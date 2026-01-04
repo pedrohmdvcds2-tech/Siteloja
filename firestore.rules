@@ -1,0 +1,162 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * This ruleset implements a security model for a PetSpa application with two primary components:
+     * strict user ownership for personal data (customers, pets) and role-based access control for
+     * shared, system-wide data (appointments). All access requires user authentication.
+     *
+     * Core Philosophy:
+     * The security model is built on the principle of least privilege. Data is either strictly private
+     * to a user or managed centrally by administrators.
+     *
+     * Data Structure:
+     * User-specific data, such as customer and pet profiles, is nested under a private `/users/{userId}`
+     * path to ensure isolation. Global data, like appointments, is stored in a top-level collection
+     * for easier querying across the application. Administrator roles are managed in a separate,
+     * client-inaccessible `/roles_admin` collection.
+     *
+     * Key Security Decisions:
+     * - Default Deny: Access is denied by default. All permissions are granted explicitly.
+     * - User Data Isolation: Users can only access data under their own `/users/{userId}` path.
+     *   They cannot see or interact with other users' data.
+     * - Admin-Managed Appointments: While all signed-in users can view appointments to check for
+     *   availability, only users designated as admins can modify or delete them. This provides a
+     *   secure mechanism for an admin panel to manage scheduling and block off time slots.
+     * - Secure Role Management: The `/roles_admin` collection is inaccessible from the client to
+     *   prevent any possibility of privilege escalation. Admin roles must be assigned through a
+     *   trusted server environment or the Firebase Console.
+     *
+     * Denormalization for Authorization:
+     * The rules assume that to allow users to create their own appointments in the future, each
+     * appointment document will need to contain a denormalized `userId` field. This avoids costly
+     * `get()` lookups and allows for a simple, secure creation rule.
+     */
+
+    // =====================================================================
+    // Global Helper Functions
+    // =====================================================================
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the authenticated user's UID matches the user ID in the path.
+     * This is the primary mechanism for enforcing data ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if the authenticated user has admin privileges.
+     * Admin status is granted by the existence of a document in the `/roles_admin`
+     * collection where the document ID is the user's UID.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+
+    // =====================================================================
+    // User Data Rules (/users)
+    // =====================================================================
+
+    match /users/{userId} {
+      /**
+       * @description  A user's root document. This path is a container for user-specific
+       *               subcollections. Direct access is denied to enforce data interaction
+       *               only through the defined subcollections.
+       * @path         /users/{userId}
+       * @allow        (none) A user cannot read or write their own root user document.
+       * @deny         (get) A user `abc` trying to get `/users/abc`.
+       * @principle    Restricts access to a user's data tree container. Subcollection
+       *               rules will grant more specific access.
+       */
+      allow read, write: if false;
+
+      /**
+       * @description  Manages a user's private list of customers.
+       * @path         /users/{userId}/customers/{customerId}
+       * @allow        (create) An authenticated user `abc` creating a document at `/users/abc/customers/new_customer`.
+       * @deny         (get) A user `xyz` trying to read a document at `/users/abc/customers/some_customer`.
+       * @principle    Enforces strict data ownership. Only the user specified in the path can
+       *               access or modify the documents within their own 'customers' subcollection.
+       */
+      match /customers/{customerId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) && resource != null;
+        allow delete: if isOwner(userId) && resource != null;
+      }
+
+      /**
+       * @description  Manages a user's private list of pets.
+       * @path         /users/{userId}/pets/{petId}
+       * @allow        (create) An authenticated user `abc` creating a document at `/users/abc/pets/new_pet`.
+       * @deny         (list) A user `xyz` trying to list documents at `/users/abc/pets`.
+       * @principle    Enforces strict data ownership. Only the user specified in the path can
+       *               access or modify the documents within their own 'pets' subcollection.
+       */
+      match /pets/{petId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) && resource != null;
+        allow delete: if isOwner(userId) && resource != null;
+      }
+    }
+
+    // =====================================================================
+    // Public & Admin-Managed Collections
+    // =====================================================================
+
+    /**
+     * @description  Manages all appointments for the PetSpa. Signed-in users can read all appointments
+     *               to check for availability, but only administrators can modify them (e.g., to block a timeslot).
+     * @path         /appointments/{appointmentId}
+     * @allow        (get) Any signed-in user reading an existing appointment to check availability.
+     * @allow        (update) An admin user updating an appointment to set `blocked: true`.
+     * @deny         (create) A regular user attempting to create a new appointment.
+     * @deny         (delete) A regular user attempting to delete an appointment.
+     * @principle    Implements a public-read (for signed-in users) with admin-only writes model. This
+     *               supports client-side availability checks while securing all modifications
+     *               to a trusted admin panel.
+     */
+    match /appointments/{appointmentId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      // CRITICAL: Cannot implement user-owned creation securely. The 'Appointment' entity is missing a 'userId' field.
+      // A 'userId' field must be denormalized onto the appointment document to verify that the creator is the owner.
+      allow create: if false; // TODO: To enable user-created appointments, add a 'userId' field to the document and change this rule to: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description  Stores a list of user UIDs that have administrator privileges.
+     *               This collection is completely locked down from client access to prevent any
+     *               form of privilege escalation.
+     * @path         /roles_admin/{userId}
+     * @allow        (none) No client is ever allowed to read or write to this collection directly.
+     * @deny         (get) Any user (including an admin) trying to read `/roles_admin/some_uid`.
+     * @principle    Prevents client-side privilege escalation. Roles are checked on the backend
+     *               using the `exists()` function and should only be managed by a trusted source
+     *               like the Firebase Console or the Admin SDK.
+     */
+    match /roles_admin/{userId} {
+      allow get: if false;
+      allow list: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

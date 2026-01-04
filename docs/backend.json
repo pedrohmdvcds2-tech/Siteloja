@@ -1,0 +1,211 @@
+{
+  "entities": {
+    "Customer": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Customer",
+      "type": "object",
+      "description": "Represents a customer using the PetSpa services.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the customer."
+        },
+        "name": {
+          "type": "string",
+          "description": "The customer's full name."
+        },
+        "contactNumber": {
+          "type": "string",
+          "description": "The customer's contact phone number."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "contactNumber"
+      ]
+    },
+    "Pet": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Pet",
+      "type": "object",
+      "description": "Represents a pet that receives services at the PetSpa.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the pet."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to Customer. (Relationship: Customer 1:N Pet)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The pet's name."
+        },
+        "breed": {
+          "type": "string",
+          "description": "The pet's breed."
+        },
+        "size": {
+          "type": "string",
+          "description": "The pet's size (e.g., small, medium, large)."
+        },
+        "vaccinationStatus": {
+          "type": "string",
+          "description": "The pet's vaccination status."
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "name",
+        "breed",
+        "size",
+        "vaccinationStatus"
+      ]
+    },
+    "Appointment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Appointment",
+      "type": "object",
+      "description": "Represents a scheduled appointment at the PetSpa.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the appointment."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to Customer. (Relationship: Customer 1:N Appointment)"
+        },
+        "petId": {
+          "type": "string",
+          "description": "Reference to Pet. (Relationship: Pet 1:N Appointment)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "The start time of the appointment. ISO8601 datetime format.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "The end time of the appointment. ISO8601 datetime format.",
+          "format": "date-time"
+        },
+        "bathType": {
+          "type": "string",
+          "description": "The type of bath service (e.g., regular, medicated)."
+        },
+        "additionalServices": {
+          "type": "array",
+          "description": "List of additional services selected for the appointment.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "totalPrice": {
+          "type": "number",
+          "description": "The total price for the appointment."
+        },
+        "blocked": {
+          "type": "boolean",
+          "description": "Specifies if this appointment time is blocked."
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "petId",
+        "startTime",
+        "endTime",
+        "bathType",
+        "totalPrice",
+        "blocked"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/customers/{customerId}",
+        "definition": {
+          "entityName": "Customer",
+          "schema": {
+            "$ref": "#/backend/entities/Customer"
+          },
+          "description": "Stores customer information. Secured by path-based ownership. Only the user with the corresponding userId can access customer data. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the customer data."
+            },
+            {
+              "name": "customerId",
+              "description": "The ID of the customer."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/pets/{petId}",
+        "definition": {
+          "entityName": "Pet",
+          "schema": {
+            "$ref": "#/backend/entities/Pet"
+          },
+          "description": "Stores pet information. Secured by path-based ownership. Only the user with the corresponding userId can access pet data. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the pet data."
+            },
+            {
+              "name": "petId",
+              "description": "The ID of the pet."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/appointments/{appointmentId}",
+        "definition": {
+          "entityName": "Appointment",
+          "schema": {
+            "$ref": "#/backend/entities/Appointment"
+          },
+          "description": "Stores appointment information. Includes the blocked property for admin control.",
+          "params": [
+            {
+              "name": "appointmentId",
+              "description": "The ID of the appointment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "roles_admin",
+          "schema": {
+            "$ref": "#/backend/entities/Customer"
+          },
+          "description": "Collection used for storing administrator roles. The existence of a document with the user's ID grants admin privileges.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who has admin privileges."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to manage customer, pet, and appointment data for the PetSpa application.  The structure prioritizes authorization independence and supports the application's core features, including scheduling, availability management, and pricing. It also supports blocking out specific times to limit appointment availability.\n\n*Authorization Independence:* Authorization independence is achieved by storing user-related data under the `/users/{userId}` path, avoiding the need for `get()` calls in security rules to determine ownership.  Admin roles are handled via collection existence checks. The `blocked` field allows admin to prevent timeslots from being booked.\n\n*QAPs Support:*\nPath-Based Ownership:  Customer and Pet data is nested under `/users/{userId}`, enabling simple and secure ownership-based security rules.\nAdmin Role via Collection Existence: The `/roles_admin/{uid}` collection is used to manage administrative privileges. The existence of a document in this collection grants admin rights.\nSegregation for Appointments: Appointments are stored under `/appointments/{appointmentId}`. This allows efficient querying and listing of all appointments, which is crucial for availability management and the admin panel.\n"
+  }
+}
