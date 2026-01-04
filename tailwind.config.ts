@@ -10,11 +10,12 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['"Baloo 2"', 'sans-serif'],
+        headline: ['"Baloo 2"', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
+        gold: '#FFC107',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
