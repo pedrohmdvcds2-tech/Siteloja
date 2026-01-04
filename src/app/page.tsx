@@ -10,7 +10,7 @@ export default function Home() {
     <div className="flex flex-col items-center min-h-screen bg-background text-foreground font-body">
       <header className="w-full p-4 flex justify-center items-center gap-2 border-b">
         <Image
-          src="https://i.imgur.com/pA0x5Iu.png"
+          src="https://i.imgur.com/SLxSDoD.png"
           alt="Princesas Pet Shop Logo"
           width={150}
           height={100}
