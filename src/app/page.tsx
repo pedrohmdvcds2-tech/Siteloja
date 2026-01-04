@@ -16,6 +16,7 @@ export default function Home() {
           height={100}
           className="object-contain"
         />
+        <h1 className="text-2xl font-bold text-primary">Princesas Pet Shop</h1>
       </header>
 
       <main className="flex-grow w-full max-w-5xl mx-auto p-4 md:p-8">
