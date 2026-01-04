@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PetSpa Agendamentos",
+  title: "Princesas Pet Shop",
   description: "Agende o melhor cuidado para o seu melhor amigo.",
 };
 

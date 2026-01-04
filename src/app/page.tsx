@@ -10,7 +10,7 @@ export default function Home() {
     <div className="flex flex-col items-center min-h-screen bg-background text-foreground font-body">
       <header className="w-full p-6 flex justify-center items-center gap-4 border-b">
         <Image
-          src="https://storage.googleapis.com/project-os-frontend/cases/princesas-pet-shop/logo.png"
+          src="https://storage.googleapis.com/project-os-frontend/cases/princesas-pet-shop/logo_princesas_pet_shop.png"
           alt="Princesas Pet Shop Logo"
           width={200}
           height={100}
@@ -46,7 +46,7 @@ export default function Home() {
 
       <footer className="w-full text-center p-6 text-sm text-muted-foreground border-t">
         <p>
-          &copy; {new Date().getFullYear()} PetSpa Agendamentos. Todos os
+          &copy; {new Date().getFullYear()} Princesas Pet Shop. Todos os
           direitos reservados.
         </p>
       </footer>
