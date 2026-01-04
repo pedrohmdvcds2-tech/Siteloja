@@ -10,15 +10,12 @@ export default function Home() {
     <div className="flex flex-col items-center min-h-screen bg-background text-foreground font-body">
       <header className="w-full p-4 flex justify-center items-center gap-2 border-b">
         <Image
-          src="https://storage.googleapis.com/project-os-frontend/cases/princesas-pet-shop/logo_princesas_pet_shop.png"
+          src="https://storage.googleapis.com/stabl-public/marigold-public/princesas-pet-shop.png"
           alt="Princesas Pet Shop Logo"
-          width={50}
-          height={50}
+          width={150}
+          height={100}
           className="object-contain"
         />
-        <h1 className="text-2xl font-bold text-primary font-headline">
-          Princesas Pet Shop
-        </h1>
       </header>
 
       <main className="flex-grow w-full max-w-5xl mx-auto p-4 md:p-8">
