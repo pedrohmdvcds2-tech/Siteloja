@@ -12,7 +12,7 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-        return request.auth.token.email == "admin@petshop.com";
+      return isSignedIn() && request.auth.token.email == "admin@petshop.com";
     }
 
     match /users/{userId} {
@@ -28,9 +28,11 @@ service cloud.firestore {
     }
 
     match /appointments/{appointmentId} {
-        allow get, list: if true;
-        allow create: if isSignedIn();
-        allow update, delete: if isAdmin();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
     }
   }
 }
+
+    

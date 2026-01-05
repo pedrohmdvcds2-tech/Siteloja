@@ -191,12 +191,12 @@ export default function AdminPage() {
         description: 'O agendamento foi cancelado.',
       });
       refetch();
-    } catch (e) {
+    } catch (e: any) {
       console.error('Error canceling appointment: ', e);
       toast({
         variant: 'destructive',
-        title: 'Erro',
-        description: 'Não foi possível cancelar o agendamento.',
+        title: 'Erro ao Cancelar',
+        description: e.message || 'Não foi possível cancelar o agendamento. Verifique as permissões.',
       });
     }
   };
@@ -508,7 +508,6 @@ export default function AdminPage() {
                         <TableCell>{apt.petName}</TableCell>
                         <TableCell>{apt.bathType}</TableCell>
                         <TableCell className="text-right">
-                          <div className='flex items-center justify-end gap-2'>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                  <Tooltip>
@@ -537,7 +536,6 @@ export default function AdminPage() {
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
-                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -550,3 +548,5 @@ export default function AdminPage() {
     </TooltipProvider>
   );
 }
+
+    
