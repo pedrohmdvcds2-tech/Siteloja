@@ -28,7 +28,7 @@ service cloud.firestore {
     }
 
     match /appointments/{appointmentId} {
-        allow get, list: if isSignedIn();
+        allow get, list: if true;
         allow create: if isSignedIn();
         allow update, delete: if isAdminByEmail();
     }

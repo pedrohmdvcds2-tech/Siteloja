@@ -22,7 +22,7 @@ import {
   FileText,
   Wind,
   AlertTriangle,
-  Calendar as CalendarIcon,
+  CalendarIcon,
 } from "lucide-react";
 
 import { formSchema, type SchedulingFormValues } from "@/lib/definitions";
@@ -100,10 +100,10 @@ export function SchedulingForm() {
   const { firestore, auth, user, isUserLoading } = useFirebase();
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (!user) {
       initiateAnonymousSignIn(auth);
     }
-  }, [user, isUserLoading, auth]);
+  }, [user, auth]);
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !selectedDate) return null;
