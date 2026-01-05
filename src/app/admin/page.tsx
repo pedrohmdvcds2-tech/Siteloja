@@ -155,6 +155,7 @@ export default function AdminPage() {
           bathType: 'N/A',
           totalPrice: 0,
           blocked: true,
+          vaccinationCardUrl: '',
         };
         
         const docRef = doc(collection(firestore, 'appointments'));
@@ -519,7 +520,7 @@ export default function AdminPage() {
                                   <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Esta ação não pode ser desfeita. Isso irá cancelar permanentemente o agendamento de {apt.clientName} para o pet {apt.petName}.
-                                  </AlertDialogDescription>
+                                  </Description>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Voltar</AlertDialogCancel>
@@ -541,5 +542,3 @@ export default function AdminPage() {
     </TooltipProvider>
   );
 }
-
-    
