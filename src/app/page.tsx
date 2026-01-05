@@ -15,7 +15,8 @@ export default function Home() {
             <Image
               src="https://i.imgur.com/SLxSDoD.png"
               alt="Princesas Pet Shop Logo"
-              fill
+              width={96}
+              height={96}
               className="object-contain"
             />
           </div>
