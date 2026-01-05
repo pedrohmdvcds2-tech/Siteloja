@@ -53,14 +53,13 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-
+    
     /**
-     * Checks if the authenticated user has admin privileges.
-     * Admin status is granted by the existence of a document in the `/roles_admin`
-     * collection where the document ID is the user's UID.
-     */
+    * Checks if the authenticated user has admin privileges.
+    * Admin status is determined by a custom claim 'admin' on the user's token.
+    */
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+        return isSignedIn() && request.auth.token.admin == true;
     }
 
 
@@ -90,11 +89,7 @@ service cloud.firestore {
        *               access or modify the documents within their own 'customers' subcollection.
        */
       match /customers/{customerId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update: if isOwner(userId) && resource != null;
-        allow delete: if isOwner(userId) && resource != null;
+        allow read, create, update, delete: if isOwner(userId);
       }
 
       /**
@@ -106,11 +101,7 @@ service cloud.firestore {
        *               access or modify the documents within their own 'pets' subcollection.
        */
       match /pets/{petId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update: if isOwner(userId) && resource != null;
-        allow delete: if isOwner(userId) && resource != null;
+        allow read, create, update, delete: if isOwner(userId);
       }
     }
 
@@ -131,32 +122,10 @@ service cloud.firestore {
      *               to a trusted admin panel.
      */
     match /appointments/{appointmentId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      // CRITICAL: Cannot implement user-owned creation securely. The 'Appointment' entity is missing a 'userId' field.
-      // A 'userId' field must be denormalized onto the appointment document to verify that the creator is the owner.
-      allow create: if false; // TODO: To enable user-created appointments, add a 'userId' field to the document and change this rule to: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
-    }
-
-    /**
-     * @description  Stores a list of user UIDs that have administrator privileges.
-     *               This collection is completely locked down from client access to prevent any
-     *               form of privilege escalation.
-     * @path         /roles_admin/{userId}
-     * @allow        (none) No client is ever allowed to read or write to this collection directly.
-     * @deny         (get) Any user (including an admin) trying to read `/roles_admin/some_uid`.
-     * @principle    Prevents client-side privilege escalation. Roles are checked on the backend
-     *               using the `exists()` function and should only be managed by a trusted source
-     *               like the Firebase Console or the Admin SDK.
-     */
-    match /roles_admin/{userId} {
-      allow get: if false;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+        allow get, list: if isSignedIn();
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow update: if isAdmin();
+        allow delete: if isAdmin();
     }
   }
 }

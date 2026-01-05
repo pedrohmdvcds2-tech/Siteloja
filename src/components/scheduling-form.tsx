@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -61,6 +61,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { useFirebase, useCollection } from "@/firebase";
+import {
+  addDocumentNonBlocking,
+  signInAnonymously,
+  initiateAnonymousSignIn,
+} from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
 
 const PRICES = {
   bath: {
@@ -81,11 +88,50 @@ const PRICES = {
 };
 
 const bathTypes = ["Banho Simples", "Banho Terapêutico", "Banho e Tosa"];
-const timeSlots = generateTimeSlots();
+const allTimeSlots = generateTimeSlots();
 
 export function SchedulingForm() {
   const [totalPrice, setTotalPrice] = useState(0);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const { toast } = useToast();
+  const { firestore, auth, user, isUserLoading } = useFirebase();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      initiateAnonymousSignIn(auth);
+    }
+  }, [user, isUserLoading, auth]);
+
+  const appointmentsQuery = useMemo(() => {
+    if (!firestore || !selectedDate) return null;
+    const startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(selectedDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return query(
+      collection(firestore, "appointments"),
+      where("startTime", ">=", startOfDay.toISOString()),
+      where("startTime", "<=", endOfDay.toISOString())
+    );
+  }, [firestore, selectedDate]);
+
+  const { data: todaysAppointments, isLoading: isLoadingAppointments } =
+    useCollection(appointmentsQuery);
+
+  const availableTimeSlots = useMemo(() => {
+    if (!todaysAppointments) {
+      return allTimeSlots;
+    }
+    const bookedTimes = todaysAppointments.map((apt) =>
+      format(new Date(apt.startTime), "HH:mm")
+    );
+    return allTimeSlots.filter(
+      (slot) =>
+        !bookedTimes.includes(slot) &&
+        !todaysAppointments.find((a) => a.blocked && format(new Date(a.startTime), 'HH:mm') === slot)
+    );
+  }, [todaysAppointments]);
 
   const form = useForm<SchedulingFormValues>({
     resolver: zodResolver(formSchema),
@@ -118,8 +164,9 @@ export function SchedulingForm() {
       const basePrice = PRICES.bath[bathType as keyof typeof PRICES.bath] || 0;
       const sizeAdjustedPrice =
         basePrice *
-        (PRICES.sizeMultiplier[petSize as keyof typeof PRICES.sizeMultiplier] ||
-          1);
+        (PRICES.sizeMultiplier[
+          petSize as keyof typeof PRICES.sizeMultiplier
+        ] || 1);
 
       let extrasPrice = 0;
       if (extras?.nailTrimming) extrasPrice += PRICES.extras.nailTrimming;
@@ -133,48 +180,61 @@ export function SchedulingForm() {
     setTotalPrice(newPrice);
   }, [watchedValues]);
 
-  function onSubmit(data: SchedulingFormValues) {
-    const extrasList = Object.entries(data.extras)
-      .filter(([, value]) => value)
-      .map(([key]) => {
-        if (key === "nailTrimming") return "- Corte de Unhas";
-        if (key === "hydration") return "- Hidratação de Pelos";
-        if (key === "earCleaning") return "- Limpeza de Ouvidos";
-      })
-      .join("\n");
+  useEffect(() => {
+    if (watchedValues.appointmentDate) {
+      const newDate = new Date(watchedValues.appointmentDate);
+      if (selectedDate?.getTime() !== newDate.getTime()) {
+        setSelectedDate(newDate);
+        form.setValue("appointmentTime", undefined); // Reset time when date changes
+      }
+    }
+  }, [watchedValues.appointmentDate, selectedDate, form]);
 
-    const formattedDate = format(data.appointmentDate, "PPP", { locale: ptBR });
+  async function onSubmit(data: SchedulingFormValues) {
+    if (!firestore || !user) {
+      toast({
+        variant: "destructive",
+        title: "Erro de autenticação",
+        description: "Por favor, recarregue a página e tente novamente.",
+      });
+      return;
+    }
 
-    const message = `Olá! ✨
+    const [hours, minutes] = data.appointmentTime.split(":").map(Number);
+    const startTime = new Date(data.appointmentDate);
+    startTime.setHours(hours, minutes, 0, 0);
+    const endTime = new Date(startTime.getTime() + 30 * 60000); // Assuming 30 min slots
 
-Gostaria de agendar um horário no *PetSpa*.
+    const newAppointment = {
+      ...data,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+      totalPrice: totalPrice,
+      blocked: false, // Appointments are not blocked by default
+      userId: user.uid,
+    };
 
-*Detalhes do Agendamento:*
+    try {
+      const appointmentsCol = collection(firestore, "appointments");
+      await addDocumentNonBlocking(appointmentsCol, newAppointment);
 
-👤 *Cliente:* ${data.clientName}
-🐶 *Pet:* ${data.petName} (${data.petBreed}, porte ${data.petSize})
-📞 *Contato:* ${data.contact}
-💉 *Vacinação em dia:* ${data.isVaccinated ? "Sim" : "Não"}
-
-*Serviços:*
-- *Banho:* ${data.bathType}
-${extrasList ? `${extrasList}` : ""}
-
-🗓️ *Data/Hora:*
-${formattedDate} às ${data.appointmentTime}
-
-💰 *Valor Total Estimado:*
-R$${totalPrice.toFixed(2).replace(".", ",")}
-`;
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-
-    window.open(whatsappUrl, "_blank");
-    toast({
-      title: "Agendamento pronto para envio!",
-      description:
-        "Sua mensagem foi gerada. Complete o envio no WhatsApp.",
-    });
+      toast({
+        title: "Agendamento realizado com sucesso! ✅",
+        description: `Seu horário para ${data.petName} no dia ${format(
+          startTime,
+          "PPP",
+          { locale: ptBR }
+        )} às ${data.appointmentTime} foi confirmado.`,
+      });
+      form.reset();
+    } catch (e: any) {
+      console.error("Error adding document: ", e);
+      toast({
+        variant: "destructive",
+        title: "Ops! Algo deu errado.",
+        description: "Não foi possível realizar o agendamento. Tente novamente.",
+      });
+    }
   }
 
   return (
@@ -191,7 +251,6 @@ R$${totalPrice.toFixed(2).replace(".", ",")}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-8">
-            {/* Tutor e Pet */}
             <div className="space-y-4">
               <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
                 <User /> Dados do Tutor e do Pet
@@ -255,12 +314,15 @@ R$${totalPrice.toFixed(2).replace(".", ",")}
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                 <FormField
+                <FormField
                   control={form.control}
                   name="petSize"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
-                      <FormLabel className="flex items-center gap-2"><Scale className="size-4"/>Porte do Pet</FormLabel>
+                      <FormLabel className="flex items-center gap-2">
+                        <Scale className="size-4" />
+                        Porte do Pet
+                      </FormLabel>
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
@@ -281,7 +343,7 @@ R$${totalPrice.toFixed(2).replace(".", ",")}
                             </FormControl>
                             <FormLabel className="font-normal">Médio</FormLabel>
                           </FormItem>
-                           <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
                               <RadioGroupItem value="grande" />
                             </FormControl>
@@ -299,7 +361,10 @@ R$${totalPrice.toFixed(2).replace(".", ",")}
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                       <div className="space-y-0.5">
-                        <FormLabel className="flex items-center gap-2"><Syringe className="size-4"/>Vacinação em dia?</FormLabel>
+                        <FormLabel className="flex items-center gap-2">
+                          <Syringe className="size-4" />
+                          Vacinação em dia?
+                        </FormLabel>
                       </div>
                       <FormControl>
                         <Switch
@@ -315,7 +380,6 @@ R$${totalPrice.toFixed(2).replace(".", ",")}
 
             <Separator />
 
-            {/* Serviços */}
             <div className="space-y-4">
               <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
                 <Scissors /> Escolha dos Serviços
@@ -356,10 +420,16 @@ R$${totalPrice.toFixed(2).replace(".", ",")}
                       name="extras.nailTrimming"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
-                           <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormControl>
-                          <FormLabel className="font-normal">Corte de Unhas (+R${PRICES.extras.nailTrimming.toFixed(2).replace(".", ",")})</FormLabel>
+                          <FormLabel className="font-normal">
+                            Corte de Unhas (+R$
+                            {PRICES.extras.nailTrimming.toFixed(2).replace(".", ",")})
+                          </FormLabel>
                         </FormItem>
                       )}
                     />
@@ -368,22 +438,34 @@ R$${totalPrice.toFixed(2).replace(".", ",")}
                       name="extras.hydration"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
-                           <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormControl>
-                          <FormLabel className="font-normal">Hidratação de Pelos (+R${PRICES.extras.hydration.toFixed(2).replace(".", ",")})</FormLabel>
+                          <FormLabel className="font-normal">
+                            Hidratação de Pelos (+R$
+                            {PRICES.extras.hydration.toFixed(2).replace(".", ",")})
+                          </FormLabel>
                         </FormItem>
                       )}
                     />
-                     <FormField
+                    <FormField
                       control={form.control}
                       name="extras.earCleaning"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
-                           <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormControl>
-                          <FormLabel className="font-normal">Limpeza de Ouvidos (+R${PRICES.extras.earCleaning.toFixed(2).replace(".", ",")})</FormLabel>
+                          <FormLabel className="font-normal">
+                            Limpeza de Ouvidos (+R$
+                            {PRICES.extras.earCleaning.toFixed(2).replace(".", ",")})
+                          </FormLabel>
                         </FormItem>
                       )}
                     />
@@ -393,14 +475,13 @@ R$${totalPrice.toFixed(2).replace(".", ",")}
             </div>
 
             <Separator />
-            
-            {/* Agendamento */}
+
             <div className="space-y-4">
-               <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
+              <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
                 <Clock /> Data e Hora
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <FormField
+                <FormField
                   control={form.control}
                   name="appointmentDate"
                   render={({ field }) => (
@@ -431,7 +512,8 @@ R$${totalPrice.toFixed(2).replace(".", ",")}
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) =>
-                              date < new Date(new Date().setHours(0,0,0,0)) || date.getDay() === 0
+                              date < new Date(new Date().setHours(0, 0, 0, 0)) ||
+                              date.getDay() === 0
                             }
                             initialFocus
                           />
@@ -441,22 +523,37 @@ R$${totalPrice.toFixed(2).replace(".", ",")}
                     </FormItem>
                   )}
                 />
-                 <FormField
+                <FormField
                   control={form.control}
                   name="appointmentTime"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Horário Disponível</FormLabel>
-                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione um horário" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {timeSlots.map(time => (
-                            <SelectItem key={time} value={time}>{time}</SelectItem>
-                          ))}
+                          {isLoadingAppointments ? (
+                            <SelectItem value="loading" disabled>
+                              Carregando...
+                            </SelectItem>
+                          ) : availableTimeSlots.length > 0 ? (
+                            availableTimeSlots.map((time) => (
+                              <SelectItem key={time} value={time}>
+                                {time}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-slots" disabled>
+                              Nenhum horário vago
+                            </SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -471,12 +568,21 @@ R$${totalPrice.toFixed(2).replace(".", ",")}
             <div className="flex items-center gap-3">
               <CircleDollarSign className="size-8 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">Valor Total Estimado</p>
-                <p className="text-2xl font-bold">R${totalPrice.toFixed(2).replace('.', ',')}</p>
+                <p className="text-sm text-muted-foreground">
+                  Valor Total Estimado
+                </p>
+                <p className="text-2xl font-bold">
+                  R${totalPrice.toFixed(2).replace(".", ",")}
+                </p>
               </div>
             </div>
-            <Button type="submit" size="lg" className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105">
-              <MessageCircle className="mr-2" /> Agendar via WhatsApp
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
+              disabled={isUserLoading || isLoadingAppointments}
+            >
+              <MessageCircle className="mr-2" /> Agendar
             </Button>
           </CardFooter>
         </form>
