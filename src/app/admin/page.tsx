@@ -190,13 +190,13 @@ export default function AdminPage() {
         title: 'Sucesso!',
         description: 'O agendamento foi cancelado.',
       });
-      refetch();
+      // refetch() is handled by useCollection's real-time listener
     } catch (e: any) {
       console.error('Error canceling appointment: ', e);
       toast({
-        variant: 'destructive',
-        title: 'Erro ao Cancelar',
-        description: e.message || 'Não foi possível cancelar o agendamento. Verifique as permissões.',
+        variant: "destructive",
+        title: "Erro ao Cancelar",
+        description: `Não foi possível cancelar o agendamento. Verifique as permissões de segurança. Detalhes: ${e.message}`,
       });
     }
   };
@@ -391,7 +391,7 @@ export default function AdminPage() {
           <CardHeader>
             <CardTitle>Horários Bloqueados</CardTitle>
             <CardDescription>
-              Horários que você bloqueou manualmente. Clique para desbloquear.
+              Horários que você bloqueou manually. Clique para desbloquear.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -477,11 +477,11 @@ export default function AdminPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Horário</TableHead>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Pet</TableHead>
                     <TableHead>Serviço</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Horário</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -494,6 +494,9 @@ export default function AdminPage() {
                     )
                     .map((apt) => (
                       <TableRow key={apt.id}>
+                        <TableCell>{apt.clientName}</TableCell>
+                        <TableCell>{apt.petName}</TableCell>
+                        <TableCell>{apt.bathType}</TableCell>
                         <TableCell>
                           {format(new Date(apt.startTime), 'dd/MM/yyyy', {
                             locale: ptBR,
@@ -504,22 +507,12 @@ export default function AdminPage() {
                             locale: ptBR,
                           })}
                         </TableCell>
-                        <TableCell>{apt.clientName}</TableCell>
-                        <TableCell>{apt.petName}</TableCell>
-                        <TableCell>{apt.bathType}</TableCell>
                         <TableCell className="text-right">
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                 <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                      <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Cancelar agendamento</p>
-                                  </TooltipContent>
-                                </Tooltip>
+                                 <Button variant="ghost" size="icon">
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
