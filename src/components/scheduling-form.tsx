@@ -444,8 +444,7 @@ Aguardando confirmação. Obrigado!`;
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                            <FormLabel className="font-normal flex items-center gap-1.5">
-                              <Sparkles className="size-4" />
+                            <FormLabel className="font-normal">
                               Hidratação (+R$
                               {PRICES.extras.hydration.toFixed(2).replace(".", ",")})
                             </FormLabel>
@@ -465,8 +464,7 @@ Aguardando confirmação. Obrigado!`;
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                          <FormLabel className="font-normal flex items-center gap-1.5">
-                            <Wind className="size-4" />
+                          <FormLabel className="font-normal">
                             Banho com Ozônio (+R$
                             {PRICES.extras.ozoneBath.toFixed(2).replace(".", ",")})
                           </FormLabel>
@@ -486,8 +484,7 @@ Aguardando confirmação. Obrigado!`;
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                          <FormLabel className="font-normal flex items-center gap-1.5">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-tooth"><path d="M9.25 4.042a4.793 4.793 0 0 1 5.5 0"/><path d="M12.75 20a4.793 4.793 0 0 1-5.5 0"/><path d="M17 16.5v-9a1.5 1.5 0 0 0-3 0v9a1.5 1.5 0 0 0 3 0Z"/><path d="M7 16.5v-9a1.5 1.5 0 0 0-3 0v9a1.5 1.5 0 0 0 3 0Z"/><path d="M12 21.5v-19"/><path d="M7.25 4.042a4.793 4.793 0 0 0 5.5 0"/></svg>
+                          <FormLabel className="font-normal">
                             Escovação de Dentes (+R$
                             {PRICES.extras.teethBrushing.toFixed(2).replace(".", ",")})
                           </FormLabel>
@@ -637,5 +634,3 @@ Aguardando confirmação. Obrigado!`;
     </Card>
   );
 }
-
-    
