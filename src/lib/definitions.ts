@@ -28,6 +28,10 @@ export const formSchema = z.object({
     teethBrushing: z.boolean().default(false),
   }),
   observations: z.string().optional(),
+}).refine(data => data.vaccinationStatus === 'Em dia', {
+  message: "A vacinação do pet precisa estar em dia para realizar o agendamento.",
+  path: ["vaccinationStatus"],
 });
+
 
 export type SchedulingFormValues = z.infer<typeof formSchema>;

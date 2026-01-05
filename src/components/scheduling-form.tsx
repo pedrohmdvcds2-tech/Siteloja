@@ -282,6 +282,8 @@ Obrigado!`;
     }
   }
 
+  const isVaccinationOk = watchedValues.vaccinationStatus === 'Em dia';
+
   return (
     <Card className="w-full shadow-xl">
       <CardHeader>
@@ -439,6 +441,15 @@ Obrigado!`;
                   )}
                 />
               </div>
+                {watchedValues.vaccinationStatus === 'Não está em dia' && (
+                  <Alert variant="destructive" className="mt-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Vacinação Obrigatória</AlertTitle>
+                    <AlertDescription>
+                      Para a segurança de todos os pets, a vacinação deve estar em dia para agendar qualquer serviço.
+                    </AlertDescription>
+                  </Alert>
+                )}
                <FormField
                   control={form.control}
                   name="vaccinationCard"
@@ -720,7 +731,7 @@ Obrigado!`;
               type="submit"
               size="lg"
               className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
-              disabled={isUserLoading || isLoadingAppointments}
+              disabled={isUserLoading || isLoadingAppointments || !isVaccinationOk}
             >
               <MessageCircle /> Agendar via WhatsApp
             </Button>
