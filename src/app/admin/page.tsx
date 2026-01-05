@@ -520,7 +520,7 @@ export default function AdminPage() {
                                   <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Esta ação não pode ser desfeita. Isso irá cancelar permanentemente o agendamento de {apt.clientName} para o pet {apt.petName}.
-                                  </Description>
+                                  </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Voltar</AlertDialogCancel>
@@ -542,3 +542,5 @@ export default function AdminPage() {
     </TooltipProvider>
   );
 }
+
+    
