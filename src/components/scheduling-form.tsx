@@ -20,6 +20,7 @@ import {
   Tag,
   Scale,
   MessageCircle,
+  FileText,
 } from "lucide-react";
 
 import { formSchema, type SchedulingFormValues } from "@/lib/definitions";
@@ -59,7 +60,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
 import {
@@ -136,7 +137,7 @@ export function SchedulingForm() {
       petName: "",
       petBreed: "",
       contact: "",
-      isVaccinated: true,
+      vaccinationStatus: undefined,
       bathType: undefined,
       petSize: undefined,
       appointmentTime: undefined,
@@ -145,6 +146,7 @@ export function SchedulingForm() {
         hydration: false,
         earCleaning: false,
       },
+      observations: "",
     },
   });
 
@@ -202,13 +204,15 @@ export function SchedulingForm() {
 *Raça:* ${data.petBreed}
 *Porte:* ${data.petSize}
 *Contato:* ${data.contact}
-*Vacinação em dia:* ${data.isVaccinated ? "Sim" : "Não"}
+*Vacinação:* ${data.vaccinationStatus}
 
 *Data:* ${appointmentDate}
 *Horário:* ${data.appointmentTime}
 
 *Serviços:*
 - ${services.join("\n- ")}
+
+${data.observations ? `*Observações:* ${data.observations}` : ''}
 
 *Total Estimado:* R$${totalPrice.toFixed(2).replace(".", ",")}
 
@@ -344,21 +348,46 @@ Aguardando confirmação. Obrigado!`;
                 />
                 <FormField
                   control={form.control}
-                  name="isVaccinated"
+                  name="vaccinationStatus"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel className="flex items-center gap-2">
-                          <Syringe className="size-4" />
-                          Vacinação em dia?
-                        </FormLabel>
-                      </div>
+                    <FormItem className="space-y-3">
+                      <FormLabel className="flex items-center gap-2">
+                        <Syringe className="size-4" />
+                        Vacinação
+                      </FormLabel>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col space-y-2"
+                        >
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Em dia" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Em dia
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Não está em dia" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Não está em dia
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Enviarei a foto da carteirinha" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Enviarei a foto da carteirinha
+                            </FormLabel>
+                          </FormItem>
+                        </RadioGroup>
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -459,6 +488,26 @@ Aguardando confirmação. Obrigado!`;
                   </div>
                 </div>
               </div>
+              <FormField
+                control={form.control}
+                name="observations"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <FileText className="size-4" />
+                      Observações
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Ex: Meu pet tem alergia a algum produto ou precisa de atenção especial?"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <Separator />

@@ -8,7 +8,9 @@ export const formSchema = z.object({
     required_error: "Selecione o porte do pet.",
   }),
   contact: z.string().min(10, "Número de contato parece curto demais."),
-  isVaccinated: z.boolean().default(false),
+  vaccinationStatus: z.string({
+    required_error: "Selecione o status da vacinação.",
+  }),
   appointmentDate: z.date({
     required_error: "Selecione uma data para o agendamento.",
   }),
@@ -23,6 +25,7 @@ export const formSchema = z.object({
     hydration: z.boolean().default(false),
     earCleaning: z.boolean().default(false),
   }),
+  observations: z.string().optional(),
 });
 
 export type SchedulingFormValues = z.infer<typeof formSchema>;

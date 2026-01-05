@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import {
   collection,
   doc,
-  updateDoc,
+  deleteDoc,
   query,
   addDoc,
   where,
@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LogOut, Calendar as CalendarIcon } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon, Trash2 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -50,6 +50,17 @@ import {
 import { cn, generateTimeSlots } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function AdminPage() {
   const { user, isUserLoading } = useUser();
@@ -146,6 +157,25 @@ export default function AdminPage() {
       });
     } finally {
       setIsBlocking(false);
+    }
+  };
+
+  const handleCancelAppointment = async (appointmentId: string) => {
+    if (!firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'appointments', appointmentId));
+      toast({
+        title: 'Sucesso!',
+        description: 'O agendamento foi cancelado.',
+      });
+      refetch();
+    } catch (e) {
+      console.error('Error canceling appointment: ', e);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível cancelar o agendamento.',
+      });
     }
   };
 
@@ -317,6 +347,7 @@ export default function AdminPage() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Pet</TableHead>
                   <TableHead>Serviço</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -341,6 +372,29 @@ export default function AdminPage() {
                       <TableCell>{apt.clientName}</TableCell>
                       <TableCell>{apt.petName}</TableCell>
                       <TableCell>{apt.bathType}</TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação não pode ser desfeita. Isso irá cancelar permanentemente o agendamento de {apt.clientName} para o pet {apt.petName}.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Voltar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleCancelAppointment(apt.id)}>
+                                Sim, cancelar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
                     </TableRow>
                   ))}
               </TableBody>
