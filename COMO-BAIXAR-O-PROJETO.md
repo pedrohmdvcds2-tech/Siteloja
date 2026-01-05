@@ -40,7 +40,7 @@ Agora, você precisa conectar o ambiente de desenvolvimento atual ao repositóri
 2.  **Execute os Comandos Git:** Digite os seguintes comandos, um de cada vez, pressionando Enter após cada um. Substitua `[URL_DO_SEU_REPO_NO_GITHUB]` pela URL que o GitHub forneceu (algo como `https://github.com/seu-usuario/meu-petshop.git`).
 
     ```bash
-    # Inicializa o Git no projeto e cria a branch 'main'
+    # Inicializa o Git no projeto e cria a branch 'main' (se ainda não foi feito)
     git init -b main
 
     # Adiciona todos os arquivos para o Git "observar"
@@ -51,7 +51,12 @@ Agora, você precisa conectar o ambiente de desenvolvimento atual ao repositóri
 
     # Conecta seu projeto local ao repositório do GitHub
     git remote add origin [URL_DO_SEU_REPO_NO_GITHUB]
+    ```
 
+    **E se aparecer `error: remote origin already exists.`?**
+    Não se preocupe! Isso significa que você já executou este comando antes e a conexão com o GitHub já está feita. Apenas pule para o próximo passo.
+
+    ```bash
     # Envia os arquivos para o GitHub
     git push -u origin main
     ```
