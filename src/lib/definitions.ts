@@ -21,7 +21,7 @@ export const formSchema = z.object({
     .refine(
       (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
       "Formato de arquivo inválido. Apenas .jpg, .jpeg, .png, .webp e .pdf são aceitos."
-    ),
+    ).nullable(),
   isMatted: z.boolean().default(false),
   appointmentDate: z.date({
     required_error: "Selecione uma data para o agendamento.",
@@ -41,6 +41,14 @@ export const formSchema = z.object({
 }).refine(data => data.vaccinationStatus === 'Em dia', {
   message: "A vacinação do pet precisa estar em dia para realizar o agendamento.",
   path: ["vaccinationStatus"],
+}).refine(data => {
+  if (data.vaccinationStatus === 'Em dia') {
+    return !!data.vaccinationCard;
+  }
+  return true;
+}, {
+  message: "A foto da carteira de vacinação é obrigatória.",
+  path: ["vaccinationCard"],
 });
 
 

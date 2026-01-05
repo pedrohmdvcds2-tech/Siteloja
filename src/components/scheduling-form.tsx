@@ -295,7 +295,7 @@ Obrigado!`;
     }
   }
 
-  const isVaccinationOk = watchedValues.vaccinationStatus === 'Em dia';
+  const isVaccinationOk = watchedValues.vaccinationStatus === 'Em dia' && watchedValues.vaccinationCard;
 
   return (
     <Card className="w-full shadow-xl">
@@ -468,12 +468,12 @@ Obrigado!`;
                   name="vaccinationCard"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Carteira de Vacinação</FormLabel>
+                      <FormLabel>Carteira de Vacinação (Obrigatório)</FormLabel>
                       <FormControl>
                         <Input type="file" accept="image/*,.pdf" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                       </FormControl>
                       <FormDescription>
-                        Anexe uma foto da carteira de vacinação do seu pet.
+                        Anexe uma foto ou PDF da carteira de vacinação do seu pet.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
