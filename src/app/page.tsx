@@ -11,13 +11,14 @@ export default function Home() {
     <div className="flex flex-col items-center min-h-screen bg-background text-foreground font-body">
       <header className="w-full p-6 bg-gradient-to-r from-[#c724b1] via-[#e05d5d] to-[#f7b733] text-white">
         <div className="container mx-auto flex items-center justify-center gap-4">
-          <Image
-            src="https://i.imgur.com/SLxSDoD.png"
-            alt="Princesas Pet Shop Logo"
-            width={100}
-            height={100}
-            className="object-contain"
-          />
+          <div className="relative h-24 w-24">
+            <Image
+              src="https://i.imgur.com/SLxSDoD.png"
+              alt="Princesas Pet Shop Logo"
+              fill
+              className="object-contain"
+            />
+          </div>
           <div>
             <h1 className="text-3xl font-bold">Princesas Pet Shop</h1>
             <p className="text-sm">Cuidado Real para Seu Amiguinho</p>
