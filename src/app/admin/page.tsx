@@ -1,7 +1,7 @@
 'use client';
-import { useUser, useCollection, useFirebase } from '@/firebase';
+import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { collection, doc, updateDoc, query } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +30,7 @@ export default function AdminPage() {
   // Simplified admin check: checks for a specific email.
   const ADMIN_EMAIL = "admin@petshop.com";
 
-  const appointmentsQuery = useMemo(() => {
+  const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
     return query(collection(firestore, 'appointments'));
   }, [firestore, isAdmin]);

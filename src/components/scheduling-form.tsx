@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -61,7 +61,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { useFirebase, useCollection } from "@/firebase";
+import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
 import {
   addDocumentNonBlocking,
   signInAnonymously,
@@ -102,7 +102,7 @@ export function SchedulingForm() {
     }
   }, [user, isUserLoading, auth]);
 
-  const appointmentsQuery = useMemo(() => {
+  const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !selectedDate) return null;
     const startOfDay = new Date(selectedDate);
     startOfDay.setHours(0, 0, 0, 0);
@@ -119,7 +119,7 @@ export function SchedulingForm() {
   const { data: todaysAppointments, isLoading: isLoadingAppointments } =
     useCollection(appointmentsQuery);
 
-  const availableTimeSlots = useMemo(() => {
+  const availableTimeSlots = useMemoFirebase(() => {
     if (!todaysAppointments) {
       return allTimeSlots;
     }
