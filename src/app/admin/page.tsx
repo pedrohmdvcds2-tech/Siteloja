@@ -2,6 +2,7 @@
 import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   collection,
   doc,
@@ -32,7 +33,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LogOut, Calendar as CalendarIcon, Trash2, Unlock, CalendarPlus } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon, Trash2, Unlock, CalendarPlus, CalendarClock } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -281,11 +282,30 @@ export default function AdminPage() {
       <div className="container mx-auto p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
+            <div className='space-y-1'>
+               <CardTitle>Painel Principal</CardTitle>
+               <CardDescription>
+                Gerencie os agendamentos e horários do seu Pet Shop.
+              </CardDescription>
+            </div>
+            <div className='flex items-center gap-2'>
+              <Button asChild variant="outline">
+                  <Link href="/admin/agenda">
+                    <CalendarClock className="mr-2" />
+                    Ver Agenda
+                  </Link>
+              </Button>
+              <Button onClick={handleLogout} variant="outline" size="sm">
+                <LogOut className="mr-2" />
+                Logout
+              </Button>
+            </div>
+          </CardHeader>
+        </Card>
+      
+        <Card>
+          <CardHeader>
             <CardTitle>Bloquear Horários</CardTitle>
-            <Button onClick={handleLogout} variant="outline" size="sm">
-              <LogOut className="mr-2" />
-              Logout
-            </Button>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleBlockTimes} className="space-y-4">
@@ -564,5 +584,3 @@ export default function AdminPage() {
     </TooltipProvider>
   );
 }
-
-    
