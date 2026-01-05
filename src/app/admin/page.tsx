@@ -331,6 +331,7 @@ export default function AdminPage() {
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
+                        locale={ptBR}
                         mode="single"
                         selected={blockDate}
                         onSelect={setBlockDate}

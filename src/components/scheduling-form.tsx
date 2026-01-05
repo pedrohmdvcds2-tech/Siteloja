@@ -23,6 +23,7 @@ import {
   Wind,
   AlertTriangle,
   CalendarIcon,
+  Upload,
 } from "lucide-react";
 
 import { formSchema, type SchedulingFormValues } from "@/lib/definitions";
@@ -431,21 +432,29 @@ Obrigado!`;
                               Não está em dia
                             </FormLabel>
                           </FormItem>
-                          <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="Enviarei a foto da carteirinha" />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              Enviarei a foto da carteirinha
-                            </FormLabel>
-                          </FormItem>
                         </RadioGroup>
                       </FormControl>
-                      <FormMessage />
+                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+               <FormField
+                  control={form.control}
+                  name="vaccinationCard"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Carteira de Vacinação (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                      </FormControl>
+                      <FormDescription>
+                        Anexe uma foto da carteira de vacinação do seu pet.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               <div className="pt-4">
                  <FormField
                   control={form.control}
@@ -637,6 +646,7 @@ Obrigado!`;
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
+                            locale={ptBR}
                             mode="single"
                             selected={field.value}
                             onSelect={field.onChange}
