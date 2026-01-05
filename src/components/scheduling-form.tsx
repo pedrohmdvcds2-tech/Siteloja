@@ -6,7 +6,6 @@ import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  CalendarIcon,
   User,
   Dog,
   Phone,
@@ -23,6 +22,7 @@ import {
   FileText,
   Wind,
   AlertTriangle,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 
 import { formSchema, type SchedulingFormValues } from "@/lib/definitions";
@@ -68,7 +68,7 @@ import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
 import {
   initiateAnonymousSignIn,
 } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, addDoc } from "firebase/firestore";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 
@@ -194,17 +194,50 @@ export function SchedulingForm() {
   }, [watchedValues.appointmentDate, selectedDate, form]);
 
   async function onSubmit(data: SchedulingFormValues) {
-    const phoneNumber = "5521993413747";
-    const appointmentDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
-    
-    let services = [data.bathType];
-    if (data.extras.hydration) services.push("Hidratação");
-    if (data.extras.ozoneBath) services.push("Banho com Ozônio");
-    if (data.extras.teethBrushing) services.push("Escovação de Dentes");
-    if (data.isMatted) services.push("Desembolo (sujeito a avaliação)");
+    if (!user || !firestore) {
+      toast({
+        variant: "destructive",
+        title: "Erro de Autenticação",
+        description: "Não foi possível identificar o usuário. Tente recarregar a página.",
+      });
+      return;
+    }
 
-    const message = `Olá! Gostaria de agendar um horário.
-    
+    const { appointmentDate, appointmentTime } = data;
+    const [hours, minutes] = appointmentTime.split(':').map(Number);
+    const startTime = new Date(appointmentDate);
+    startTime.setHours(hours, minutes, 0, 0);
+
+    const endTime = new Date(startTime.getTime() + 30 * 60000); // Assuming 30 min slots
+
+    const newAppointment = {
+      userId: user.uid,
+      clientName: data.clientName,
+      petName: data.petName,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+      bathType: data.bathType,
+      additionalServices: Object.entries(data.extras)
+        .filter(([, value]) => value)
+        .map(([key]) => key),
+      totalPrice: totalPrice,
+      blocked: false,
+    };
+
+    try {
+      await addDoc(collection(firestore, "appointments"), newAppointment);
+      
+      const phoneNumber = "5521993413747";
+      const formattedDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
+      
+      let services = [data.bathType];
+      if (data.extras.hydration) services.push("Hidratação");
+      if (data.extras.ozoneBath) services.push("Banho com Ozônio");
+      if (data.extras.teethBrushing) services.push("Escovação de Dentes");
+      if (data.isMatted) services.push("Desembolo (sujeito a avaliação)");
+
+      const message = `Olá! Gostaria de confirmar meu agendamento.
+      
 *Tutor:* ${data.clientName}
 *Pet:* ${data.petName}
 *Raça:* ${data.petBreed}
@@ -213,7 +246,7 @@ export function SchedulingForm() {
 *Vacinação:* ${data.vaccinationStatus}
 *Com pelos embolados:* ${data.isMatted ? "Sim" : "Não"}
 
-*Data:* ${appointmentDate}
+*Data:* ${formattedDate}
 *Horário:* ${data.appointmentTime}
 
 *Serviços:*
@@ -224,16 +257,28 @@ ${data.observations ? `*Observações:* ${data.observations}` : ''}
 *Total Estimado:* R$${totalPrice.toFixed(2).replace(".", ",")}
 (O valor final pode variar dependendo da avaliação do pet, especialmente em caso de pelos embolados.)
 
-Aguardando confirmação. Obrigado!`;
+Obrigado!`;
 
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
-    window.open(whatsappUrl, "_blank");
+      window.open(whatsappUrl, "_blank");
 
-    toast({
-      title: "Quase lá!",
-      description: "Abri o WhatsApp para você enviar a mensagem de agendamento. Por favor, confirme o envio.",
-    });
+      toast({
+        title: "Agendamento Registrado!",
+        description: "Agora abra o WhatsApp para confirmar o envio da sua mensagem.",
+      });
+
+      form.reset();
+      setSelectedDate(undefined);
+
+    } catch (e) {
+      console.error("Error adding document: ", e);
+      toast({
+        variant: "destructive",
+        title: "Erro!",
+        description: "Não foi possível salvar seu agendamento. Por favor, tente novamente.",
+      });
+    }
   }
 
   return (
@@ -252,7 +297,8 @@ Aguardando confirmação. Obrigado!`;
           <CardContent className="space-y-8">
             <div className="space-y-4">
               <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
-                <User /> Dados do Tutor e do Pet
+                <User />
+                Dados do Tutor e do Pet
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
@@ -319,7 +365,7 @@ Aguardando confirmação. Obrigado!`;
                   render={({ field }) => (
                     <FormItem className="space-y-3">
                       <FormLabel className="flex items-center gap-2">
-                        <Scale className="size-4" />
+                        <Scale />
                         Porte do Pet
                       </FormLabel>
                       <FormControl>
@@ -360,7 +406,7 @@ Aguardando confirmação. Obrigado!`;
                   render={({ field }) => (
                     <FormItem className="space-y-3">
                       <FormLabel className="flex items-center gap-2">
-                        <Syringe className="size-4" />
+                        <Syringe />
                         Vacinação
                       </FormLabel>
                       <FormControl>
@@ -401,14 +447,13 @@ Aguardando confirmação. Obrigado!`;
                 />
               </div>
               <div className="pt-4">
-                <FormField
+                 <FormField
                   control={form.control}
                   name="isMatted"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                       <div className="space-y-0.5">
-                        <FormLabel className="flex items-center gap-2">
-                          <Wind />
+                        <FormLabel>
                           Seu pet está com nós/embolado?
                         </FormLabel>
                         <FormDescription>
