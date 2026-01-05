@@ -243,35 +243,37 @@ export function SchedulingForm() {
       const phoneNumber = "5521993413747";
       const formattedDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
       
-      let services = [data.bathType];
-      if (data.extras.hydration) services.push("Hidratação");
-      if (data.extras.ozoneBath) services.push("Banho com Ozônio");
-      if (data.extras.teethBrushing) services.push("Escovação de Dentes");
-      if (data.isMatted) services.push("Desembolo (sujeito a avaliação)");
+      const message = `🐕 *NOVO AGENDAMENTO - Princesas Pet Shop*
 
-      const message = `Olá! Gostaria de confirmar meu agendamento.
-      
-*Tutor:* ${data.clientName}
-*Pet:* ${data.petName}
-*Raça:* ${data.petBreed}
-*Porte:* ${data.petSize}
-*Contato:* ${data.contact}
-*Vacinação:* ${data.vaccinationStatus}
-${vaccinationCardUrl ? `*Carteira de Vacinação:* ${vaccinationCardUrl}` : ''}
-*Com pelos embolados:* ${data.isMatted ? "Sim" : "Não"}
+📋 *Dados do Cliente*
+Nome: ${data.clientName}
+Telefone: ${data.contact}
 
-*Data:* ${formattedDate}
-*Horário:* ${data.appointmentTime}
+🐶 *Dados do Cachorro*
+Nome: ${data.petName}
+Porte: ${data.petSize}
+${data.isMatted ? '⚠️ Animal está embolado (requer avaliação presencial)' : ''}
 
-*Serviços:*
-- ${services.join("\n- ")}
+📅 *Agendamento*
+Data: ${formattedDate}
+Horário: ${data.appointmentTime}
 
-${data.observations ? `*Observações:* ${data.observations}` : ''}
+✨ *Serviço*
+Tipo: ${data.bathType}
+${data.extras.hydration ? `Hidratação: Sim (+R$${PRICES.extras.hydration.toFixed(2).replace('.',',')})` : 'Hidratação: Não'}
+${data.extras.ozoneBath ? `Banho com Ozônio: Sim (+R$${PRICES.extras.ozoneBath.toFixed(2).replace('.',',')})` : 'Banho com Ozônio: Não'}
+${data.extras.teethBrushing ? `Escovação dental: Sim (+R$${PRICES.extras.teethBrushing.toFixed(2).replace('.',',')})` : 'Escovação dental: Não'}
 
-*Total Estimado:* R$${totalPrice.toFixed(2).replace(".", ",")}
-(O valor final pode variar dependendo da avaliação do pet, especialmente em caso de pelos embolados.)
+${data.observations ? `\n💡 *Observações:* ${data.observations}` : ''}
 
-Obrigado!`;
+💰 *Valor Total: R$ ${totalPrice.toFixed(2).replace(".", ",")}*
+${data.isMatted ? '💡 Obs: Valor pode variar devido ao embolamento' : ''}
+
+📸 *Documentos*
+${vaccinationCardUrl ? `Carteira de vacinação: ${vaccinationCardUrl}` : 'Carteira de vacinação: Não enviada'}
+
+---
+Agendamento realizado através do site.`;
 
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
@@ -565,7 +567,7 @@ Obrigado!`;
                           <div className="space-y-1 leading-none">
                             <FormLabel className="font-normal">
                               Hidratação (+R$
-                              {PRICES.extras.hydration.toFixed(2).replace(".", ",")})
+                              {PRICES.extras.hydration.toFixed(2).replace(".", ",")}
                             </FormLabel>
                           </div>
                         </FormItem>
@@ -585,7 +587,7 @@ Obrigado!`;
                           <div className="space-y-1 leading-none">
                           <FormLabel className="font-normal">
                             Banho com Ozônio (+R$
-                            {PRICES.extras.ozoneBath.toFixed(2).replace(".", ",")})
+                            {PRICES.extras.ozoneBath.toFixed(2).replace(".", ",")}
                           </FormLabel>
                           </div>
                         </FormItem>
@@ -605,7 +607,7 @@ Obrigado!`;
                           <div className="space-y-1 leading-none">
                           <FormLabel className="font-normal">
                             Escovação de Dentes (+R$
-                            {PRICES.extras.teethBrushing.toFixed(2).replace(".", ",")})
+                            {PRICES.extras.teethBrushing.toFixed(2).replace(".", ",")}
                           </FormLabel>
                           </div>
                         </FormItem>
