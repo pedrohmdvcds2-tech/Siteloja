@@ -25,6 +25,8 @@ import {
   CalendarIcon,
   Upload,
 } from "lucide-react";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
 
 import { formSchema, type SchedulingFormValues } from "@/lib/definitions";
 import { cn, generateTimeSlots } from "@/lib/utils";
@@ -98,7 +100,7 @@ export function SchedulingForm() {
   const [totalPrice, setTotalPrice] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const { toast } = useToast();
-  const { firestore, auth, user, isUserLoading } = useFirebase();
+  const { firestore, auth, user, isUserLoading, storage } = useFirebase();
 
   useEffect(() => {
     if (!user) {
@@ -195,7 +197,7 @@ export function SchedulingForm() {
   }, [watchedValues.appointmentDate, selectedDate, form]);
 
   async function onSubmit(data: SchedulingFormValues) {
-    if (!user || !firestore) {
+    if (!user || !firestore || !storage) {
       toast({
         variant: "destructive",
         title: "Erro de Autenticação",
@@ -204,28 +206,38 @@ export function SchedulingForm() {
       return;
     }
 
-    const { appointmentDate, appointmentTime } = data;
+    const { appointmentDate, appointmentTime, vaccinationCard } = data;
     const [hours, minutes] = appointmentTime.split(':').map(Number);
     const startTime = new Date(appointmentDate);
     startTime.setHours(hours, minutes, 0, 0);
 
     const endTime = new Date(startTime.getTime() + 30 * 60000); // Assuming 30 min slots
-
-    const newAppointment = {
-      userId: user.uid,
-      clientName: data.clientName,
-      petName: data.petName,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-      bathType: data.bathType,
-      additionalServices: Object.entries(data.extras)
-        .filter(([, value]) => value)
-        .map(([key]) => key),
-      totalPrice: totalPrice,
-      blocked: false,
-    };
+    
+    let vaccinationCardUrl = "";
 
     try {
+      if (vaccinationCard) {
+        const file = vaccinationCard;
+        const storageRef = ref(storage, `vaccination-cards/${user.uid}/${Date.now()}-${file.name}`);
+        const uploadResult = await uploadBytes(storageRef, file);
+        vaccinationCardUrl = await getDownloadURL(uploadResult.ref);
+      }
+
+      const newAppointment = {
+        userId: user.uid,
+        clientName: data.clientName,
+        petName: data.petName,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        bathType: data.bathType,
+        additionalServices: Object.entries(data.extras)
+          .filter(([, value]) => value)
+          .map(([key]) => key),
+        totalPrice: totalPrice,
+        blocked: false,
+        vaccinationCardUrl: vaccinationCardUrl,
+      };
+
       await addDoc(collection(firestore, "appointments"), newAppointment);
       
       const phoneNumber = "5521993413747";
@@ -245,6 +257,7 @@ export function SchedulingForm() {
 *Porte:* ${data.petSize}
 *Contato:* ${data.contact}
 *Vacinação:* ${data.vaccinationStatus}
+${vaccinationCardUrl ? `*Carteira de Vacinação:* ${vaccinationCardUrl}` : ''}
 *Com pelos embolados:* ${data.isMatted ? "Sim" : "Não"}
 
 *Data:* ${formattedDate}
@@ -457,7 +470,7 @@ Obrigado!`;
                     <FormItem>
                       <FormLabel>Carteira de Vacinação</FormLabel>
                       <FormControl>
-                        <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                        <Input type="file" accept="image/*,.pdf" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                       </FormControl>
                       <FormDescription>
                         Anexe uma foto da carteira de vacinação do seu pet.
