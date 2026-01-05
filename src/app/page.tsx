@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { PawPrint } from "lucide-react";
 import { SchedulingForm } from "@/components/scheduling-form";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -54,6 +55,11 @@ export default function Home() {
         <p>
           &copy; {new Date().getFullYear()} Princesas Pet Shop. Todos os
           direitos reservados.
+        </p>
+        <p className="mt-2">
+          <Link href="/login" className="text-primary hover:underline">
+            Acesso do Administrador
+          </Link>
         </p>
       </footer>
     </div>
