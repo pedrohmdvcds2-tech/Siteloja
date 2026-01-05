@@ -2,7 +2,7 @@
 import { useUser, useCollection, useFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { collection, doc, updateDoc, where, query } from 'firebase/firestore';
+import { collection, doc, updateDoc, query } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -27,8 +27,11 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
 
+  // Simplified admin check: checks for a specific email.
+  const ADMIN_EMAIL = "admin@petshop.com";
+
   const appointmentsQuery = useMemo(() => {
-    if (!isAdmin) return null;
+    if (!firestore || !isAdmin) return null;
     return query(collection(firestore, 'appointments'));
   }, [firestore, isAdmin]);
 
@@ -39,25 +42,18 @@ export default function AdminPage() {
   } = useCollection(appointmentsQuery);
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
+    if (!isUserLoading) {
+      if (user) {
+        // Check if the logged-in user's email is the admin email
+        setIsAdmin(user.email === ADMIN_EMAIL);
+        setIsCheckingAdmin(false);
+      } else {
+        // If no user, redirect to login
+        router.push('/login');
+      }
     }
   }, [user, isUserLoading, router]);
 
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (user) {
-        const idTokenResult = await user.getIdTokenResult();
-        const isAdminClaim = !!idTokenResult.claims.admin;
-        setIsAdmin(isAdminClaim);
-      }
-      setIsCheckingAdmin(false);
-    };
-
-    if (user) {
-      checkAdminStatus();
-    }
-  }, [user]);
 
   const handleBlockToggle = async (appointmentId: string, blocked: boolean) => {
     if (!firestore) return;
