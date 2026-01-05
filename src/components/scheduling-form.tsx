@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -63,8 +63,6 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
 import {
-  addDocumentNonBlocking,
-  signInAnonymously,
   initiateAnonymousSignIn,
 } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
@@ -119,17 +117,15 @@ export function SchedulingForm() {
   const { data: todaysAppointments, isLoading: isLoadingAppointments } =
     useCollection(appointmentsQuery);
 
-  const availableTimeSlots = useMemoFirebase(() => {
+  const availableTimeSlots = useMemo(() => {
     if (!todaysAppointments) {
       return allTimeSlots;
     }
-    const bookedTimes = todaysAppointments.map((apt) =>
+    const bookedOrBlockedTimes = todaysAppointments.map((apt) =>
       format(new Date(apt.startTime), "HH:mm")
     );
     return allTimeSlots.filter(
-      (slot) =>
-        !bookedTimes.includes(slot) &&
-        !todaysAppointments.find((a) => a.blocked && format(new Date(a.startTime), 'HH:mm') === slot)
+      (slot) => !bookedOrBlockedTimes.includes(slot)
     );
   }, [todaysAppointments]);
 
@@ -191,50 +187,41 @@ export function SchedulingForm() {
   }, [watchedValues.appointmentDate, selectedDate, form]);
 
   async function onSubmit(data: SchedulingFormValues) {
-    if (!firestore || !user) {
-      toast({
-        variant: "destructive",
-        title: "Erro de autenticação",
-        description: "Por favor, recarregue a página e tente novamente.",
-      });
-      return;
-    }
+    const phoneNumber = "5521993413747";
+    const appointmentDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
+    
+    let services = [data.bathType];
+    if (data.extras.nailTrimming) services.push("Corte de Unhas");
+    if (data.extras.hydration) services.push("Hidratação");
+    if (data.extras.earCleaning) services.push("Limpeza de Ouvidos");
+    
+    const message = `Olá! Gostaria de agendar um horário.
+    
+*Tutor:* ${data.clientName}
+*Pet:* ${data.petName}
+*Raça:* ${data.petBreed}
+*Porte:* ${data.petSize}
+*Contato:* ${data.contact}
+*Vacinação em dia:* ${data.isVaccinated ? "Sim" : "Não"}
 
-    const [hours, minutes] = data.appointmentTime.split(":").map(Number);
-    const startTime = new Date(data.appointmentDate);
-    startTime.setHours(hours, minutes, 0, 0);
-    const endTime = new Date(startTime.getTime() + 30 * 60000); // Assuming 30 min slots
+*Data:* ${appointmentDate}
+*Horário:* ${data.appointmentTime}
 
-    const newAppointment = {
-      ...data,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-      totalPrice: totalPrice,
-      blocked: false, // Appointments are not blocked by default
-      userId: user.uid,
-    };
+*Serviços:*
+- ${services.join("\n- ")}
 
-    try {
-      const appointmentsCol = collection(firestore, "appointments");
-      await addDocumentNonBlocking(appointmentsCol, newAppointment);
+*Total Estimado:* R$${totalPrice.toFixed(2).replace(".", ",")}
 
-      toast({
-        title: "Agendamento realizado com sucesso! ✅",
-        description: `Seu horário para ${data.petName} no dia ${format(
-          startTime,
-          "PPP",
-          { locale: ptBR }
-        )} às ${data.appointmentTime} foi confirmado.`,
-      });
-      form.reset();
-    } catch (e: any) {
-      console.error("Error adding document: ", e);
-      toast({
-        variant: "destructive",
-        title: "Ops! Algo deu errado.",
-        description: "Não foi possível realizar o agendamento. Tente novamente.",
-      });
-    }
+Aguardando confirmação. Obrigado!`;
+
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+    window.open(whatsappUrl, "_blank");
+
+    toast({
+      title: "Quase lá!",
+      description: "Abri o WhatsApp para você enviar a mensagem de agendamento. Por favor, confirme o envio.",
+    });
   }
 
   return (
@@ -532,6 +519,7 @@ export function SchedulingForm() {
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
+                        disabled={!watchedValues.appointmentDate}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -582,7 +570,7 @@ export function SchedulingForm() {
               className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
               disabled={isUserLoading || isLoadingAppointments}
             >
-              <MessageCircle className="mr-2" /> Agendar
+              <MessageCircle className="mr-2" /> Agendar via WhatsApp
             </Button>
           </CardFooter>
         </form>

@@ -2,9 +2,24 @@
 import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { collection, doc, updateDoc, query } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  updateDoc,
+  query,
+  addDoc,
+  where,
+  getDocs,
+  writeBatch,
+} from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -17,51 +32,120 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LogOut } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon } from 'lucide-react';
 import { signOut } from 'firebase/auth';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn, generateTimeSlots } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { Label } from '@/components/ui/label';
 
 export default function AdminPage() {
   const { user, isUserLoading } = useUser();
   const { firestore, auth } = useFirebase();
   const router = useRouter();
+  const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
 
-  // Simplified admin check: checks for a specific email.
-  const ADMIN_EMAIL = "admin@petshop.com";
+  // State for the new blocking form
+  const [blockDate, setBlockDate] = useState<Date | undefined>();
+  const [timeSlotsToBlock, setTimeSlotsToBlock] = useState<string[]>([]);
+  const [isBlocking, setIsBlocking] = useState(false);
+
+  const ADMIN_EMAIL = 'admin@petshop.com';
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
-    return query(collection(firestore, 'appointments'));
+    // Query to get appointments that are not admin-blocked placeholders
+    return query(
+      collection(firestore, 'appointments'),
+      where('clientName', '!=', 'Horário Bloqueado')
+    );
   }, [firestore, isAdmin]);
 
   const {
     data: appointments,
     isLoading: isLoadingAppointments,
     error,
+    refetch,
   } = useCollection(appointmentsQuery);
 
   useEffect(() => {
     if (!isUserLoading) {
       if (user) {
-        // Check if the logged-in user's email is the admin email
         setIsAdmin(user.email === ADMIN_EMAIL);
         setIsCheckingAdmin(false);
       } else {
-        // If no user, redirect to login
         router.push('/login');
       }
     }
   }, [user, isUserLoading, router]);
 
+  const handleBlockTimes = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firestore || !user || !blockDate || timeSlotsToBlock.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Por favor, selecione uma data e pelo menos um horário.',
+      });
+      return;
+    }
+    setIsBlocking(true);
 
-  const handleBlockToggle = async (appointmentId: string, blocked: boolean) => {
-    if (!firestore) return;
-    const appointmentRef = doc(firestore, 'appointments', appointmentId);
     try {
-      await updateDoc(appointmentRef, { blocked: !blocked });
+      const batch = writeBatch(firestore);
+
+      for (const timeSlot of timeSlotsToBlock) {
+        const [hours, minutes] = timeSlot.split(':').map(Number);
+        const startTime = new Date(blockDate);
+        startTime.setHours(hours, minutes, 0, 0);
+
+        const newBlockedAppointment = {
+          userId: user.uid,
+          clientName: 'Horário Bloqueado',
+          petName: 'Admin',
+          startTime: startTime.toISOString(),
+          endTime: new Date(startTime.getTime() + 30 * 60000).toISOString(),
+          bathType: 'N/A',
+          totalPrice: 0,
+          blocked: true,
+        };
+        
+        const docRef = doc(collection(firestore, 'appointments'));
+        batch.set(docRef, newBlockedAppointment);
+      }
+
+      await batch.commit();
+
+      toast({
+        title: 'Sucesso!',
+        description: 'Os horários foram bloqueados.',
+      });
+      setBlockDate(undefined);
+      setTimeSlotsToBlock([]);
+      refetch(); // Refetch the appointments list
     } catch (e) {
-      console.error('Error updating document: ', e);
+      console.error('Error blocking time slots: ', e);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível bloquear os horários.',
+      });
+    } finally {
+      setIsBlocking(false);
     }
   };
 
@@ -85,7 +169,7 @@ export default function AdminPage() {
   if (!user) {
     return null; // Redirect is handled by useEffect
   }
-  
+
   if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 p-4 text-center">
@@ -104,14 +188,119 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
+    <div className="container mx-auto p-4 md:p-8 space-y-8">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Painel de Administração de Agendamentos</CardTitle>
+          <CardTitle>Bloquear Horários</CardTitle>
           <Button onClick={handleLogout} variant="outline" size="sm">
             <LogOut className="mr-2" />
             Logout
           </Button>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleBlockTimes} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label>Data</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={'outline'}
+                      className={cn(
+                        'pl-3 text-left font-normal',
+                        !blockDate && 'text-muted-foreground'
+                      )}
+                    >
+                      {blockDate ? (
+                        format(blockDate, 'PPP', { locale: ptBR })
+                      ) : (
+                        <span>Escolha uma data</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={blockDate}
+                      onSelect={setBlockDate}
+                      disabled={(date) =>
+                        date < new Date(new Date().setHours(0, 0, 0, 0)) ||
+                        date.getDay() === 0
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label>Horários para bloquear</Label>
+                <Select
+                  value={undefined} // Not a controlled component for selection
+                  onValueChange={(value) => {
+                    if (value && !timeSlotsToBlock.includes(value)) {
+                      setTimeSlotsToBlock((prev) => [...prev, value].sort());
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Adicionar um horário para bloquear" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {generateTimeSlots().map((time) => (
+                      <SelectItem
+                        key={time}
+                        value={time}
+                        disabled={timeSlotsToBlock.includes(time)}
+                      >
+                        {time}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {timeSlotsToBlock.length > 0 && (
+              <div className="space-y-2">
+                <Label>Horários selecionados:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {timeSlotsToBlock.map((time) => (
+                    <Badge
+                      key={time}
+                      variant="secondary"
+                      className="flex items-center gap-2"
+                    >
+                      {time}
+                      <button
+                        type="button"
+                        className="rounded-full hover:bg-muted"
+                        onClick={() =>
+                          setTimeSlotsToBlock(
+                            timeSlotsToBlock.filter((t) => t !== time)
+                          )
+                        }
+                      >
+                        &#x2715;
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <Button type="submit" disabled={isBlocking}>
+              {isBlocking ? 'Bloqueando...' : 'Bloquear Horários Selecionados'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Painel de Administração de Agendamentos</CardTitle>
+          <CardDescription>
+            Agendamentos feitos pelos clientes. Os horários bloqueados não são
+            mostrados aqui.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoadingAppointments && <p>Carregando agendamentos...</p>}
@@ -128,8 +317,6 @@ export default function AdminPage() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Pet</TableHead>
                   <TableHead>Serviço</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ação</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -154,22 +341,6 @@ export default function AdminPage() {
                       <TableCell>{apt.clientName}</TableCell>
                       <TableCell>{apt.petName}</TableCell>
                       <TableCell>{apt.bathType}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={apt.blocked ? 'destructive' : 'secondary'}
-                        >
-                          {apt.blocked ? 'Bloqueado' : 'Aberto'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant={apt.blocked ? 'secondary' : 'destructive'}
-                          onClick={() => handleBlockToggle(apt.id, apt.blocked)}
-                        >
-                          {apt.blocked ? 'Desbloquear' : 'Bloquear'}
-                        </Button>
-                      </TableCell>
                     </TableRow>
                   ))}
               </TableBody>
