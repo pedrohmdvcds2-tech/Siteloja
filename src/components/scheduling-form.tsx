@@ -22,6 +22,7 @@ import {
   MessageCircle,
   FileText,
   Wind,
+  AlertTriangle,
 } from "lucide-react";
 
 import { formSchema, type SchedulingFormValues } from "@/lib/definitions";
@@ -68,6 +69,8 @@ import {
   initiateAnonymousSignIn,
 } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 
 const PRICES = {
   bath: {
@@ -84,6 +87,7 @@ const PRICES = {
     hydration: 20,
     ozoneBath: 25,
     teethBrushing: 15,
+    tangledFee: 20,
   },
 };
 
@@ -139,6 +143,7 @@ export function SchedulingForm() {
       petBreed: "",
       contact: "",
       vaccinationStatus: undefined,
+      isMatted: false,
       bathType: undefined,
       petSize: undefined,
       appointmentTime: undefined,
@@ -155,7 +160,7 @@ export function SchedulingForm() {
 
   useEffect(() => {
     const calculatePrice = () => {
-      const { bathType, petSize, extras } = watchedValues;
+      const { bathType, petSize, extras, isMatted } = watchedValues;
       if (!bathType || !petSize) {
         return 0;
       }
@@ -171,6 +176,7 @@ export function SchedulingForm() {
       if (extras?.hydration) extrasPrice += PRICES.extras.hydration;
       if (extras?.ozoneBath) extrasPrice += PRICES.extras.ozoneBath;
       if (extras?.teethBrushing) extrasPrice += PRICES.extras.teethBrushing;
+      if (isMatted) extrasPrice += PRICES.extras.tangledFee;
 
       return sizeAdjustedPrice + extrasPrice;
     };
@@ -197,7 +203,8 @@ export function SchedulingForm() {
     if (data.extras.hydration) services.push("Hidratação");
     if (data.extras.ozoneBath) services.push("Banho com Ozônio");
     if (data.extras.teethBrushing) services.push("Escovação de Dentes");
-    
+    if (data.isMatted) services.push("Taxa para desembolo");
+
     const message = `Olá! Gostaria de agendar um horário.
     
 *Tutor:* ${data.clientName}
@@ -206,6 +213,7 @@ export function SchedulingForm() {
 *Porte:* ${data.petSize}
 *Contato:* ${data.contact}
 *Vacinação:* ${data.vaccinationStatus}
+*Com pelos embolados:* ${data.isMatted ? "Sim" : "Não"}
 
 *Data:* ${appointmentDate}
 *Horário:* ${data.appointmentTime}
@@ -233,7 +241,7 @@ Aguardando confirmação. Obrigado!`;
     <Card className="w-full shadow-xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-2xl font-bold">
-          <CalendarDays className="text-gold" />
+          <CalendarDays />
           Formulário de Agendamento
         </CardTitle>
         <CardDescription>
@@ -393,6 +401,42 @@ Aguardando confirmação. Obrigado!`;
                   )}
                 />
               </div>
+              <div className="pt-4">
+                <FormField
+                  control={form.control}
+                  name="isMatted"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel className="flex items-center gap-2">
+                          <Wind />
+                          Seu pet está com nós/embolado?
+                        </FormLabel>
+                        <FormDescription>
+                          A remoção de nós exige tempo e cuidado extra.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                {watchedValues.isMatted && (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Taxa Adicional Aplicada</AlertTitle>
+                    <AlertDescription>
+                      Será cobrada uma taxa de R$
+                      {PRICES.extras.tangledFee.toFixed(2).replace(".", ",")} para o
+                      serviço de desembolo.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
             </div>
 
             <Separator />
@@ -501,7 +545,7 @@ Aguardando confirmação. Obrigado!`;
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <FileText className="size-4" />
+                      <FileText />
                       Observações
                     </FormLabel>
                     <FormControl>
@@ -626,7 +670,7 @@ Aguardando confirmação. Obrigado!`;
               className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
               disabled={isUserLoading || isLoadingAppointments}
             >
-              <MessageCircle className="mr-2" /> Agendar via WhatsApp
+              <MessageCircle /> Agendar via WhatsApp
             </Button>
           </CardFooter>
         </form>

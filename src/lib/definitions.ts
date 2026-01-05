@@ -11,6 +11,7 @@ export const formSchema = z.object({
   vaccinationStatus: z.string({
     required_error: "Selecione o status da vacinação.",
   }),
+  isMatted: z.boolean().default(false),
   appointmentDate: z.date({
     required_error: "Selecione uma data para o agendamento.",
   }),
@@ -29,5 +30,3 @@ export const formSchema = z.object({
 });
 
 export type SchedulingFormValues = z.infer<typeof formSchema>;
-
-    
