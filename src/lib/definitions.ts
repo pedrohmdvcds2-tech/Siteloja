@@ -21,11 +21,13 @@ export const formSchema = z.object({
     required_error: "Selecione um tipo de banho.",
   }),
   extras: z.object({
-    nailTrimming: z.boolean().default(false),
     hydration: z.boolean().default(false),
-    earCleaning: z.boolean().default(false),
+    ozoneBath: z.boolean().default(false),
+    teethBrushing: z.boolean().default(false),
   }),
   observations: z.string().optional(),
 });
 
 export type SchedulingFormValues = z.infer<typeof formSchema>;
+
+    

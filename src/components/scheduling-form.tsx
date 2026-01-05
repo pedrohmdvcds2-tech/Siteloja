@@ -21,6 +21,7 @@ import {
   Scale,
   MessageCircle,
   FileText,
+  Wind,
 } from "lucide-react";
 
 import { formSchema, type SchedulingFormValues } from "@/lib/definitions";
@@ -80,9 +81,9 @@ const PRICES = {
     grande: 1.5,
   },
   extras: {
-    nailTrimming: 10,
     hydration: 20,
-    earCleaning: 15,
+    ozoneBath: 25,
+    teethBrushing: 15,
   },
 };
 
@@ -142,9 +143,9 @@ export function SchedulingForm() {
       petSize: undefined,
       appointmentTime: undefined,
       extras: {
-        nailTrimming: false,
         hydration: false,
-        earCleaning: false,
+        ozoneBath: false,
+        teethBrushing: false,
       },
       observations: "",
     },
@@ -167,9 +168,9 @@ export function SchedulingForm() {
         ] || 1);
 
       let extrasPrice = 0;
-      if (extras?.nailTrimming) extrasPrice += PRICES.extras.nailTrimming;
       if (extras?.hydration) extrasPrice += PRICES.extras.hydration;
-      if (extras?.earCleaning) extrasPrice += PRICES.extras.earCleaning;
+      if (extras?.ozoneBath) extrasPrice += PRICES.extras.ozoneBath;
+      if (extras?.teethBrushing) extrasPrice += PRICES.extras.teethBrushing;
 
       return sizeAdjustedPrice + extrasPrice;
     };
@@ -193,9 +194,9 @@ export function SchedulingForm() {
     const appointmentDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
     
     let services = [data.bathType];
-    if (data.extras.nailTrimming) services.push("Corte de Unhas");
     if (data.extras.hydration) services.push("Hidratação");
-    if (data.extras.earCleaning) services.push("Limpeza de Ouvidos");
+    if (data.extras.ozoneBath) services.push("Banho com Ozônio");
+    if (data.extras.teethBrushing) services.push("Escovação de Dentes");
     
     const message = `Olá! Gostaria de agendar um horário.
     
@@ -433,24 +434,6 @@ Aguardando confirmação. Obrigado!`;
                   <div className="flex flex-col gap-2">
                     <FormField
                       control={form.control}
-                      name="extras.nailTrimming"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Corte de Unhas (+R$
-                            {PRICES.extras.nailTrimming.toFixed(2).replace(".", ",")})
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
                       name="extras.hydration"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
@@ -460,16 +443,19 @@ Aguardando confirmação. Obrigado!`;
                               onCheckedChange={field.onChange}
                             />
                           </FormControl>
-                          <FormLabel className="font-normal">
-                            Hidratação de Pelos (+R$
-                            {PRICES.extras.hydration.toFixed(2).replace(".", ",")})
-                          </FormLabel>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="font-normal flex items-center gap-1.5">
+                              <Sparkles className="size-4" />
+                              Hidratação (+R$
+                              {PRICES.extras.hydration.toFixed(2).replace(".", ",")})
+                            </FormLabel>
+                          </div>
                         </FormItem>
                       )}
                     />
-                    <FormField
+                     <FormField
                       control={form.control}
-                      name="extras.earCleaning"
+                      name="extras.ozoneBath"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
                           <FormControl>
@@ -478,10 +464,34 @@ Aguardando confirmação. Obrigado!`;
                               onCheckedChange={field.onChange}
                             />
                           </FormControl>
-                          <FormLabel className="font-normal">
-                            Limpeza de Ouvidos (+R$
-                            {PRICES.extras.earCleaning.toFixed(2).replace(".", ",")})
+                          <div className="space-y-1 leading-none">
+                          <FormLabel className="font-normal flex items-center gap-1.5">
+                            <Wind className="size-4" />
+                            Banho com Ozônio (+R$
+                            {PRICES.extras.ozoneBath.toFixed(2).replace(".", ",")})
                           </FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="extras.teethBrushing"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                          <FormLabel className="font-normal flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-tooth"><path d="M9.25 4.042a4.793 4.793 0 0 1 5.5 0"/><path d="M12.75 20a4.793 4.793 0 0 1-5.5 0"/><path d="M17 16.5v-9a1.5 1.5 0 0 0-3 0v9a1.5 1.5 0 0 0 3 0Z"/><path d="M7 16.5v-9a1.5 1.5 0 0 0-3 0v9a1.5 1.5 0 0 0 3 0Z"/><path d="M12 21.5v-19"/><path d="M7.25 4.042a4.793 4.793 0 0 0 5.5 0"/></svg>
+                            Escovação de Dentes (+R$
+                            {PRICES.extras.teethBrushing.toFixed(2).replace(".", ",")})
+                          </FormLabel>
+                          </div>
                         </FormItem>
                       )}
                     />
@@ -609,7 +619,7 @@ Aguardando confirmação. Obrigado!`;
                   Valor Total Estimado
                 </p>
                 <p className="text-2xl font-bold">
-                  R${totalPrice.toFixed(2).replace(".", ",")}
+                  R$${totalPrice.toFixed(2).replace(".", ",")}
                 </p>
               </div>
             </div>
@@ -627,3 +637,5 @@ Aguardando confirmação. Obrigado!`;
     </Card>
   );
 }
+
+    
