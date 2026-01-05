@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LogOut, Calendar as CalendarIcon, Trash2, Unlock } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon, Trash2, Unlock, CalendarPlus } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -61,6 +61,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 
 export default function AdminPage() {
   const { user, isUserLoading } = useUser();
@@ -212,6 +219,24 @@ export default function AdminPage() {
     }
   };
 
+  const generateGoogleCalendarLink = (appointment: any) => {
+    const startTime = new Date(appointment.startTime);
+    const endTime = new Date(appointment.endTime);
+
+    // Format dates to YYYYMMDDTHHMMSSZ
+    const formatGoogleDate = (date: Date) => {
+      return date.toISOString().replace(/-|:|\.\d+/g, '');
+    };
+
+    const url = new URL('https://www.google.com/calendar/render');
+    url.searchParams.append('action', 'TEMPLATE');
+    url.searchParams.append('text', `PetShop: ${appointment.petName} (${appointment.bathType})`);
+    url.searchParams.append('dates', `${formatGoogleDate(startTime)}/${formatGoogleDate(endTime)}`);
+    url.searchParams.append('details', `Cliente: ${appointment.clientName}\nPet: ${appointment.petName}\nServiço: ${appointment.bathType}\n\nAgendado pelo site.`);
+    
+    return url.toString();
+  };
+
   const handleLogout = async () => {
     if (!auth) return;
     try {
@@ -252,263 +277,291 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-8 space-y-8">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Bloquear Horários</CardTitle>
-          <Button onClick={handleLogout} variant="outline" size="sm">
-            <LogOut className="mr-2" />
-            Logout
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleBlockTimes} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label>Data</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={'outline'}
-                      className={cn(
-                        'pl-3 text-left font-normal',
-                        !blockDate && 'text-muted-foreground'
-                      )}
-                    >
-                      {blockDate ? (
-                        format(blockDate, 'PPP', { locale: ptBR })
-                      ) : (
-                        <span>Escolha uma data</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={blockDate}
-                      onSelect={setBlockDate}
-                      disabled={(date) =>
-                        date < new Date(new Date().setHours(0, 0, 0, 0)) ||
-                        date.getDay() === 0
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label>Horários para bloquear</Label>
-                <Select
-                  value={undefined} // Not a controlled component for selection
-                  onValueChange={(value) => {
-                    if (value && !timeSlotsToBlock.includes(value)) {
-                      setTimeSlotsToBlock((prev) => [...prev, value].sort());
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Adicionar um horário para bloquear" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {generateTimeSlots().map((time) => (
-                      <SelectItem
-                        key={time}
-                        value={time}
-                        disabled={timeSlotsToBlock.includes(time)}
+    <TooltipProvider>
+      <div className="container mx-auto p-4 md:p-8 space-y-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Bloquear Horários</CardTitle>
+            <Button onClick={handleLogout} variant="outline" size="sm">
+              <LogOut className="mr-2" />
+              Logout
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleBlockTimes} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>Data</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={'outline'}
+                        className={cn(
+                          'pl-3 text-left font-normal',
+                          !blockDate && 'text-muted-foreground'
+                        )}
                       >
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            {timeSlotsToBlock.length > 0 && (
-              <div className="space-y-2">
-                <Label>Horários selecionados:</Label>
-                <div className="flex flex-wrap gap-2">
-                  {timeSlotsToBlock.map((time) => (
-                    <Badge
-                      key={time}
-                      variant="secondary"
-                      className="flex items-center gap-2"
-                    >
-                      {time}
-                      <button
-                        type="button"
-                        className="rounded-full hover:bg-muted"
-                        onClick={() =>
-                          setTimeSlotsToBlock(
-                            timeSlotsToBlock.filter((t) => t !== time)
-                          )
+                        {blockDate ? (
+                          format(blockDate, 'PPP', { locale: ptBR })
+                        ) : (
+                          <span>Escolha uma data</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={blockDate}
+                        onSelect={setBlockDate}
+                        disabled={(date) =>
+                          date < new Date(new Date().setHours(0, 0, 0, 0)) ||
+                          date.getDay() === 0
                         }
-                      >
-                        &#x2715;
-                      </button>
-                    </Badge>
-                  ))}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Horários para bloquear</Label>
+                  <Select
+                    value={undefined} // Not a controlled component for selection
+                    onValueChange={(value) => {
+                      if (value && !timeSlotsToBlock.includes(value)) {
+                        setTimeSlotsToBlock((prev) => [...prev, value].sort());
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Adicionar um horário para bloquear" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {generateTimeSlots().map((time) => (
+                        <SelectItem
+                          key={time}
+                          value={time}
+                          disabled={timeSlotsToBlock.includes(time)}
+                        >
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+              {timeSlotsToBlock.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Horários selecionados:</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {timeSlotsToBlock.map((time) => (
+                      <Badge
+                        key={time}
+                        variant="secondary"
+                        className="flex items-center gap-2"
+                      >
+                        {time}
+                        <button
+                          type="button"
+                          className="rounded-full hover:bg-muted"
+                          onClick={() =>
+                            setTimeSlotsToBlock(
+                              timeSlotsToBlock.filter((t) => t !== time)
+                            )
+                          }
+                        >
+                          &#x2715;
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <Button type="submit" disabled={isBlocking}>
+                {isBlocking ? 'Bloqueando...' : 'Bloquear Horários Selecionados'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Horários Bloqueados</CardTitle>
+            <CardDescription>
+              Horários que você bloqueou manualmente. Clique para desbloquear.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingBlocked && <p>Carregando horários bloqueados...</p>}
+            {blockedError && <p className="text-red-500">{blockedError.message}</p>}
+            {!isLoadingBlocked && !blockedAppointments?.length && (
+              <p>Nenhum horário bloqueado encontrado.</p>
             )}
-            <Button type="submit" disabled={isBlocking}>
-              {isBlocking ? 'Bloqueando...' : 'Bloquear Horários Selecionados'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+            {blockedAppointments && blockedAppointments.length > 0 && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Horário</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {blockedAppointments
+                    .sort(
+                      (a, b) =>
+                        new Date(a.startTime).getTime() -
+                        new Date(b.startTime).getTime()
+                    )
+                    .map((apt) => (
+                      <TableRow key={apt.id}>
+                        <TableCell>
+                          {format(new Date(apt.startTime), 'dd/MM/yyyy', {
+                            locale: ptBR,
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(apt.startTime), 'HH:mm', {
+                            locale: ptBR,
+                          })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Unlock className="mr-2 h-4 w-4" />
+                                Desbloquear
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta ação liberará este horário na agenda para novos agendamentos.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Voltar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleUnblockAppointment(apt.id)}>
+                                  Sim, desbloquear
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Horários Bloqueados</CardTitle>
-          <CardDescription>
-            Horários que você bloqueou manualmente. Clique para desbloquear.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingBlocked && <p>Carregando horários bloqueados...</p>}
-          {blockedError && <p className="text-red-500">{blockedError.message}</p>}
-          {!isLoadingBlocked && !blockedAppointments?.length && (
-            <p>Nenhum horário bloqueado encontrado.</p>
-          )}
-          {blockedAppointments && blockedAppointments.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Horário</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {blockedAppointments
-                  .sort(
-                    (a, b) =>
-                      new Date(a.startTime).getTime() -
-                      new Date(b.startTime).getTime()
-                  )
-                  .map((apt) => (
-                    <TableRow key={apt.id}>
-                      <TableCell>
-                        {format(new Date(apt.startTime), 'dd/MM/yyyy', {
-                          locale: ptBR,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(apt.startTime), 'HH:mm', {
-                          locale: ptBR,
-                        })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Unlock className="mr-2 h-4 w-4" />
-                              Desbloquear
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta ação liberará este horário na agenda para novos agendamentos.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Voltar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleUnblockAppointment(apt.id)}>
-                                Sim, desbloquear
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Painel de Administração de Agendamentos</CardTitle>
-          <CardDescription>
-            Agendamentos feitos pelos clientes.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingAppointments && <p>Carregando agendamentos...</p>}
-          {error && <p className="text-red-500">{error.message}</p>}
-          {!isLoadingAppointments && !appointments?.length && (
-            <p>Nenhum agendamento encontrado.</p>
-          )}
-          {appointments && appointments.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Horário</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Pet</TableHead>
-                  <TableHead>Serviço</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {appointments
-                  .sort(
-                    (a, b) =>
-                      new Date(a.startTime).getTime() -
-                      new Date(b.startTime).getTime()
-                  )
-                  .map((apt) => (
-                    <TableRow key={apt.id}>
-                      <TableCell>
-                        {format(new Date(apt.startTime), 'dd/MM/yyyy', {
-                          locale: ptBR,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(apt.startTime), 'HH:mm', {
-                          locale: ptBR,
-                        })}
-                      </TableCell>
-                      <TableCell>{apt.clientName}</TableCell>
-                      <TableCell>{apt.petName}</TableCell>
-                      <TableCell>{apt.bathType}</TableCell>
-                      <TableCell className="text-right">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta ação não pode ser desfeita. Isso irá cancelar permanentemente o agendamento de {apt.clientName} para o pet {apt.petName}.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Voltar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleCancelAppointment(apt.id)}>
-                                Sim, cancelar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Painel de Administração de Agendamentos</CardTitle>
+            <CardDescription>
+              Agendamentos feitos pelos clientes.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingAppointments && <p>Carregando agendamentos...</p>}
+            {error && <p className="text-red-500">{error.message}</p>}
+            {!isLoadingAppointments && !appointments?.length && (
+              <p>Nenhum agendamento encontrado.</p>
+            )}
+            {appointments && appointments.length > 0 && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Horário</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Pet</TableHead>
+                    <TableHead>Serviço</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {appointments
+                    .sort(
+                      (a, b) =>
+                        new Date(a.startTime).getTime() -
+                        new Date(b.startTime).getTime()
+                    )
+                    .map((apt) => (
+                      <TableRow key={apt.id}>
+                        <TableCell>
+                          {format(new Date(apt.startTime), 'dd/MM/yyyy', {
+                            locale: ptBR,
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(apt.startTime), 'HH:mm', {
+                            locale: ptBR,
+                          })}
+                        </TableCell>
+                        <TableCell>{apt.clientName}</TableCell>
+                        <TableCell>{apt.petName}</TableCell>
+                        <TableCell>{apt.bathType}</TableCell>
+                        <TableCell className="text-right">
+                          <div className='flex items-center justify-end gap-2'>
+                             <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  asChild
+                                >
+                                  <a href={generateGoogleCalendarLink(apt)} target="_blank" rel="noopener noreferrer">
+                                    <CalendarPlus className="h-4 w-4 text-blue-500" />
+                                  </a>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Adicionar ao Google Agenda</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                 <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Cancelar agendamento</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta ação não pode ser desfeita. Isso irá cancelar permanentemente o agendamento de {apt.clientName} para o pet {apt.petName}.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Voltar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleCancelAppointment(apt.id)}>
+                                    Sim, cancelar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </TooltipProvider>
   );
 }
 
