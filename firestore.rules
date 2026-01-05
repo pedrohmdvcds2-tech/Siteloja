@@ -30,7 +30,7 @@ service cloud.firestore {
     match /appointments/{appointmentId} {
         allow get, list: if true;
         allow create: if isSignedIn();
-        allow update, delete: if isSignedIn() && isAdmin();
+        allow update, delete: if isAdmin();
     }
   }
 }
