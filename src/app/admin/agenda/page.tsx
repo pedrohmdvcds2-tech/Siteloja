@@ -132,7 +132,9 @@ export default function AgendaPage() {
               {isLoadingAppointments && <p>Carregando agendamentos...</p>}
               {error && <p className="text-red-500">{error.message}</p>}
               {!isLoadingAppointments && selectedDayAppointments.length === 0 && (
-                <p>Nenhum agendamento para este dia.</p>
+                <div className="text-center text-muted-foreground py-8">
+                  <p>Nenhum agendamento para este dia.</p>
+                </div>
               )}
               {selectedDayAppointments.length > 0 && (
                 <Table>
@@ -147,7 +149,7 @@ export default function AgendaPage() {
                   <TableBody>
                     {selectedDayAppointments.map(apt => (
                       <TableRow key={apt.id}>
-                        <TableCell>{format(new Date(apt.startTime), 'HH:mm')}</TableCell>
+                        <TableCell className="font-medium">{format(new Date(apt.startTime), 'HH:mm')}</TableCell>
                         <TableCell>
                           {apt.blocked ? (
                             <Badge variant="destructive">Bloqueado</Badge>
