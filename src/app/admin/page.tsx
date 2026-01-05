@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LogOut, Calendar as CalendarIcon, Trash2 } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon, Trash2, Unlock } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -79,10 +79,17 @@ export default function AdminPage() {
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
-    // Query to get appointments that are not admin-blocked placeholders
     return query(
       collection(firestore, 'appointments'),
-      where('clientName', '!=', 'Horário Bloqueado')
+      where('blocked', '==', false)
+    );
+  }, [firestore, isAdmin]);
+
+  const blockedAppointmentsQuery = useMemoFirebase(() => {
+    if (!firestore || !isAdmin) return null;
+    return query(
+      collection(firestore, 'appointments'),
+      where('blocked', '==', true)
     );
   }, [firestore, isAdmin]);
 
@@ -92,6 +99,13 @@ export default function AdminPage() {
     error,
     refetch,
   } = useCollection(appointmentsQuery);
+
+  const {
+    data: blockedAppointments,
+    isLoading: isLoadingBlocked,
+    error: blockedError,
+    refetch: refetchBlocked,
+  } = useCollection(blockedAppointmentsQuery);
 
   useEffect(() => {
     if (!isUserLoading) {
@@ -147,7 +161,7 @@ export default function AdminPage() {
       });
       setBlockDate(undefined);
       setTimeSlotsToBlock([]);
-      refetch(); // Refetch the appointments list
+      refetchBlocked(); 
     } catch (e) {
       console.error('Error blocking time slots: ', e);
       toast({
@@ -178,8 +192,28 @@ export default function AdminPage() {
       });
     }
   };
+  
+  const handleUnblockAppointment = async (appointmentId: string) => {
+    if (!firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'appointments', appointmentId));
+      toast({
+        title: 'Sucesso!',
+        description: 'O horário foi desbloqueado.',
+      });
+      refetchBlocked();
+    } catch (e) {
+      console.error('Error unblocking appointment: ', e);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível desbloquear o horário.',
+      });
+    }
+  };
 
   const handleLogout = async () => {
+    if (!auth) return;
     try {
       await signOut(auth);
       router.push('/login');
@@ -326,10 +360,82 @@ export default function AdminPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Horários Bloqueados</CardTitle>
+          <CardDescription>
+            Horários que você bloqueou manualmente. Clique para desbloquear.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoadingBlocked && <p>Carregando horários bloqueados...</p>}
+          {blockedError && <p className="text-red-500">{blockedError.message}</p>}
+          {!isLoadingBlocked && !blockedAppointments?.length && (
+            <p>Nenhum horário bloqueado encontrado.</p>
+          )}
+          {blockedAppointments && blockedAppointments.length > 0 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Horário</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {blockedAppointments
+                  .sort(
+                    (a, b) =>
+                      new Date(a.startTime).getTime() -
+                      new Date(b.startTime).getTime()
+                  )
+                  .map((apt) => (
+                    <TableRow key={apt.id}>
+                      <TableCell>
+                        {format(new Date(apt.startTime), 'dd/MM/yyyy', {
+                          locale: ptBR,
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(apt.startTime), 'HH:mm', {
+                          locale: ptBR,
+                        })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                         <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Unlock className="mr-2 h-4 w-4" />
+                              Desbloquear
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação liberará este horário na agenda para novos agendamentos.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Voltar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleUnblockAppointment(apt.id)}>
+                                Sim, desbloquear
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Painel de Administração de Agendamentos</CardTitle>
           <CardDescription>
-            Agendamentos feitos pelos clientes. Os horários bloqueados não são
-            mostrados aqui.
+            Agendamentos feitos pelos clientes.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -405,3 +511,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
