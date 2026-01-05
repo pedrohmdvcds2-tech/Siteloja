@@ -113,4 +113,8 @@ body {
       transform: translateX(100%);
     }
   }
+
+  #admin-agenda-calendar .rdp-head {
+    display: none;
+  }
 }

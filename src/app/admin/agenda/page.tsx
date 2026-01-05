@@ -105,6 +105,7 @@ export default function AgendaPage() {
             <Card>
                 <CardContent className="p-2">
                     <Calendar
+                        id="admin-agenda-calendar"
                         mode="single"
                         selected={selectedDate}
                         onSelect={setSelectedDate}
