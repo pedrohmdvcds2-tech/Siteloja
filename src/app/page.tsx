@@ -16,6 +16,7 @@ export default function Home() {
             alt="Princesas Pet Shop Logo"
             width={96}
             height={96}
+            className="h-auto"
           />
           <div>
             <h1 className="text-3xl font-bold">Princesas Pet Shop</h1>
