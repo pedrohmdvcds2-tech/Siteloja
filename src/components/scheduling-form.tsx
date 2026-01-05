@@ -87,7 +87,6 @@ const PRICES = {
     hydration: 20,
     ozoneBath: 25,
     teethBrushing: 15,
-    tangledFee: 20,
   },
 };
 
@@ -160,7 +159,7 @@ export function SchedulingForm() {
 
   useEffect(() => {
     const calculatePrice = () => {
-      const { bathType, petSize, extras, isMatted } = watchedValues;
+      const { bathType, petSize, extras } = watchedValues;
       if (!bathType || !petSize) {
         return 0;
       }
@@ -176,8 +175,7 @@ export function SchedulingForm() {
       if (extras?.hydration) extrasPrice += PRICES.extras.hydration;
       if (extras?.ozoneBath) extrasPrice += PRICES.extras.ozoneBath;
       if (extras?.teethBrushing) extrasPrice += PRICES.extras.teethBrushing;
-      if (isMatted) extrasPrice += PRICES.extras.tangledFee;
-
+      
       return sizeAdjustedPrice + extrasPrice;
     };
 
@@ -203,7 +201,7 @@ export function SchedulingForm() {
     if (data.extras.hydration) services.push("Hidratação");
     if (data.extras.ozoneBath) services.push("Banho com Ozônio");
     if (data.extras.teethBrushing) services.push("Escovação de Dentes");
-    if (data.isMatted) services.push("Taxa para desembolo");
+    if (data.isMatted) services.push("Desembolo (sujeito a avaliação)");
 
     const message = `Olá! Gostaria de agendar um horário.
     
@@ -224,6 +222,7 @@ export function SchedulingForm() {
 ${data.observations ? `*Observações:* ${data.observations}` : ''}
 
 *Total Estimado:* R$${totalPrice.toFixed(2).replace(".", ",")}
+(O valor final pode variar dependendo da avaliação do pet, especialmente em caso de pelos embolados.)
 
 Aguardando confirmação. Obrigado!`;
 
@@ -428,11 +427,9 @@ Aguardando confirmação. Obrigado!`;
                 {watchedValues.isMatted && (
                   <Alert variant="destructive" className="mt-4">
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Taxa Adicional Aplicada</AlertTitle>
+                    <AlertTitle>Avaliação Necessária</AlertTitle>
                     <AlertDescription>
-                      Será cobrada uma taxa de R$
-                      {PRICES.extras.tangledFee.toFixed(2).replace(".", ",")} para o
-                      serviço de desembolo.
+                      A necessidade e o valor da taxa de desembolo serão confirmados por nossa equipe durante a avaliação presencial do pet.
                     </AlertDescription>
                   </Alert>
                 )}
