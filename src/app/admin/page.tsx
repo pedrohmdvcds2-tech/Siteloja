@@ -220,24 +220,6 @@ export default function AdminPage() {
     }
   };
 
-  const generateGoogleCalendarLink = (appointment: any) => {
-    const startTime = new Date(appointment.startTime);
-    const endTime = new Date(appointment.endTime);
-
-    // Format dates to YYYYMMDDTHHMMSSZ
-    const formatGoogleDate = (date: Date) => {
-      return date.toISOString().replace(/-|:|\.\d+/g, '');
-    };
-
-    const url = new URL('https://www.google.com/calendar/render');
-    url.searchParams.append('action', 'TEMPLATE');
-    url.searchParams.append('text', `PetShop: ${appointment.petName} (${appointment.bathType})`);
-    url.searchParams.append('dates', `${formatGoogleDate(startTime)}/${formatGoogleDate(endTime)}`);
-    url.searchParams.append('details', `Cliente: ${appointment.clientName}\nPet: ${appointment.petName}\nServiço: ${appointment.bathType}\n\nAgendado pelo site.`);
-    
-    return url.toString();
-  };
-
   const handleLogout = async () => {
     if (!auth) return;
     try {
@@ -527,23 +509,6 @@ export default function AdminPage() {
                         <TableCell>{apt.bathType}</TableCell>
                         <TableCell className="text-right">
                           <div className='flex items-center justify-end gap-2'>
-                             <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  asChild
-                                >
-                                  <a href={generateGoogleCalendarLink(apt)} target="_blank" rel="noopener noreferrer">
-                                    <CalendarPlus className="h-4 w-4 text-blue-500" />
-                                  </a>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Adicionar ao Google Agenda</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                  <Tooltip>
