@@ -40,7 +40,7 @@ Agora, você precisa conectar o ambiente de desenvolvimento atual ao repositóri
 2.  **Execute os Comandos Git:** Digite os seguintes comandos, um de cada vez, pressionando Enter após cada um. Substitua `[URL_DO_SEU_REPO_NO_GITHUB]` pela URL que o GitHub forneceu (algo como `https://github.com/seu-usuario/meu-petshop.git`).
 
     ```bash
-    # Inicializa o Git no projeto
+    # Inicializa o Git no projeto e cria a branch 'main'
     git init -b main
 
     # Adiciona todos os arquivos para o Git "observar"
@@ -58,6 +58,8 @@ Agora, você precisa conectar o ambiente de desenvolvimento atual ao repositóri
 
     *Pode ser que ele peça seu nome de usuário e senha (ou um token) do GitHub para autorizar o envio.*
 
+    **Se encontrar um erro aqui:** O erro `fatal: 'main' does not appear to be a git repository` geralmente significa que o `git init` não foi executado ou não funcionou como esperado. Tente rodar os comandos na sequência exata. Se o erro `Could not read from remote repository` aparecer, verifique se a URL do GitHub que você colou está correta.
+
 ### Passo 3: Baixar (Clonar) o Projeto para o Seu Computador
 
 Com o projeto no GitHub, agora você pode baixá-lo em qualquer máquina.
@@ -66,7 +68,7 @@ Com o projeto no GitHub, agora você pode baixá-lo em qualquer máquina.
 2.  **Abra o Terminal (no seu computador):**
     *   No Windows, você pode usar o Git Bash (que vem com a instalação do Git) ou o Terminal do Windows.
     *   No Mac ou Linux, use o aplicativo Terminal.
-3.  **Clone o Repositório:** Navegue até a pasta onde você quer salvar o projeto e execute o comando abaixo:
+3.  **Clone o Repositório:** Navegue até a pasta onde você quer salvar o projeto e execute o comando abaixo, usando a mesma URL de antes:
 
     ```bash
     git clone [URL_DO_SEU_REPO_NO_GITHUB]
