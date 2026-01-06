@@ -3,7 +3,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 import "./globals.css";
 
-
 export const metadata: Metadata = {
   title: "Princesas Pet Shop",
   description: "Agende o melhor cuidado para o seu melhor amigo.",
