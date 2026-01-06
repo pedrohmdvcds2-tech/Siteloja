@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"];
+
+
 export const formSchema = z.object({
   clientName: z.string().min(2, "Nome deve ter pelo menos 2 caracteres."),
   petName: z.string().min(2, "Nome do pet deve ter pelo menos 2 caracteres."),
@@ -8,9 +12,17 @@ export const formSchema = z.object({
     required_error: "Selecione o porte do pet.",
   }),
   contact: z.string().min(10, "Número de contato parece curto demais."),
-  vaccinationStatus: z.string({
+  vaccinationStatus: z.enum(["Em dia", "Não está em dia"],{
     required_error: "Selecione o status da vacinação.",
   }),
+  vaccinationCard: z
+    .any()
+    .refine((files) => files?.length === 1 ? files?.[0].size <= MAX_FILE_SIZE : true, `O tamanho máximo é 5MB.`)
+    .refine(
+      (files) => files?.length === 1 ? ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type) : true,
+      "Apenas os formatos .jpg, .jpeg, .png, .webp e .pdf são aceitos."
+    )
+    .optional(),
   isMatted: z.boolean().default(false),
   appointmentDate: z.date({
     required_error: "Selecione uma data para o agendamento.",
@@ -27,9 +39,24 @@ export const formSchema = z.object({
     teethBrushing: z.boolean().default(false),
   }),
   observations: z.string().optional(),
-}).refine(data => data.vaccinationStatus === 'Em dia', {
+}).refine(data => {
+  // Se a vacina não está em dia, o formulário é inválido
+  if (data.vaccinationStatus === 'Não está em dia') {
+    return false;
+  }
+  return true;
+}, {
   message: "A vacinação do pet precisa estar em dia para realizar o agendamento.",
   path: ["vaccinationStatus"],
+}).refine(data => {
+    // Se a vacina está em dia, o upload é obrigatório
+    if (data.vaccinationStatus === 'Em dia') {
+        return data.vaccinationCard && data.vaccinationCard.length > 0;
+    }
+    return true;
+}, {
+    message: "É necessário enviar a carteira de vacinação.",
+    path: ["vaccinationCard"],
 });
 
 

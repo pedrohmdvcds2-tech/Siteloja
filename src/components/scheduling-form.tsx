@@ -148,6 +148,7 @@ export function SchedulingForm() {
       isMatted: false,
       bathType: undefined,
       petSize: undefined,
+      appointmentDate: undefined,
       appointmentTime: undefined,
       extras: {
         hydration: false,
@@ -155,6 +156,7 @@ export function SchedulingForm() {
         teethBrushing: false,
       },
       observations: "",
+      vaccinationCard: undefined,
     },
   });
 
@@ -208,15 +210,37 @@ export function SchedulingForm() {
       return;
     }
   
-    const { appointmentDate, appointmentTime } = data;
-    const [hours, minutes] = appointmentTime.split(':').map(Number);
-    const startTime = new Date(appointmentDate);
-    startTime.setHours(hours, minutes, 0, 0);
-  
-    const endTime = new Date(startTime.getTime() + 30 * 60000); // Assuming 30 min slots
-    
+    let fileUrl = "";
+
     try {
-      // 1. Create appointment object
+      // 1. Upload file if it exists
+      if (data.vaccinationCard && data.vaccinationCard[0]) {
+        const file = data.vaccinationCard[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('userId', user.uid);
+
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json();
+          throw new Error(errorData.error || 'Falha no upload do arquivo.');
+        }
+        
+        const { url } = await uploadResponse.json();
+        fileUrl = url;
+      }
+  
+      // 2. Create appointment object
+      const { appointmentDate, appointmentTime } = data;
+      const [hours, minutes] = appointmentTime.split(':').map(Number);
+      const startTime = new Date(appointmentDate);
+      startTime.setHours(hours, minutes, 0, 0);
+      const endTime = new Date(startTime.getTime() + 30 * 60000); // Assuming 30 min slots
+      
       const newAppointment = {
         userId: user.uid,
         clientName: data.clientName,
@@ -229,13 +253,13 @@ export function SchedulingForm() {
           .map(([key]) => key),
         totalPrice: totalPrice,
         blocked: false,
-        vaccinationCardUrl: "", // Removed upload
+        vaccinationCardUrl: fileUrl,
       };
   
-      // 2. Save appointment to Firestore
+      // 3. Save appointment to Firestore
       await addDoc(collection(firestore, "appointments"), newAppointment);
       
-      // 3. If successful, show toast and open WhatsApp
+      // 4. If successful, show toast and open WhatsApp
       toast({
         title: "Agendamento Registrado!",
         description: "Agora abra o WhatsApp para confirmar o envio da sua mensagem.",
@@ -255,6 +279,7 @@ Nome: ${data.petName}
 Porte: ${data.petSize}
 Vacinação: ${data.vaccinationStatus}
 ${data.isMatted ? '⚠️ Animal está embolado (requer avaliação presencial)' : ''}
+${fileUrl ? '✅ Carteira de vacinação enviada.' : '❗️ Carteira de vacinação a ser apresentada no local.'}
 
 📅 *Agendamento*
 Data: ${formattedDate}
@@ -272,7 +297,7 @@ ${data.observations ? `\n💡 *Observações:* ${data.observations}` : ''}
 ${data.isMatted ? '💡 Obs: Valor pode variar devido ao embolamento' : ''}
 
 ---
-Agendamento realizado através do site. A carteira de vacinação será verificada na chegada.`;
+Agendamento realizado através do site.`;
   
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, "_self");
@@ -282,11 +307,10 @@ Agendamento realizado através do site. A carteira de vacinação será verifica
   
     } catch (e: any) {
       console.error("Error during submission: ", e);
-      
       toast({
         variant: "destructive",
         title: "Erro ao Agendar!",
-        description: "Não foi possível salvar seu agendamento. Por favor, tente novamente.",
+        description: e.message || "Não foi possível salvar seu agendamento. Por favor, tente novamente.",
       });
     } finally {
       setIsSubmitting(false);
@@ -452,7 +476,7 @@ Agendamento realizado através do site. A carteira de vacinação será verifica
                   )}
                 />
               </div>
-                {watchedValues.vaccinationStatus === 'Não está em dia' && (
+                {!isVaccinationOk && watchedValues.vaccinationStatus === 'Não está em dia' && (
                   <Alert variant="destructive" className="mt-2">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Vacinação Obrigatória</AlertTitle>
@@ -460,6 +484,29 @@ Agendamento realizado através do site. A carteira de vacinação será verifica
                       Para a segurança de todos os pets, a vacinação deve estar em dia para agendar qualquer serviço.
                     </AlertDescription>
                   </Alert>
+                )}
+                {isVaccinationOk && (
+                  <FormField
+                    control={form.control}
+                    name="vaccinationCard"
+                    render={({ field }) => {
+                      const { ref, name, onBlur, onChange } = form.register("vaccinationCard");
+                      return (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Upload />
+                          Carteira de Vacinação
+                        </FormLabel>
+                        <FormControl>
+                          <Input type="file" accept="image/*,.pdf" {...{ ref, name, onBlur, onChange }}/>
+                        </FormControl>
+                        <FormDescription>
+                          Envie uma foto da carteira de vacinação do seu pet.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}}
+                  />
                 )}
               <div className="pt-4">
                  <FormField
