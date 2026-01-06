@@ -23,7 +23,7 @@ export default function AgendaPage() {
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  const ADMIN_EMAIL = 'admin@petshop.com';
+  const ADMIN_EMAILS = ['admin@petshop.com'];
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
@@ -35,7 +35,7 @@ export default function AgendaPage() {
   useEffect(() => {
     if (!isUserLoading) {
       if (user) {
-        setIsAdmin(user.email === ADMIN_EMAIL);
+        setIsAdmin(ADMIN_EMAILS.includes(user.email || ''));
         setIsCheckingAdmin(false);
       } else {
         router.push('/login');
@@ -175,3 +175,5 @@ export default function AgendaPage() {
     </div>
   );
 }
+
+    

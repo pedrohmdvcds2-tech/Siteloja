@@ -83,7 +83,7 @@ export default function AdminPage() {
   const [timeSlotsToBlock, setTimeSlotsToBlock] = useState<string[]>([]);
   const [isBlocking, setIsBlocking] = useState(false);
 
-  const ADMIN_EMAIL = 'admin@petshop.com';
+  const ADMIN_EMAILS = ['admin@petshop.com'];
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
@@ -118,7 +118,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isUserLoading) {
       if (user) {
-        setIsAdmin(user.email === ADMIN_EMAIL);
+        setIsAdmin(ADMIN_EMAILS.includes(user.email || ''));
         setIsCheckingAdmin(false);
       } else {
         router.push('/login');
