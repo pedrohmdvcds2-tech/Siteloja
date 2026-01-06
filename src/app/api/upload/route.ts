@@ -6,24 +6,20 @@ import { firebaseConfig } from '@/firebase/config';
 
 // Initialize Firebase Admin SDK
 function initializeFirebaseAdmin(): App {
-    // Check if there are already initialized apps
-    if (getApps().length > 0) {
+    if (getApps().length) {
         return getApps()[0] as App;
     }
 
-    // If not initialized, create a new instance.
-    // This handles different environments (local vs. Vercel)
     const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
         ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-        : undefined;
+        : null;
 
-    // Use cert only if serviceAccount is available
-    const credential = serviceAccount ? cert(serviceAccount) : undefined;
-
-    return initializeApp({
-        credential, // credential will be undefined if serviceAccount is not set
+    const appOptions = {
         storageBucket: firebaseConfig.storageBucket,
-    });
+        ...(serviceAccount ? { credential: cert(serviceAccount) } : {}),
+    };
+    
+    return initializeApp(appOptions);
 }
 
 export async function POST(request: Request) {
