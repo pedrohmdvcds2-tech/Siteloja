@@ -71,7 +71,7 @@ import { useFirebase, useCollection, useMemoFirebase, errorEmitter, FirestorePer
 import {
   initiateAnonymousSignIn,
 } from "@/firebase";
-import { collection, query, where, addDoc } from "firebase/firestore";
+import { collection, query, where, addDoc, doc, setDoc } from "firebase/firestore";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 
@@ -99,14 +99,15 @@ const allTimeSlots = generateTimeSlots();
 export function SchedulingForm() {
   const [totalPrice, setTotalPrice] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { firestore, auth, user, isUserLoading, storage } = useFirebase();
 
   useEffect(() => {
-    if (!user) {
+    if (!user && !isUserLoading) {
       initiateAnonymousSignIn(auth);
     }
-  }, [user, auth]);
+  }, [user, auth, isUserLoading]);
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !selectedDate) return null;
@@ -197,12 +198,14 @@ export function SchedulingForm() {
   }, [watchedValues.appointmentDate, selectedDate, form]);
 
   async function onSubmit(data: SchedulingFormValues) {
+    setIsSubmitting(true);
     if (!user || !firestore || !storage) {
       toast({
         variant: "destructive",
         title: "Erro de Autenticação",
         description: "Não foi possível identificar o usuário. Tente recarregar a página.",
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -215,36 +218,43 @@ export function SchedulingForm() {
     
     let vaccinationCardUrl = "";
 
-    const file = vaccinationCard;
-    const storageRef = ref(storage, `vaccination-cards/${user.uid}/${Date.now()}-${file.name}`);
-    
-    uploadBytes(storageRef, file).then(uploadResult => {
-      getDownloadURL(uploadResult.ref).then(downloadUrl => {
-        vaccinationCardUrl = downloadUrl;
+    try {
+      // 1. Upload file and get URL
+      const file = vaccinationCard;
+      const storageRef = ref(storage, `vaccination-cards/${user.uid}/${Date.now()}-${file.name}`);
+      const uploadResult = await uploadBytes(storageRef, file);
+      vaccinationCardUrl = await getDownloadURL(uploadResult.ref);
 
-        const newAppointment = {
-          userId: user.uid,
-          clientName: data.clientName,
-          petName: data.petName,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
-          bathType: data.bathType,
-          additionalServices: Object.entries(data.extras)
-            .filter(([, value]) => value)
-            .map(([key]) => key),
-          totalPrice: totalPrice,
-          blocked: false,
-          vaccinationCardUrl: vaccinationCardUrl,
-        };
-        
-        const appointmentsCollection = collection(firestore, "appointments");
+      // 2. Create appointment object with URL
+      const newAppointment = {
+        userId: user.uid,
+        clientName: data.clientName,
+        petName: data.petName,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        bathType: data.bathType,
+        additionalServices: Object.entries(data.extras)
+          .filter(([, value]) => value)
+          .map(([key]) => key),
+        totalPrice: totalPrice,
+        blocked: false,
+        vaccinationCardUrl: vaccinationCardUrl,
+      };
 
-        addDoc(appointmentsCollection, newAppointment)
-          .then(() => {
-            const phoneNumber = "5521993413747";
-            const formattedDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
-            
-            const message = `🐕 *NOVO AGENDAMENTO - Princesas Pet Shop*
+      // 3. Save appointment to Firestore
+      const appointmentsCollection = collection(firestore, "appointments");
+      await addDoc(appointmentsCollection, newAppointment);
+      
+      // 4. If successful, show toast and redirect
+      toast({
+        title: "Agendamento Registrado!",
+        description: "Agora abra o WhatsApp para confirmar o envio da sua mensagem.",
+      });
+
+      const phoneNumber = "5521993413747";
+      const formattedDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
+      
+      const message = `🐕 *NOVO AGENDAMENTO - Princesas Pet Shop*
 
 📋 *Dados do Cliente*
 Nome: ${data.clientName}
@@ -276,41 +286,27 @@ ${vaccinationCardUrl ? `Carteira de vacinação: ${vaccinationCardUrl}` : 'Carte
 ---
 Agendamento realizado através do site.`;
 
-            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, "_self");
 
-            window.open(whatsappUrl, "_self");
+      form.reset();
+      setSelectedDate(undefined);
 
-            toast({
-              title: "Agendamento Registrado!",
-              description: "Agora abra o WhatsApp para confirmar o envio da sua mensagem.",
-            });
-
-            form.reset();
-            setSelectedDate(undefined);
-          })
-          .catch((e) => {
-            console.error("Error adding document: ", e);
-            const permissionError = new FirestorePermissionError({
-              path: appointmentsCollection.path,
-              operation: 'create',
-              requestResourceData: newAppointment,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            toast({
-              variant: "destructive",
-              title: "Erro!",
-              description: "Não foi possível salvar seu agendamento. Por favor, tente novamente.",
-            });
-          });
+    } catch (e) {
+      console.error("Error during submission: ", e);
+      let errorDescription = "Não foi possível salvar seu agendamento. Por favor, tente novamente.";
+      if (e instanceof Error && (e.name === 'FirebaseError' || e.message.includes('storage/unauthorized'))) {
+         errorDescription = "Erro de permissão ao enviar arquivo. Verifique a configuração de CORS do Firebase Storage.";
+      }
+      
+      toast({
+        variant: "destructive",
+        title: "Erro!",
+        description: errorDescription,
       });
-    }).catch(e => {
-        console.error("Error uploading file: ", e);
-        toast({
-            variant: "destructive",
-            title: "Erro no Upload!",
-            description: "Não foi possível enviar a carteira de vacinação. Por favor, tente novamente.",
-        });
-    });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const isVaccinationOk = watchedValues.vaccinationStatus === 'Em dia' && watchedValues.vaccinationCard;
@@ -762,9 +758,9 @@ Agendamento realizado através do site.`;
               type="submit"
               size="lg"
               className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
-              disabled={isUserLoading || isLoadingAppointments || !isVaccinationOk}
+              disabled={isUserLoading || isLoadingAppointments || isSubmitting || !isVaccinationOk}
             >
-              <MessageCircle /> Agendar via WhatsApp
+              {isSubmitting ? 'Enviando...' : <><MessageCircle /> Agendar via WhatsApp</>}
             </Button>
           </CardFooter>
         </form>
