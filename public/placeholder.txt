@@ -1,1 +1,0 @@
-Esta pasta 'public' foi criada para armazenar arquivos estáticos, como sua imagem de logo. Por favor, faça o upload do seu arquivo 'logo-petshop.png' para esta pasta.
