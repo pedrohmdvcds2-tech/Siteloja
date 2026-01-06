@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { PawPrint } from "lucide-react";
 import { SchedulingForm } from "@/components/scheduling-form";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
@@ -11,12 +10,12 @@ export default function Home() {
     <div className="flex flex-col items-center min-h-screen bg-background text-foreground font-body">
       <header className="w-full p-6 bg-gradient-to-r from-[#c724b1] via-[#e05d5d] to-[#f7b733] text-white">
         <div className="container mx-auto flex items-center justify-center gap-4">
-           <div className="relative h-12 w-12">
+           <div className="relative h-16 w-16">
             <Image
               src="https://i.imgur.com/SLxSDoD.png"
               alt="Princesas Pet Shop Logo"
               fill
-              sizes="48px"
+              sizes="64px"
               className="object-contain"
             />
           </div>
