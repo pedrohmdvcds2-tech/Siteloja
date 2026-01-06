@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Princesas Pet Shop",
   description: "Agende o melhor cuidado para o seu melhor amigo.",
   icons: {
-    icon: "https://i.imgur.com/agbon6P.png",
+    icon: "https://i.imgur.com/SLxSDoD.png",
   }
 };
 
