@@ -12,16 +12,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nenhum arquivo enviado.' }, { status: 400 });
     }
 
-    const imageFormData = new FormData();
-    imageFormData.append('image', file);
-    imageFormData.append('type', 'file');
+    // Convert file to base64
+    const fileBuffer = await file.arrayBuffer();
+    const base64Image = Buffer.from(fileBuffer).toString('base64');
 
     const imgurResponse = await fetch('https://api.imgur.com/3/image', {
       method: 'POST',
       headers: {
         Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+        'Content-Type': 'application/json',
       },
-      body: imageFormData,
+      body: JSON.stringify({
+        image: base64Image,
+        type: 'base64',
+      }),
     });
 
     if (!imgurResponse.ok) {
@@ -42,7 +46,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'A resposta da API de imagem não continha um link.' }, { status: 500 });
     }
 
-    // Retorna a URL da imagem hospedada no Imgur
     return NextResponse.json({ url: data.link });
     
   } catch (error: any) {

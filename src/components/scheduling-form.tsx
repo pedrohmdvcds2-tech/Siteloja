@@ -213,7 +213,6 @@ export function SchedulingForm() {
     let fileUrl = "";
 
     try {
-      // 1. Upload file if it exists (vaccination is 'Em dia')
       if (data.vaccinationStatus === 'Em dia' && data.vaccinationCard && data.vaccinationCard[0]) {
         const file = data.vaccinationCard[0];
         const uploadFormData = new FormData();
@@ -224,21 +223,20 @@ export function SchedulingForm() {
           body: uploadFormData,
         });
 
+        const responseData = await uploadResponse.json();
+
         if (!uploadResponse.ok) {
-          const errorData = await uploadResponse.json();
-          throw new Error(errorData.error || 'Falha no upload da carteira de vacinação.');
+          throw new Error(responseData.error || 'Falha no upload da carteira de vacinação.');
         }
         
-        const { url } = await uploadResponse.json();
-        fileUrl = url;
+        fileUrl = responseData.url;
       }
   
-      // 2. Create appointment object
       const { appointmentDate, appointmentTime } = data;
       const [hours, minutes] = appointmentTime.split(':').map(Number);
       const startTime = new Date(appointmentDate);
       startTime.setHours(hours, minutes, 0, 0);
-      const endTime = new Date(startTime.getTime() + 30 * 60000); // Assuming 30 min slots
+      const endTime = new Date(startTime.getTime() + 30 * 60000); 
       
       const newAppointment = {
         userId: user.uid,
@@ -252,13 +250,11 @@ export function SchedulingForm() {
           .map(([key]) => key),
         totalPrice: totalPrice,
         blocked: false,
-        vaccinationCardUrl: fileUrl, // Will be an Imgur link or empty string
+        vaccinationCardUrl: fileUrl,
       };
   
-      // 3. Save appointment to Firestore
       await addDoc(collection(firestore, "appointments"), newAppointment);
       
-      // 4. If successful, show toast and open WhatsApp
       toast({
         title: "Agendamento Registrado!",
         description: "Agora abra o WhatsApp para confirmar o envio da sua mensagem.",
