@@ -13,16 +13,12 @@ export default function Home() {
         <div className="container mx-auto flex items-center justify-center gap-4">
           <div className="relative h-24 w-24">
             <Image
-              src="https://i.imgur.com/SLxSDoD.png"
+              src="/logo-petshop.png"
               alt="Princesas Pet Shop Logo"
               fill
               sizes="96px"
               className="object-contain"
             />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">Princesas Pet Shop</h1>
-            <p className="text-sm">Cuidado Real para Seu Amiguinho</p>
           </div>
         </div>
       </header>
