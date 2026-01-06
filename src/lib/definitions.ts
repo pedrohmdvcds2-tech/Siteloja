@@ -15,14 +15,6 @@ export const formSchema = z.object({
   vaccinationStatus: z.enum(["Em dia", "Não está em dia"],{
     required_error: "Selecione o status da vacinação.",
   }),
-  vaccinationCard: z
-    .any()
-    .refine((files) => files?.length === 1 ? files?.[0].size <= MAX_FILE_SIZE : true, `O tamanho máximo é 5MB.`)
-    .refine(
-      (files) => files?.length === 1 ? ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type) : true,
-      "Apenas os formatos .jpg, .jpeg, .png, .webp e .pdf são aceitos."
-    )
-    .optional(),
   isMatted: z.boolean().default(false),
   appointmentDate: z.date({
     required_error: "Selecione uma data para o agendamento.",
@@ -45,16 +37,6 @@ export const formSchema = z.object({
 }, {
   message: "A vacinação do pet precisa estar em dia para realizar o agendamento.",
   path: ["vaccinationStatus"], 
-}).refine(data => {
-    // Se a vacina está em dia, o upload é obrigatório.
-    if (data.vaccinationStatus === 'Em dia') {
-        return data.vaccinationCard && data.vaccinationCard.length > 0;
-    }
-    // Se não está em dia, a validação principal já vai falhar, mas aqui retornamos true para não sobrepor o erro.
-    return true;
-}, {
-    message: "É necessário enviar a carteira de vacinação se a vacina está em dia.",
-    path: ["vaccinationCard"],
 });
 
 

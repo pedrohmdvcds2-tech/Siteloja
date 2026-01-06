@@ -100,13 +100,13 @@ export function SchedulingForm() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { firestore, auth, user, isUserLoading, storage } = useFirebase();
+  const { firestore, auth, user, isUserLoading } = useFirebase();
 
   useEffect(() => {
     if (!user && !isUserLoading) {
       initiateAnonymousSignIn(auth);
     }
-  }, [user, auth, isUserLoading, storage]);
+  }, [user, auth, isUserLoading]);
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !selectedDate) return null;
@@ -156,7 +156,6 @@ export function SchedulingForm() {
         teethBrushing: false,
       },
       observations: "",
-      vaccinationCard: undefined,
     },
   });
 
@@ -210,28 +209,7 @@ export function SchedulingForm() {
       return;
     }
   
-    let fileUrl = "";
-
     try {
-      if (data.vaccinationStatus === 'Em dia' && data.vaccinationCard && data.vaccinationCard[0]) {
-        const file = data.vaccinationCard[0];
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', file);
-
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: uploadFormData,
-        });
-
-        const responseData = await uploadResponse.json();
-
-        if (!uploadResponse.ok) {
-          throw new Error(responseData.error || 'Falha no upload da carteira de vacinação.');
-        }
-        
-        fileUrl = responseData.url;
-      }
-  
       const { appointmentDate, appointmentTime } = data;
       const [hours, minutes] = appointmentTime.split(':').map(Number);
       const startTime = new Date(appointmentDate);
@@ -250,7 +228,7 @@ export function SchedulingForm() {
           .map(([key]) => key),
         totalPrice: totalPrice,
         blocked: false,
-        vaccinationCardUrl: fileUrl,
+        vaccinationCardUrl: "", // Campo mantido para consistência do schema, mas vazio.
       };
   
       await addDoc(collection(firestore, "appointments"), newAppointment);
@@ -274,7 +252,7 @@ Nome: ${data.petName}
 Porte: ${data.petSize}
 Vacinação: ${data.vaccinationStatus}
 ${data.isMatted ? '⚠️ Animal está embolado (requer avaliação presencial)' : ''}
-${fileUrl ? `✅ Carteira de vacinação enviada: ${fileUrl}` : '❗️ Carteira de vacinação a ser apresentada no local.'}
+${data.vaccinationStatus === 'Em dia' ? '❗️ Carteira de vacinação a ser apresentada no local.' : ''}
 
 📅 *Agendamento*
 Data: ${formattedDate}
@@ -481,27 +459,13 @@ Agendamento realizado através do site.`;
                   </Alert>
                 )}
                 {isVaccinationOk && (
-                  <FormField
-                    control={form.control}
-                    name="vaccinationCard"
-                    render={({ field }) => {
-                      const { ref, name, onBlur, onChange } = form.register("vaccinationCard");
-                      return (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Upload />
-                          Carteira de Vacinação
-                        </FormLabel>
-                        <FormControl>
-                          <Input type="file" accept="image/*,.pdf" {...{ ref, name, onBlur, onChange }}/>
-                        </FormControl>
-                        <FormDescription>
-                          Obrigatório. Envie uma foto da carteira de vacinação do seu pet.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}}
-                  />
+                  <Alert className="mt-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Apresentar Carteirinha</AlertTitle>
+                    <AlertDescription>
+                      Lembre-se de apresentar a carteira de vacinação do seu pet no dia do atendimento.
+                    </AlertDescription>
+                  </Alert>
                 )}
               <div className="pt-4">
                  <FormField
