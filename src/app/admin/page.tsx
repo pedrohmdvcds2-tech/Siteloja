@@ -83,7 +83,7 @@ export default function AdminPage() {
   const [timeSlotsToBlock, setTimeSlotsToBlock] = useState<string[]>([]);
   const [isBlocking, setIsBlocking] = useState(false);
 
-  const ADMIN_EMAILS = ['admin@petshop.com'];
+  const ADMIN_EMAILS = ['admin@princesaspetshop.com'];
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
