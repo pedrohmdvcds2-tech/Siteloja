@@ -67,7 +67,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
+import { useFirebase, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
 import {
   initiateAnonymousSignIn,
 } from "@/firebase";
@@ -215,35 +215,36 @@ export function SchedulingForm() {
     
     let vaccinationCardUrl = "";
 
-    try {
-      if (vaccinationCard) {
-        const file = vaccinationCard;
-        const storageRef = ref(storage, `vaccination-cards/${user.uid}/${Date.now()}-${file.name}`);
-        const uploadResult = await uploadBytes(storageRef, file);
-        vaccinationCardUrl = await getDownloadURL(uploadResult.ref);
-      }
+    const file = vaccinationCard;
+    const storageRef = ref(storage, `vaccination-cards/${user.uid}/${Date.now()}-${file.name}`);
+    
+    uploadBytes(storageRef, file).then(uploadResult => {
+      getDownloadURL(uploadResult.ref).then(downloadUrl => {
+        vaccinationCardUrl = downloadUrl;
 
-      const newAppointment = {
-        userId: user.uid,
-        clientName: data.clientName,
-        petName: data.petName,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-        bathType: data.bathType,
-        additionalServices: Object.entries(data.extras)
-          .filter(([, value]) => value)
-          .map(([key]) => key),
-        totalPrice: totalPrice,
-        blocked: false,
-        vaccinationCardUrl: vaccinationCardUrl,
-      };
+        const newAppointment = {
+          userId: user.uid,
+          clientName: data.clientName,
+          petName: data.petName,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          bathType: data.bathType,
+          additionalServices: Object.entries(data.extras)
+            .filter(([, value]) => value)
+            .map(([key]) => key),
+          totalPrice: totalPrice,
+          blocked: false,
+          vaccinationCardUrl: vaccinationCardUrl,
+        };
+        
+        const appointmentsCollection = collection(firestore, "appointments");
 
-      await addDoc(collection(firestore, "appointments"), newAppointment);
-      
-      const phoneNumber = "5521993413747";
-      const formattedDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
-      
-      const message = `🐕 *NOVO AGENDAMENTO - Princesas Pet Shop*
+        addDoc(appointmentsCollection, newAppointment)
+          .then(() => {
+            const phoneNumber = "5521993413747";
+            const formattedDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
+            
+            const message = `🐕 *NOVO AGENDAMENTO - Princesas Pet Shop*
 
 📋 *Dados do Cliente*
 Nome: ${data.clientName}
@@ -275,26 +276,41 @@ ${vaccinationCardUrl ? `Carteira de vacinação: ${vaccinationCardUrl}` : 'Carte
 ---
 Agendamento realizado através do site.`;
 
-      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
-      window.open(whatsappUrl, "_self");
+            window.open(whatsappUrl, "_self");
 
-      toast({
-        title: "Agendamento Registrado!",
-        description: "Agora abra o WhatsApp para confirmar o envio da sua mensagem.",
+            toast({
+              title: "Agendamento Registrado!",
+              description: "Agora abra o WhatsApp para confirmar o envio da sua mensagem.",
+            });
+
+            form.reset();
+            setSelectedDate(undefined);
+          })
+          .catch((e) => {
+            console.error("Error adding document: ", e);
+            const permissionError = new FirestorePermissionError({
+              path: appointmentsCollection.path,
+              operation: 'create',
+              requestResourceData: newAppointment,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            toast({
+              variant: "destructive",
+              title: "Erro!",
+              description: "Não foi possível salvar seu agendamento. Por favor, tente novamente.",
+            });
+          });
       });
-
-      form.reset();
-      setSelectedDate(undefined);
-
-    } catch (e) {
-      console.error("Error adding document: ", e);
-      toast({
-        variant: "destructive",
-        title: "Erro!",
-        description: "Não foi possível salvar seu agendamento. Por favor, tente novamente.",
-      });
-    }
+    }).catch(e => {
+        console.error("Error uploading file: ", e);
+        toast({
+            variant: "destructive",
+            title: "Erro no Upload!",
+            description: "Não foi possível enviar a carteira de vacinação. Por favor, tente novamente.",
+        });
+    });
   }
 
   const isVaccinationOk = watchedValues.vaccinationStatus === 'Em dia' && watchedValues.vaccinationCard;
@@ -468,11 +484,11 @@ Agendamento realizado através do site.`;
                <FormField
                   control={form.control}
                   name="vaccinationCard"
-                  render={({ field }) => (
+                  render={({ field: { onChange, ...fieldProps} }) => (
                     <FormItem>
                       <FormLabel>Carteira de Vacinação (Obrigatório)</FormLabel>
                       <FormControl>
-                        <Input type="file" accept="image/*,.pdf" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                        <Input type="file" accept="image/*,.pdf" onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)} />
                       </FormControl>
                       <FormDescription>
                         Anexe uma foto ou PDF da carteira de vacinação do seu pet.
