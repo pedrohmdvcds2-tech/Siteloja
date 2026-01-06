@@ -11,7 +11,15 @@ export default function Home() {
     <div className="flex flex-col items-center min-h-screen bg-background text-foreground font-body">
       <header className="w-full p-6 bg-gradient-to-r from-[#c724b1] via-[#e05d5d] to-[#f7b733] text-white">
         <div className="container mx-auto flex items-center justify-center gap-4">
-           <PawPrint className="h-10 w-10 text-white" />
+           <div className="relative h-12 w-12">
+            <Image
+              src="https://i.imgur.com/agbon6P.png"
+              alt="Princesas Pet Shop Logo"
+              fill
+              sizes="48px"
+              className="object-contain"
+            />
+          </div>
            <h1 className="text-4xl font-bold font-headline">
             Princesas Pet Shop
           </h1>
