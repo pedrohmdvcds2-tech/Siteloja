@@ -245,7 +245,7 @@ export function SchedulingForm() {
         description: "Agora abra o WhatsApp para confirmar o envio da sua mensagem.",
       });
   
-      const phoneNumber = "5521993413747";
+      const phoneNumber = "5521992056443";
       const formattedDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
       
       const message = `🐕 *NOVO AGENDAMENTO - Princesas Pet Shop*
