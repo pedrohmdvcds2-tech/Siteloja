@@ -1,9 +1,5 @@
 import { z } from "zod";
 
-const MAX_FILE_SIZE = 5000000; // 5MB
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"];
-
-
 export const formSchema = z.object({
   clientName: z.string().min(2, "Nome deve ter pelo menos 2 caracteres."),
   petName: z.string().min(2, "Nome do pet deve ter pelo menos 2 caracteres."),
@@ -15,13 +11,6 @@ export const formSchema = z.object({
   vaccinationStatus: z.string({
     required_error: "Selecione o status da vacinação.",
   }),
-  vaccinationCard: z.any()
-    .refine((file) => file, "A foto da carteira de vacinação é obrigatória.")
-    .refine((file) => file?.size <= MAX_FILE_SIZE, `O tamanho máximo do arquivo é 5MB.`)
-    .refine(
-      (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-      "Formato de arquivo inválido. Apenas .jpg, .jpeg, .png, .webp e .pdf são aceitos."
-    ).nullable(),
   isMatted: z.boolean().default(false),
   appointmentDate: z.date({
     required_error: "Selecione uma data para o agendamento.",
@@ -41,14 +30,6 @@ export const formSchema = z.object({
 }).refine(data => data.vaccinationStatus === 'Em dia', {
   message: "A vacinação do pet precisa estar em dia para realizar o agendamento.",
   path: ["vaccinationStatus"],
-}).refine(data => {
-  if (data.vaccinationStatus === 'Em dia') {
-    return !!data.vaccinationCard;
-  }
-  return true;
-}, {
-  message: "A foto da carteira de vacinação é obrigatória.",
-  path: ["vaccinationCard"],
 });
 
 

@@ -208,36 +208,15 @@ export function SchedulingForm() {
       return;
     }
   
-    const { appointmentDate, appointmentTime, vaccinationCard } = data;
+    const { appointmentDate, appointmentTime } = data;
     const [hours, minutes] = appointmentTime.split(':').map(Number);
     const startTime = new Date(appointmentDate);
     startTime.setHours(hours, minutes, 0, 0);
   
     const endTime = new Date(startTime.getTime() + 30 * 60000); // Assuming 30 min slots
     
-    let vaccinationCardUrl = "";
-  
     try {
-      // 1. Upload file via our API route
-      const file = vaccinationCard;
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("uid", user.uid);
-  
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-  
-      if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
-        throw new Error(errorData.error || 'Falha no upload do arquivo.');
-      }
-      
-      const { url } = await uploadResponse.json();
-      vaccinationCardUrl = url;
-  
-      // 2. Create appointment object with URL
+      // 1. Create appointment object
       const newAppointment = {
         userId: user.uid,
         clientName: data.clientName,
@@ -250,13 +229,13 @@ export function SchedulingForm() {
           .map(([key]) => key),
         totalPrice: totalPrice,
         blocked: false,
-        vaccinationCardUrl: vaccinationCardUrl,
+        vaccinationCardUrl: "", // Removed upload
       };
   
-      // 3. Save appointment to Firestore
+      // 2. Save appointment to Firestore
       await addDoc(collection(firestore, "appointments"), newAppointment);
       
-      // 4. If successful, show toast and open WhatsApp
+      // 3. If successful, show toast and open WhatsApp
       toast({
         title: "Agendamento Registrado!",
         description: "Agora abra o WhatsApp para confirmar o envio da sua mensagem.",
@@ -274,6 +253,7 @@ Telefone: ${data.contact}
 🐶 *Dados do Cachorro*
 Nome: ${data.petName}
 Porte: ${data.petSize}
+Vacinação: ${data.vaccinationStatus}
 ${data.isMatted ? '⚠️ Animal está embolado (requer avaliação presencial)' : ''}
 
 📅 *Agendamento*
@@ -291,11 +271,8 @@ ${data.observations ? `\n💡 *Observações:* ${data.observations}` : ''}
 💰 *Valor Total: R$ ${totalPrice.toFixed(2).replace(".", ",")}*
 ${data.isMatted ? '💡 Obs: Valor pode variar devido ao embolamento' : ''}
 
-📸 *Documentos*
-${vaccinationCardUrl ? `Carteira de vacinação: ${vaccinationCardUrl}` : 'Carteira de vacinação: Não enviada'}
-
 ---
-Agendamento realizado através do site.`;
+Agendamento realizado através do site. A carteira de vacinação será verificada na chegada.`;
   
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, "_self");
@@ -305,22 +282,18 @@ Agendamento realizado através do site.`;
   
     } catch (e: any) {
       console.error("Error during submission: ", e);
-      let errorDescription = "Não foi possível salvar seu agendamento. Por favor, tente novamente.";
-      if (e instanceof Error) {
-        errorDescription = e.message;
-      }
       
       toast({
         variant: "destructive",
-        title: "Erro!",
-        description: errorDescription,
+        title: "Erro ao Agendar!",
+        description: "Não foi possível salvar seu agendamento. Por favor, tente novamente.",
       });
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  const isVaccinationOk = watchedValues.vaccinationStatus === 'Em dia' && watchedValues.vaccinationCard;
+  const isVaccinationOk = watchedValues.vaccinationStatus === 'Em dia';
 
   return (
     <Card className="w-full shadow-xl">
@@ -488,22 +461,6 @@ Agendamento realizado através do site.`;
                     </AlertDescription>
                   </Alert>
                 )}
-               <FormField
-                  control={form.control}
-                  name="vaccinationCard"
-                  render={({ field: { onChange, ...fieldProps} }) => (
-                    <FormItem>
-                      <FormLabel>Carteira de Vacinação (Obrigatório)</FormLabel>
-                      <FormControl>
-                        <Input type="file" accept="image/*,.pdf" onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)} />
-                      </FormControl>
-                      <FormDescription>
-                        Anexe uma foto ou PDF da carteira de vacinação do seu pet.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               <div className="pt-4">
                  <FormField
                   control={form.control}
