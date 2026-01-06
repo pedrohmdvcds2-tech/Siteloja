@@ -40,22 +40,20 @@ export const formSchema = z.object({
   }),
   observations: z.string().optional(),
 }).refine(data => {
-  // Se a vacina não está em dia, o formulário é inválido
-  if (data.vaccinationStatus === 'Não está em dia') {
-    return false;
-  }
-  return true;
+  // Se a vacina não está em dia, o formulário é inválido no geral.
+  return data.vaccinationStatus !== 'Não está em dia';
 }, {
   message: "A vacinação do pet precisa estar em dia para realizar o agendamento.",
-  path: ["vaccinationStatus"],
+  path: ["vaccinationStatus"], 
 }).refine(data => {
-    // Se a vacina está em dia, o upload é obrigatório
+    // Se a vacina está em dia, o upload é obrigatório.
     if (data.vaccinationStatus === 'Em dia') {
         return data.vaccinationCard && data.vaccinationCard.length > 0;
     }
+    // Se não está em dia, a validação principal já vai falhar, mas aqui retornamos true para não sobrepor o erro.
     return true;
 }, {
-    message: "É necessário enviar a carteira de vacinação.",
+    message: "É necessário enviar a carteira de vacinação se a vacina está em dia.",
     path: ["vaccinationCard"],
 });
 

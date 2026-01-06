@@ -66,7 +66,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useFirebase, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
+import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
 import {
   initiateAnonymousSignIn,
 } from "@/firebase";
@@ -213,21 +213,20 @@ export function SchedulingForm() {
     let fileUrl = "";
 
     try {
-      // 1. Upload file if it exists
-      if (data.vaccinationCard && data.vaccinationCard[0]) {
+      // 1. Upload file if it exists (vaccination is 'Em dia')
+      if (data.vaccinationStatus === 'Em dia' && data.vaccinationCard && data.vaccinationCard[0]) {
         const file = data.vaccinationCard[0];
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('userId', user.uid);
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
 
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
-          body: formData,
+          body: uploadFormData,
         });
 
         if (!uploadResponse.ok) {
           const errorData = await uploadResponse.json();
-          throw new Error(errorData.error || 'Falha no upload do arquivo.');
+          throw new Error(errorData.error || 'Falha no upload da carteira de vacinação.');
         }
         
         const { url } = await uploadResponse.json();
@@ -253,7 +252,7 @@ export function SchedulingForm() {
           .map(([key]) => key),
         totalPrice: totalPrice,
         blocked: false,
-        vaccinationCardUrl: fileUrl,
+        vaccinationCardUrl: fileUrl, // Will be an Imgur link or empty string
       };
   
       // 3. Save appointment to Firestore
@@ -279,7 +278,7 @@ Nome: ${data.petName}
 Porte: ${data.petSize}
 Vacinação: ${data.vaccinationStatus}
 ${data.isMatted ? '⚠️ Animal está embolado (requer avaliação presencial)' : ''}
-${fileUrl ? '✅ Carteira de vacinação enviada.' : '❗️ Carteira de vacinação a ser apresentada no local.'}
+${fileUrl ? `✅ Carteira de vacinação enviada: ${fileUrl}` : '❗️ Carteira de vacinação a ser apresentada no local.'}
 
 📅 *Agendamento*
 Data: ${formattedDate}
@@ -476,7 +475,7 @@ Agendamento realizado através do site.`;
                   )}
                 />
               </div>
-                {!isVaccinationOk && watchedValues.vaccinationStatus === 'Não está em dia' && (
+                {watchedValues.vaccinationStatus === 'Não está em dia' && (
                   <Alert variant="destructive" className="mt-2">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Vacinação Obrigatória</AlertTitle>
@@ -501,7 +500,7 @@ Agendamento realizado através do site.`;
                           <Input type="file" accept="image/*,.pdf" {...{ ref, name, onBlur, onChange }}/>
                         </FormControl>
                         <FormDescription>
-                          Envie uma foto da carteira de vacinação do seu pet.
+                          Obrigatório. Envie uma foto da carteira de vacinação do seu pet.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -724,7 +723,7 @@ Agendamento realizado através do site.`;
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
-                        disabled={!watchedValues.appointmentDate}
+                        disabled={!watchedValues.appointmentDate || watchedValues.vaccinationStatus === 'Não está em dia'}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -773,7 +772,7 @@ Agendamento realizado através do site.`;
               type="submit"
               size="lg"
               className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
-              disabled={isUserLoading || isLoadingAppointments || isSubmitting || !isVaccinationOk}
+              disabled={isUserLoading || isLoadingAppointments || isSubmitting || watchedValues.vaccinationStatus === 'Não está em dia'}
             >
               {isSubmitting ? 'Enviando...' : <><MessageCircle /> Agendar via WhatsApp</>}
             </Button>
