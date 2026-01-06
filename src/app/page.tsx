@@ -20,9 +20,12 @@ export default function Home() {
               className="object-contain"
             />
           </div>
-           <h1 className="text-4xl font-bold font-headline">
-            Princesas Pet Shop
-          </h1>
+          <div className="text-center">
+            <h1 className="text-4xl font-bold font-headline">
+              Princesas Pet Shop
+            </h1>
+            <p className="text-lg">Cuidado Real para Seu Amiguinho</p>
+          </div>
         </div>
       </header>
 
