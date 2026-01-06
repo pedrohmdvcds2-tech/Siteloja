@@ -1,25 +1,27 @@
 
 import { NextResponse } from 'next/server';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase-admin/storage';
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { getStorage } from 'firebase-admin/storage';
+import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { firebaseConfig } from '@/firebase/config';
 
 // Initialize Firebase Admin SDK
 function initializeFirebaseAdmin(): App {
+    // Check if there are already initialized apps
     if (getApps().length > 0) {
         return getApps()[0] as App;
     }
-    // IMPORTANT: Firebase Admin SDK requires service account credentials.
-    // For Vercel, these should be set as environment variables.
-    // The SDK automatically picks up GOOGLE_APPLICATION_CREDENTIALS for the JSON key
-    // and can derive project_id from there. If not set, it might fail.
-    // For local dev, you can use a service account file.
-    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT ? 
-        JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) : 
-        undefined;
+
+    // If not initialized, create a new instance.
+    // This handles different environments (local vs. Vercel)
+    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
+        ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+        : undefined;
+
+    // Use cert only if serviceAccount is available
+    const credential = serviceAccount ? cert(serviceAccount) : undefined;
 
     return initializeApp({
-        credential: serviceAccount ? require('firebase-admin').credential.cert(serviceAccount) : undefined,
+        credential, // credential will be undefined if serviceAccount is not set
         storageBucket: firebaseConfig.storageBucket,
     });
 }
@@ -56,15 +58,19 @@ export async function POST(request: Request) {
             },
         });
         
+        // Make the file public to get a URL - this can be slow.
+        // A more robust solution might use signed URLs.
+        await fileRef.makePublic();
+
         // Get the public URL
-        const downloadURL = await getDownloadURL(fileRef);
+        const downloadURL = fileRef.publicUrl();
 
         return NextResponse.json({ url: downloadURL });
 
     } catch (error: any) {
         console.error('--- Upload API Error ---', error);
-        return NextResponse.json({ error: `Erro interno do servidor: ${error.message}` }, { status: 500 });
+        // Provide a more specific error message if available
+        const errorMessage = error.message || 'Ocorreu um erro desconhecido durante o upload.';
+        return NextResponse.json({ error: `Erro interno do servidor: ${errorMessage}` }, { status: 500 });
     }
 }
-
-    
