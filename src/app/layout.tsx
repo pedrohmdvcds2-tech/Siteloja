@@ -7,9 +7,6 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Princesas Pet Shop",
   description: "Agende o melhor cuidado para o seu melhor amigo.",
-  icons: {
-    icon: "https://i.imgur.com/SLxSDoD.png",
-  }
 };
 
 export default function RootLayout({
