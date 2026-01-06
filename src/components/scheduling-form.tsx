@@ -100,13 +100,14 @@ export function SchedulingForm() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { firestore, auth, user, isUserLoading } = useFirebase();
+  const { firestore, auth, user, isUserLoading, storage } = useFirebase();
 
   useEffect(() => {
-    if (!user && !isUserLoading) {
+    if (!user && !isUserLoading && auth) {
       initiateAnonymousSignIn(auth);
     }
-  }, [user, auth, isUserLoading]);
+  }, [user, isUserLoading, auth, storage]);
+
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !selectedDate) return null;
@@ -208,8 +209,14 @@ export function SchedulingForm() {
       setIsSubmitting(false);
       return;
     }
-  
+    
+    let fileUrl = "";
+
     try {
+      // 1. Lógica de Upload (removida)
+      // ...
+
+      // 2. Salvar Agendamento
       const { appointmentDate, appointmentTime } = data;
       const [hours, minutes] = appointmentTime.split(':').map(Number);
       const startTime = new Date(appointmentDate);
@@ -228,7 +235,7 @@ export function SchedulingForm() {
           .map(([key]) => key),
         totalPrice: totalPrice,
         blocked: false,
-        vaccinationCardUrl: "", // Campo mantido para consistência do schema, mas vazio.
+        vaccinationCardUrl: "", // Campo mantido para consistência, mas vazio
       };
   
       await addDoc(collection(firestore, "appointments"), newAppointment);
@@ -252,7 +259,7 @@ Nome: ${data.petName}
 Porte: ${data.petSize}
 Vacinação: ${data.vaccinationStatus}
 ${data.isMatted ? '⚠️ Animal está embolado (requer avaliação presencial)' : ''}
-${data.vaccinationStatus === 'Em dia' ? '❗️ Carteira de vacinação a ser apresentada no local.' : ''}
+${data.vaccinationStatus === 'Em dia' ? '❗️ Carteira de vacinação a ser apresentada no local ou enviada via WhatsApp.' : ''}
 
 📅 *Agendamento*
 Data: ${formattedDate}
@@ -463,7 +470,7 @@ Agendamento realizado através do site.`;
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Apresentar Carteirinha</AlertTitle>
                     <AlertDescription>
-                      Lembre-se de apresentar a carteira de vacinação do seu pet no dia do atendimento.
+                      Lembre-se de apresentar a carteira de vacinação do seu pet no dia do atendimento ou enviar via whatsapp.
                     </AlertDescription>
                   </Alert>
                 )}
