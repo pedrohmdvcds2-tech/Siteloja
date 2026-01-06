@@ -106,7 +106,7 @@ export function SchedulingForm() {
     if (!user && !isUserLoading) {
       initiateAnonymousSignIn(auth);
     }
-  }, [user, auth, isUserLoading]);
+  }, [user, auth, isUserLoading, storage]);
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !selectedDate) return null;
@@ -779,5 +779,3 @@ Agendamento realizado através do site.`;
     </Card>
   );
 }
-
-    
