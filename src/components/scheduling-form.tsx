@@ -25,7 +25,6 @@ import {
   CalendarIcon,
   Upload,
 } from "lucide-react";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 
 import { formSchema, type SchedulingFormValues } from "@/lib/definitions";
@@ -199,7 +198,7 @@ export function SchedulingForm() {
 
   async function onSubmit(data: SchedulingFormValues) {
     setIsSubmitting(true);
-    if (!user || !firestore || !storage) {
+    if (!user || !firestore) {
       toast({
         variant: "destructive",
         title: "Erro de Autenticação",
@@ -208,23 +207,36 @@ export function SchedulingForm() {
       setIsSubmitting(false);
       return;
     }
-
+  
     const { appointmentDate, appointmentTime, vaccinationCard } = data;
     const [hours, minutes] = appointmentTime.split(':').map(Number);
     const startTime = new Date(appointmentDate);
     startTime.setHours(hours, minutes, 0, 0);
-
+  
     const endTime = new Date(startTime.getTime() + 30 * 60000); // Assuming 30 min slots
     
     let vaccinationCardUrl = "";
-
+  
     try {
-      // 1. Upload file and get URL
+      // 1. Upload file via our API route
       const file = vaccinationCard;
-      const storageRef = ref(storage, `vaccination-cards/${user.uid}/${Date.now()}-${file.name}`);
-      const uploadResult = await uploadBytes(storageRef, file);
-      vaccinationCardUrl = await getDownloadURL(uploadResult.ref);
-
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("uid", user.uid);
+  
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || 'Falha no upload do arquivo.');
+      }
+      
+      const { url } = await uploadResponse.json();
+      vaccinationCardUrl = url;
+  
       // 2. Create appointment object with URL
       const newAppointment = {
         userId: user.uid,
@@ -240,17 +252,16 @@ export function SchedulingForm() {
         blocked: false,
         vaccinationCardUrl: vaccinationCardUrl,
       };
-
+  
       // 3. Save appointment to Firestore
-      const appointmentsCollection = collection(firestore, "appointments");
-      await addDoc(appointmentsCollection, newAppointment);
+      await addDoc(collection(firestore, "appointments"), newAppointment);
       
-      // 4. If successful, show toast and redirect
+      // 4. If successful, show toast and open WhatsApp
       toast({
         title: "Agendamento Registrado!",
         description: "Agora abra o WhatsApp para confirmar o envio da sua mensagem.",
       });
-
+  
       const phoneNumber = "5521993413747";
       const formattedDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
       
@@ -285,18 +296,18 @@ ${vaccinationCardUrl ? `Carteira de vacinação: ${vaccinationCardUrl}` : 'Carte
 
 ---
 Agendamento realizado através do site.`;
-
+  
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, "_self");
-
+  
       form.reset();
       setSelectedDate(undefined);
-
-    } catch (e) {
+  
+    } catch (e: any) {
       console.error("Error during submission: ", e);
       let errorDescription = "Não foi possível salvar seu agendamento. Por favor, tente novamente.";
-      if (e instanceof Error && (e.name === 'FirebaseError' || e.message.includes('storage/unauthorized'))) {
-         errorDescription = "Erro de permissão ao enviar arquivo. Verifique a configuração de CORS do Firebase Storage.";
+      if (e instanceof Error) {
+        errorDescription = e.message;
       }
       
       toast({
@@ -768,3 +779,5 @@ Agendamento realizado através do site.`;
     </Card>
   );
 }
+
+    

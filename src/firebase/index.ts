@@ -8,15 +8,13 @@ import { getStorage } from 'firebase/storage';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
-  if (!getApps().length) {
-    // Always initialize with the explicit config to ensure consistency
-    // across development and production environments (like Vercel).
-    const firebaseApp = initializeApp(firebaseConfig);
-    return getSdks(firebaseApp);
+  if (getApps().length > 0) {
+    return getSdks(getApp());
   }
-
-  // If already initialized, return the SDKs with the already initialized App
-  return getSdks(getApp());
+  // Always initialize with the explicit config to ensure consistency
+  // across development and production environments (like Vercel).
+  const firebaseApp = initializeApp(firebaseConfig);
+  return getSdks(firebaseApp);
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {
@@ -36,3 +34,5 @@ export * from './non-blocking-updates';
 export * from './non-blocking-login';
 export * from './errors';
 export * from './error-emitter';
+
+    
