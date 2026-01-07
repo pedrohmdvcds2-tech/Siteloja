@@ -256,6 +256,7 @@ Telefone: ${data.contact}
 
 🐶 *Dados do Cachorro*
 Nome: ${data.petName}
+Raça: ${data.petBreed}
 Porte: ${data.petSize}
 Vacinação: ${data.vaccinationStatus}
 ${data.isMatted ? '⚠️ Animal está embolado (requer avaliação presencial)' : ''}
