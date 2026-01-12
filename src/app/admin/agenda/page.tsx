@@ -93,47 +93,39 @@ export default function AgendaPage() {
 
     // 2. Adicionar bloqueios recorrentes (clubinho)
     const selectedDayOfWeek = selectedDate.getDay();
-    const weekOfYear = getWeek(selectedDate, { weekStartsOn: 1 });
-    const selectedWeekParity = weekOfYear % 2; // 0 for even, 1 for odd
+    const selectedWeekOfYear = getWeek(selectedDate, { weekStartsOn: 1 });
 
     const dayRecurringBlocks = recurringBlocks.filter(block => {
-        if (parseInt(block.dayOfWeek, 10) !== selectedDayOfWeek) {
-            return false;
-        }
+        const blockDayOfWeek = parseInt(block.dayOfWeek, 10);
+        if (blockDayOfWeek !== selectedDayOfWeek) return false;
 
-        if (block.frequency === 'weekly') {
-            return true;
-        }
+        if (block.frequency === 'weekly') return true;
 
         if (block.frequency === 'bi-weekly') {
-            const startWeekParity = block.startWeekParity ?? 0;
-            return selectedWeekParity === startWeekParity;
+            const startWeekParity = block.startWeekParity ?? (block.cycleStartDate ? getWeek(new Date(block.cycleStartDate.seconds * 1000), { weekStartsOn: 1 }) % 2 : 0);
+            return selectedWeekOfYear % 2 === startWeekParity;
         }
 
         return false;
     });
 
     dayRecurringBlocks.forEach(block => {
+        const cycleStartDate = block.cycleStartDate ? new Date(block.cycleStartDate.seconds * 1000) : null;
+        const startBathNumber = block.startBathNumber || 1;
         const firstDayOfMonth = startOfMonth(selectedDate);
-        let bathCount = block.startBathNumber || 0;
-        let startCounting = false;
+        let occurrencesInMonth = 0;
         
-        if (block.cycleStartDate && new Date(block.cycleStartDate) > firstDayOfMonth) {
-             startCounting = true;
-        } else {
-            bathCount = 0;
-        }
-        
-        for (let i = 1; i <= selectedDate.getDate(); i++) {
-            const currentDay = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth(), i);
-             
-            if (block.cycleStartDate && currentDay < new Date(block.cycleStartDate) && !startCounting) {
+        // Contar ocorrências desde o início do mês ou da data do ciclo, o que for posterior.
+        for (let d = 1; d <= selectedDate.getDate(); d++) {
+            const currentDay = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth(), d);
+            
+            // Pular dias antes do início do ciclo, se houver
+            if (cycleStartDate && currentDay < cycleStartDate) {
                 continue;
             }
-
-            if(startCounting) startCounting = false;
             
-            if (parseInt(block.dayOfWeek, 10) !== currentDay.getDay()) {
+            // Verificar se é o dia da semana correto
+            if (currentDay.getDay() !== parseInt(block.dayOfWeek, 10)) {
                 continue;
             }
 
@@ -142,17 +134,19 @@ export default function AgendaPage() {
                 isValidOccurrence = true;
             } else if (block.frequency === 'bi-weekly') {
                 const currentWeekOfYear = getWeek(currentDay, { weekStartsOn: 1 });
-                const startWeekParity = block.startWeekParity ?? 0;
+                const startWeekParity = block.startWeekParity ?? (cycleStartDate ? getWeek(cycleStartDate, { weekStartsOn: 1 }) % 2 : 0);
                 if (currentWeekOfYear % 2 === startWeekParity) {
                     isValidOccurrence = true;
                 }
             }
             
-            if(isValidOccurrence) {
-                bathCount++;
+            if (isValidOccurrence) {
+                occurrencesInMonth++;
             }
         }
         
+        const bathCount = occurrencesInMonth > 0 ? (startBathNumber - 1) + occurrencesInMonth : undefined;
+
         const [hours, minutes] = block.time.split(':').map(Number);
         const startTime = new Date(selectedDate);
         startTime.setHours(hours, minutes, 0, 0);
@@ -163,7 +157,7 @@ export default function AgendaPage() {
             type: 'recurring',
             petName: block.petName,
             label: block.label,
-            bathCount: bathCount > 0 ? bathCount : undefined
+            bathCount: bathCount
         });
     });
 
