@@ -47,6 +47,9 @@ export const recurringBlockSchema = z.object({
   frequency: z.enum(['weekly', 'bi-weekly'], {
     required_error: 'Selecione a frequência.'
   }),
+  startBathNumber: z.number().optional(),
+  startWeekParity: z.number().optional(),
+  cycleStartDate: z.date().optional(),
 });
 
 export type RecurringBlockValues = z.infer<typeof recurringBlockSchema>;

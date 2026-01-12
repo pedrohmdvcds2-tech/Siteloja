@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { format, toDate } from 'date-fns';
+import { format, getWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LogOut, Calendar as CalendarIcon, Trash2, CalendarClock, Repeat } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon, Trash2, CalendarClock, Repeat, CalendarCheck2, Star } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import {
   Select,
@@ -83,6 +83,8 @@ export default function AdminPage() {
       petName: '',
       label: 'Clubinho',
       frequency: 'weekly',
+      cycleStartDate: undefined,
+      startBathNumber: undefined,
     },
   });
 
@@ -136,13 +138,36 @@ export default function AdminPage() {
     setIsBlocking(true);
 
     try {
-      await addDoc(collection(firestore, 'recurringBlocks'), data);
+      const dataToSave: Partial<RecurringBlockValues> = { ...data };
+      
+      // Calculate startWeekParity if cycleStartDate is provided
+      if(data.cycleStartDate) {
+        dataToSave.startWeekParity = getWeek(data.cycleStartDate, { weekStartsOn: 1 }) % 2;
+      }
+      
+      // Convert startBathNumber from string to number
+      if (data.startBathNumber) {
+          dataToSave.startBathNumber = Number(data.startBathNumber);
+      } else {
+          delete dataToSave.startBathNumber; // Remove if empty
+      }
+
+
+      await addDoc(collection(firestore, 'recurringBlocks'), dataToSave);
 
       toast({
         title: 'Sucesso!',
-        description: `O horário do clubinho foi salvo e será bloqueado com frequência ${data.frequency === 'weekly' ? 'semanal' : 'quinzenal'}.`,
+        description: `O horário do clubinho foi salvo.`,
       });
-      form.reset();
+      form.reset({
+          dayOfWeek: '',
+          time: '',
+          petName: '',
+          label: 'Clubinho',
+          frequency: 'weekly',
+          cycleStartDate: undefined,
+          startBathNumber: undefined,
+      });
       refetchRecurring(); 
     } catch (e) {
       console.error('Error creating recurring block: ', e);
@@ -239,10 +264,9 @@ export default function AdminPage() {
   };
   
   const handleImportSuccess = () => {
-    toast({
-      title: 'Importação Concluída!',
-      description: 'Os horários do clubinho foram adicionados à agenda.',
-    });
+    refetchRecurring();
+  };
+  const handleClearSuccess = () => {
     refetchRecurring();
   };
 
@@ -310,7 +334,7 @@ export default function AdminPage() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleBlockRecurringTime)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     <FormField
                       control={form.control}
                       name="dayOfWeek"
@@ -376,7 +400,7 @@ export default function AdminPage() {
                             </FormItem>
                         )}
                     />
-                    <FormField
+                     <FormField
                       control={form.control}
                       name="frequency"
                       render={({ field }) => (
@@ -397,6 +421,58 @@ export default function AdminPage() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                        control={form.control}
+                        name="cycleStartDate"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Data de Início do Ciclo (Opcional)</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        format(field.value, "PPP", { locale: ptBR })
+                                    ) : (
+                                        <span>Escolha uma data</span>
+                                    )}
+                                    <CalendarCheck2 className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    locale={ptBR}
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="startBathNumber"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Nº do Banho Inicial (Opcional)</FormLabel>
+                                <FormControl>
+                                    <Input type="number" placeholder="Ex: 1" {...field} onChange={event => field.onChange(+event.target.value)} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
                 <Button type="submit" disabled={isBlocking}>
                   <Repeat className='mr-2' />
@@ -410,6 +486,8 @@ export default function AdminPage() {
         <BulkImporter
           collectionPath="recurringBlocks"
           onImportSuccess={handleImportSuccess}
+          onClearSuccess={handleClearSuccess}
+          currentBlocks={recurringBlocks || []}
         />
         
         <Card>
@@ -460,6 +538,8 @@ export default function AdminPage() {
                     <TableHead>Horário</TableHead>
                     <TableHead>Pet</TableHead>
                     <TableHead>Frequência</TableHead>
+                    <TableHead>Início do Ciclo</TableHead>
+                    <TableHead>Banho Inicial</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -481,6 +561,12 @@ export default function AdminPage() {
                           <Badge variant={block.frequency === 'weekly' ? 'secondary' : 'outline'}>
                             {block.frequency === 'weekly' ? 'Semanal' : 'Quinzenal'}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {block.cycleStartDate ? format(new Date(block.cycleStartDate.seconds * 1000), 'dd/MM/yy') : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {block.startBathNumber || 'N/A'}
                         </TableCell>
                         <TableCell className="text-right">
                           <AlertDialog>
@@ -595,5 +681,3 @@ export default function AdminPage() {
       </div>
   );
 }
-
-    

@@ -9,41 +9,57 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Upload, AlertCircle, FileText } from 'lucide-react';
+import { Upload, AlertCircle, FileText, Trash2 } from 'lucide-react';
 import { recurringBlockSchema } from '@/lib/definitions';
-import { format, parse } from 'date-fns';
+import { format, parse, getWeek } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface BulkImporterProps {
   collectionPath: string;
   onImportSuccess: () => void;
+  onClearSuccess: () => void;
+  currentBlocks: any[];
 }
 
-// Mapeia os dias da semana em português para o índice numérico (Segunda=1)
 const dayOfWeekMap: { [key: string]: string } = {
-  'segunda': '1',
-  'segunda-feira': '1',
-  'terca': '2',
-  'terça-feira': '2',
-  'quarta': '3',
-  'quarta-feira': '3',
-  'quinta': '4',
-  'quinta-feira': '4',
-  'sexta': '5',
-  'sexta-feira': '5',
-  'sabado': '6',
-  'sábado': '6',
+  'segunda': '1', 'segunda-feira': '1',
+  'terca': '2', 'terça-feira': '2',
+  'quarta': '3', 'quarta-feira': '3',
+  'quinta': '4', 'quinta-feira': '4',
+  'sexta': '5', 'sexta-feira': '5',
+  'sabado': '6', 'sábado': '6',
 };
 
-// Mapeia as frequências para os valores do schema
 const frequencyMap: { [key: string]: string } = {
     'semanal': 'weekly',
     'quinzenal': 'bi-weekly'
-}
+};
 
-export function BulkImporter({ collectionPath, onImportSuccess }: BulkImporterProps) {
+const parseDateString = (dateStr: string): Date | undefined => {
+    if (!dateStr || dateStr.trim() === '') return undefined;
+    try {
+        return parse(dateStr.trim(), 'dd/MM/yyyy', new Date());
+    } catch (e) {
+        console.warn(`Data inválida encontrada e ignorada: "${dateStr}"`);
+        return undefined;
+    }
+};
+
+export function BulkImporter({ collectionPath, onImportSuccess, onClearSuccess, currentBlocks }: BulkImporterProps) {
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const [isImporting, setIsImporting] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,6 +72,8 @@ export function BulkImporter({ collectionPath, onImportSuccess }: BulkImporterPr
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      dynamicTyping: false, // Keep all values as strings
+      transformHeader: header => header.trim(),
       complete: async (results) => {
         if (!firestore) {
           setError("Conexão com o banco de dados não encontrada.");
@@ -63,63 +81,73 @@ export function BulkImporter({ collectionPath, onImportSuccess }: BulkImporterPr
           return;
         }
 
-        try {
-          const batch = writeBatch(firestore);
-          const requiredHeaders = ['dayOfWeek', 'time', 'petName', 'frequency'];
-          const fileHeaders = results.meta.fields || [];
-          
-          const hasAllHeaders = requiredHeaders.every(h => fileHeaders.includes(h));
-          if (!hasAllHeaders) {
-            setError(`O arquivo CSV deve conter os seguintes cabeçalhos: ${requiredHeaders.join(', ')}.`);
-            setIsImporting(false);
-            return;
-          }
+        const batch = writeBatch(firestore);
+        let validRows = 0;
 
-          for (const row of results.data as any[]) {
+        for (const row of results.data as any[]) {
             const dayOfWeekRaw = (row.dayOfWeek || '').toLowerCase().trim();
             const frequencyRaw = (row.frequency || '').toLowerCase().trim();
             const timeRaw = (row.time || '').trim();
-            
+            const cycleStartDateRaw = (row.cycleStartDate || '').trim();
+            const startBathNumberRaw = (row.startBathNumber || '').trim();
+
             const dayOfWeek = dayOfWeekMap[dayOfWeekRaw];
             const frequency = frequencyMap[frequencyRaw];
             
-            if (!dayOfWeek) {
-                console.warn(`Dia da semana inválido ou não mapeado na linha: ${JSON.stringify(row)}`);
-                continue; // Pula a linha se o dia da semana for inválido
-            }
-             if (!frequency) {
-                console.warn(`Frequência inválida ou não mapeada na linha: ${JSON.stringify(row)}`);
+            if (!dayOfWeek || !frequency || !timeRaw || !row.petName) {
+                console.warn(`Linha com campos obrigatórios ausentes, pulando:`, row);
                 continue;
             }
 
-            const dataToValidate = {
+            const dataToValidate: any = {
               dayOfWeek,
               time: timeRaw,
               petName: row.petName,
               frequency,
-              label: 'Clubinho' // Valor padrão
+              label: 'Clubinho'
             };
+
+            const cycleStartDate = parseDateString(cycleStartDateRaw);
+            if(cycleStartDate) {
+                dataToValidate.cycleStartDate = cycleStartDate;
+                dataToValidate.startWeekParity = getWeek(cycleStartDate, { weekStartsOn: 1 }) % 2;
+            }
             
+            const startBathNumber = startBathNumberRaw ? parseInt(startBathNumberRaw, 10) : undefined;
+            if (startBathNumber && !isNaN(startBathNumber)) {
+                dataToValidate.startBathNumber = startBathNumber;
+            }
+
             const validation = recurringBlockSchema.safeParse(dataToValidate);
 
             if (validation.success) {
               const docRef = doc(collection(firestore, collectionPath));
               batch.set(docRef, validation.data);
+              validRows++;
             } else {
-              console.warn("Linha inválida, pulando:", validation.error.flatten().fieldErrors);
+              console.warn("Linha inválida, pulando:", { rowData: row, error: validation.error.flatten().fieldErrors });
             }
-          }
-
-          await batch.commit();
-          onImportSuccess();
-        } catch (e: any) {
-          console.error("Erro durante a importação em massa: ", e);
-          setError(`Falha ao importar os dados. Verifique o console para mais detalhes. Erro: ${e.message}`);
-        } finally {
-          setIsImporting(false);
-          // Limpa o valor do input para permitir o upload do mesmo arquivo novamente
-          event.target.value = '';
         }
+        
+        if (validRows > 0) {
+            try {
+                await batch.commit();
+                toast({
+                    title: 'Importação Concluída!',
+                    description: `${validRows} horários do clubinho foram adicionados/atualizados.`,
+                });
+                onImportSuccess();
+            } catch (e: any) {
+                console.error("Erro durante a importação em massa: ", e);
+                setError(`Falha ao salvar os dados. Verifique o console para mais detalhes. Erro: ${e.message}`);
+            } finally {
+                setIsImporting(false);
+            }
+        } else {
+            setError("Nenhuma linha válida encontrada no arquivo CSV. Verifique o formato e os dados do arquivo e tente novamente.");
+            setIsImporting(false);
+        }
+        event.target.value = ''; // Reset input
       },
       error: (err: any) => {
         setError(`Falha ao ler o arquivo CSV: ${err.message}`);
@@ -127,6 +155,31 @@ export function BulkImporter({ collectionPath, onImportSuccess }: BulkImporterPr
       },
     });
   };
+  
+  const handleClearAll = async () => {
+    if (!firestore || !currentBlocks || currentBlocks.length === 0) {
+      toast({ variant: 'destructive', title: 'Nenhum item para remover.' });
+      return;
+    }
+    setIsClearing(true);
+    const batch = writeBatch(firestore);
+    currentBlocks.forEach(block => {
+      const docRef = doc(firestore, collectionPath, block.id);
+      batch.delete(docRef);
+    });
+
+    try {
+      await batch.commit();
+      toast({ title: 'Sucesso!', description: 'Todos os horários de clubinho foram removidos.' });
+      onClearSuccess();
+    } catch (e: any) {
+      console.error("Erro ao limpar todos os blocos: ", e);
+      setError(`Falha ao remover os horários. Erro: ${e.message}`);
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
 
   return (
     <Card>
@@ -140,18 +193,39 @@ export function BulkImporter({ collectionPath, onImportSuccess }: BulkImporterPr
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-            <label htmlFor="csv-importer" className="block text-sm font-medium text-gray-700">
-                Selecione o arquivo CSV
+        <div className="flex items-center gap-4">
+            <label htmlFor="csv-importer" className="flex-grow">
+              <Input
+                  id="csv-importer"
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  disabled={isImporting || isClearing}
+                  className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+              />
             </label>
-            <Input
-                id="csv-importer"
-                type="file"
-                accept=".csv"
-                onChange={handleFileChange}
-                disabled={isImporting}
-                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-            />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={isImporting || isClearing || !currentBlocks || currentBlocks.length === 0}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Limpar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação removerá permanentemente TODOS os horários de clubinho existentes antes de uma nova importação.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearAll} disabled={isClearing}>
+                    {isClearing ? 'Limpando...' : 'Sim, limpar tudo'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
         </div>
         
         {isImporting && (
@@ -173,12 +247,14 @@ export function BulkImporter({ collectionPath, onImportSuccess }: BulkImporterPr
             <FileText className="h-4 w-4" />
             <AlertTitle>Instruções para o Arquivo CSV</AlertTitle>
             <AlertDescription>
-                <p className='mb-2'>O arquivo deve ter as colunas: <strong>dayOfWeek, time, petName, frequency</strong>.</p>
+                <p className='mb-2'>O arquivo deve ter as colunas: <strong>dayOfWeek, time, petName, frequency</strong>. Colunas opcionais: <strong>cycleStartDate, startBathNumber</strong>.</p>
                 <ul className="list-disc list-inside text-xs space-y-1">
-                    <li><strong>dayOfWeek:</strong> Use 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'.</li>
-                    <li><strong>time:</strong> Use o formato HH:mm (ex: 14:00).</li>
+                    <li><strong>dayOfWeek:</strong> 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'.</li>
+                    <li><strong>time:</strong> Formato HH:mm (ex: 14:00).</li>
                     <li><strong>petName:</strong> O nome do pet.</li>
-                    <li><strong>frequency:</strong> Use 'semanal' ou 'quinzenal'.</li>
+                    <li><strong>frequency:</strong> 'semanal' ou 'quinzenal'.</li>
+                    <li><strong>cycleStartDate (opcional):</strong> Data de início do ciclo no formato dd/MM/yyyy.</li>
+                    <li><strong>startBathNumber (opcional):</strong> Número do banho inicial (ex: 1, 2, 3, 4).</li>
                 </ul>
             </AlertDescription>
         </Alert>

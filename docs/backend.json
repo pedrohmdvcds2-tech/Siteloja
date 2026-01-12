@@ -157,6 +157,19 @@
           "type": "string",
           "enum": ["weekly", "bi-weekly"],
           "description": "The frequency of the recurrence."
+        },
+        "cycleStartDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The start date of a bi-weekly cycle."
+        },
+        "startWeekParity": {
+            "type": "number",
+            "description": "The parity of the start week (0 for even, 1 for odd)."
+        },
+        "startBathNumber": {
+            "type": "number",
+            "description": "The starting number for the bath cycle."
         }
       },
       "required": [
@@ -230,5 +243,3 @@
     ]
   }
 }
-
-    
