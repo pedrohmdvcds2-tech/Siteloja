@@ -13,14 +13,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Users } from 'lucide-react';
+import { ArrowLeft, Dog } from 'lucide-react';
 
 interface UnifiedAppointment {
     id: string;
     startTime: string;
     type: 'client' | 'recurring';
     clientName?: string;
-    petNames: string[];
+    petName: string;
     service?: string;
     label?: string;
     bathCount?: number;
@@ -86,7 +86,7 @@ export default function AgendaPage() {
           startTime: apt.startTime,
           type: 'client',
           clientName: apt.clientName,
-          petNames: [apt.petName],
+          petName: apt.petName,
           service: apt.bathType,
         });
       });
@@ -112,8 +112,7 @@ export default function AgendaPage() {
 
             return false;
         });
-
-        const recurringGroupedByTime: Record<string, any[]> = {};
+        
         dayRecurringBlocks.forEach(block => {
             // Calcula o número do banho no mês
             const firstDayOfMonth = startOfMonth(selectedDate);
@@ -140,26 +139,17 @@ export default function AgendaPage() {
                 }
             }
             
-            const blockWithCount = {...block, bathCount};
-
-            if(!recurringGroupedByTime[block.time]) {
-                recurringGroupedByTime[block.time] = [];
-            }
-            recurringGroupedByTime[block.time].push(blockWithCount);
-        });
-        
-        Object.entries(recurringGroupedByTime).forEach(([time, blocks]) => {
-            const [hours, minutes] = time.split(':').map(Number);
+            const [hours, minutes] = block.time.split(':').map(Number);
             const startTime = new Date(selectedDate);
             startTime.setHours(hours, minutes, 0, 0);
 
             schedule.push({
-                id: `recurring-${time}`,
+                id: `${block.id}-${selectedDate.toISOString()}`, // ID único para a ocorrência
                 startTime: startTime.toISOString(),
                 type: 'recurring',
-                petNames: blocks.map(b => b.petName),
-                label: blocks[0].label, // Assume all have same label
-                bathCount: blocks[0].bathCount // Assumindo que o primeiro é representativo
+                petName: block.petName,
+                label: block.label,
+                bathCount: bathCount > 0 ? bathCount : undefined
             });
         });
     }
@@ -262,22 +252,19 @@ export default function AgendaPage() {
                           {item.type === 'client' ? (
                             <>
                                 <div className='font-medium'>{item.clientName}</div>
-                                <div className='text-sm text-muted-foreground'>{item.petNames[0]}</div>
+                                <div className='text-sm text-muted-foreground'>{item.petName}</div>
                                 <div className='text-xs text-muted-foreground mt-1'>{item.service}</div>
                             </>
                           ) : (
                             <div className="flex flex-col gap-1">
                                <div className='font-medium flex items-center gap-2'>
-                                  <Users className="h-4 w-4 text-primary" /> 
-                                   <div className='flex items-center gap-2'>
-                                      <span>{item.petNames.length} {item.petNames.length > 1 ? 'pets' : 'pet'} no clubinho</span>
-                                      {item.bathCount && item.bathCount > 0 && (
-                                        <Badge variant="outline">{item.bathCount}º Banho</Badge>
-                                      )}
-                                   </div>
+                                  <Dog className="h-4 w-4 text-primary" /> 
+                                  <span>{item.petName}</span>
                                </div>
-                               <div className='text-sm text-muted-foreground'>
-                                {item.petNames.join(', ')}
+                               <div className='flex items-center gap-2'>
+                                  {item.bathCount && item.bathCount > 0 && (
+                                    <Badge variant="outline">{item.bathCount}º Banho</Badge>
+                                  )}
                                </div>
                             </div>
                           )}
