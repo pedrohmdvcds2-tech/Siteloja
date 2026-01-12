@@ -9,8 +9,6 @@ import {
   deleteDoc,
   query,
   addDoc,
-  where,
-  getDocs,
   writeBatch,
 } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
@@ -36,7 +34,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LogOut, Calendar as CalendarIcon, Trash2, Unlock, CalendarPlus, CalendarClock, Repeat, Dog } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon, Trash2, CalendarClock, Repeat } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import {
   Select,
@@ -47,7 +45,6 @@ import {
 } from '@/components/ui/select';
 import { cn, generateTimeSlots, getDayOfWeekName } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,6 +61,7 @@ import { recurringBlockSchema, type RecurringBlockValues } from '@/lib/definitio
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { BulkImporter } from '@/components/bulk-importer';
 
 
 export default function AdminPage() {
@@ -93,7 +91,6 @@ export default function AdminPage() {
     if (!firestore || !isAdmin) return null;
     return query(
       collection(firestore, 'appointments'),
-      where('blocked', '==', false)
     );
   }, [firestore, isAdmin]);
 
@@ -210,6 +207,14 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Error signing out: ', error);
     }
+  };
+  
+  const handleImportSuccess = () => {
+    toast({
+      title: 'Importação Concluída!',
+      description: 'Os horários do clubinho foram adicionados à agenda.',
+    });
+    refetchRecurring();
   };
 
   if (isUserLoading || isCheckingAdmin) {
@@ -413,6 +418,11 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
+        <BulkImporter
+          collectionPath="recurringBlocks"
+          onImportSuccess={handleImportSuccess}
+        />
+        
         <Card>
           <CardHeader>
             <CardTitle>Horários Fixos (Clubinho)</CardTitle>
@@ -519,6 +529,7 @@ export default function AdminPage() {
                 </TableHeader>
                 <TableBody>
                   {appointments
+                    .filter(apt => !apt.blocked) // Filtra para não mostrar horários bloqueados
                     .sort(
                       (a, b) =>
                         new Date(a.startTime).getTime() -
@@ -551,7 +562,7 @@ export default function AdminPage() {
                                   <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Esta ação não pode ser desfeita. Isso irá cancelar permanentemente o agendamento de {apt.clientName} para o pet {apt.petName}.
-                                  </AlertDialogDescription>
+                                  </Ã›Â›Ã›Â›lertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Voltar</AlertDialogCancel>
