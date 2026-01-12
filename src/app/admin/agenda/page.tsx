@@ -4,7 +4,7 @@ import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where } from 'firebase/firestore';
-import { format, startOfMonth, getWeek } from 'date-fns';
+import { format, getWeek, startOfDay as startOfDayFns, addDays, isBefore, isEqual } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
@@ -93,59 +93,54 @@ export default function AgendaPage() {
 
     // 2. Adicionar bloqueios recorrentes (clubinho)
     const selectedDayOfWeek = selectedDate.getDay();
-    
-    const dayRecurringBlocks = recurringBlocks.filter(block => {
+    const startOfSelectedDate = startOfDayFns(selectedDate);
+
+    recurringBlocks.forEach(block => {
         const blockDayOfWeek = parseInt(block.dayOfWeek, 10);
-        if (blockDayOfWeek !== selectedDayOfWeek) return false;
+        if (blockDayOfWeek !== selectedDayOfWeek) return;
 
-        if (block.frequency === 'weekly') return true;
-
-        if (block.frequency === 'bi-weekly') {
-            const selectedWeekOfYear = getWeek(selectedDate, { weekStartsOn: 1 });
-            const startWeekParity = block.startWeekParity ?? (block.cycleStartDate ? getWeek(new Date(block.cycleStartDate.seconds * 1000), { weekStartsOn: 1 }) % 2 : 0);
-            return selectedWeekOfYear % 2 === startWeekParity;
+        const cycleStartDate = block.cycleStartDate ? startOfDayFns(new Date(block.cycleStartDate.seconds * 1000)) : startOfDayFns(new Date());
+        
+        if (isBefore(startOfSelectedDate, cycleStartDate)) {
+            return;
         }
 
-        return false;
-    });
+        const startWeekParity = getWeek(cycleStartDate, { weekStartsOn: 1 }) % 2;
 
-    dayRecurringBlocks.forEach(block => {
-        const cycleStartDate = block.cycleStartDate ? new Date(block.cycleStartDate.seconds * 1000) : startOfMonth(selectedDate);
-        const startBathNumber = block.startBathNumber || 1;
-        
-        let occurrencesInMonth = 0;
-        
-        // Contar ocorrências desde o início do mês ou da data do ciclo, o que for posterior.
-        for (let d = 1; d <= selectedDate.getDate(); d++) {
-            const currentDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), d);
-            
-            // Pular dias antes do início do ciclo
-            if (currentDay < startOfMonth(cycleStartDate)) {
-                continue;
+        if (block.frequency === 'weekly') {
+            // Always valid if after start date
+        } else if (block.frequency === 'bi-weekly') {
+            const selectedWeekParity = getWeek(selectedDate, { weekStartsOn: 1 }) % 2;
+            if (selectedWeekParity !== startWeekParity) {
+                return; // Skip if week parity doesn't match
             }
-            
-            // Verificar se é o dia da semana correto
-            if (currentDay.getDay() !== parseInt(block.dayOfWeek, 10)) {
-                continue;
-            }
+        } else {
+            return; // Skip if no valid frequency
+        }
 
-            let isValidOccurrence = false;
-            if (block.frequency === 'weekly') {
-                isValidOccurrence = true;
-            } else if (block.frequency === 'bi-weekly') {
-                const currentWeekOfYear = getWeek(currentDay, { weekStartsOn: 1 });
-                const startWeekParity = block.startWeekParity ?? (cycleStartDate ? getWeek(cycleStartDate, { weekStartsOn: 1 }) % 2 : 0);
-                if (currentWeekOfYear % 2 === startWeekParity) {
-                    isValidOccurrence = true;
+        // Calculate occurrences since cycle start date
+        let totalOccurrences = 0;
+        let currentDate = cycleStartDate;
+
+        while (isBefore(currentDate, startOfSelectedDate) || isEqual(currentDate, startOfSelectedDate)) {
+             if (currentDate.getDay() === blockDayOfWeek) {
+                if (block.frequency === 'weekly') {
+                    totalOccurrences++;
+                } else if (block.frequency === 'bi-weekly') {
+                    const currentWeekParity = getWeek(currentDate, { weekStartsOn: 1 }) % 2;
+                    if (currentWeekParity === startWeekParity) {
+                        totalOccurrences++;
+                    }
                 }
             }
-            
-            if (isValidOccurrence) {
-                occurrencesInMonth++;
-            }
+            currentDate = addDays(currentDate, 1);
         }
-        
-        const bathCount = occurrencesInMonth > 0 ? (startBathNumber - 1) + occurrencesInMonth : undefined;
+
+        if (totalOccurrences === 0) return; // Should not happen if logic is correct but as a safeguard
+
+        const startBathNumber = block.startBathNumber || 1;
+        const bathCount = (((startBathNumber - 1) + (totalOccurrences - 1)) % 4) + 1;
+
 
         const [hours, minutes] = block.time.split(':').map(Number);
         const startTime = new Date(selectedDate);

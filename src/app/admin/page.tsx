@@ -83,8 +83,8 @@ export default function AdminPage() {
       petName: '',
       label: 'Clubinho',
       frequency: 'weekly',
-      cycleStartDate: undefined,
-      startBathNumber: undefined,
+      cycleStartDate: new Date(),
+      startBathNumber: 1,
     },
   });
 
@@ -140,16 +140,14 @@ export default function AdminPage() {
     try {
       const dataToSave: Partial<RecurringBlockValues> = { ...data };
       
-      // Calculate startWeekParity if cycleStartDate is provided
       if(data.cycleStartDate) {
         dataToSave.startWeekParity = getWeek(data.cycleStartDate, { weekStartsOn: 1 }) % 2;
       }
       
-      // Convert startBathNumber from string to number
       if (data.startBathNumber) {
           dataToSave.startBathNumber = Number(data.startBathNumber);
       } else {
-          delete dataToSave.startBathNumber; // Remove if empty
+          delete dataToSave.startBathNumber;
       }
 
 
@@ -165,8 +163,8 @@ export default function AdminPage() {
           petName: '',
           label: 'Clubinho',
           frequency: 'weekly',
-          cycleStartDate: undefined,
-          startBathNumber: undefined,
+          cycleStartDate: new Date(),
+          startBathNumber: 1,
       });
       refetchRecurring(); 
     } catch (e) {
@@ -426,7 +424,7 @@ export default function AdminPage() {
                         name="cycleStartDate"
                         render={({ field }) => (
                         <FormItem className="flex flex-col">
-                            <FormLabel>Data de Início do Ciclo (Opcional)</FormLabel>
+                            <FormLabel>Data de Início do Ciclo</FormLabel>
                             <Popover>
                                 <PopoverTrigger asChild>
                                 <FormControl>
@@ -465,9 +463,9 @@ export default function AdminPage() {
                         name="startBathNumber"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Nº do Banho Inicial (Opcional)</FormLabel>
+                                <FormLabel>Nº do Banho Inicial</FormLabel>
                                 <FormControl>
-                                    <Input type="number" placeholder="Ex: 1" {...field} onChange={event => field.onChange(+event.target.value)} />
+                                    <Input type="number" placeholder="Ex: 1" {...field} value={field.value || ''} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
