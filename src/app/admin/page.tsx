@@ -458,7 +458,7 @@ export default function AdminPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {format(toDate(block.startDate), 'dd/MM/yyyy')}
+                          {block.startDate ? format(toDate(block.startDate), 'dd/MM/yyyy') : 'N/A'}
                         </TableCell>
                         <TableCell className="text-right">
                           <AlertDialog>
