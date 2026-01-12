@@ -36,7 +36,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LogOut, Calendar as CalendarIcon, Trash2, Unlock, CalendarPlus, CalendarClock, Repeat } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon, Trash2, Unlock, CalendarPlus, CalendarClock, Repeat, Dog } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import {
   Select,
@@ -61,6 +61,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { recurringBlockSchema, type RecurringBlockValues } from '@/lib/definitions';
+import { Input } from '@/components/ui/input';
 
 
 export default function AdminPage() {
@@ -79,6 +80,7 @@ export default function AdminPage() {
     defaultValues: {
       dayOfWeek: '',
       time: '',
+      petName: '',
       label: 'Clubinho'
     },
   });
@@ -277,13 +279,13 @@ export default function AdminPage() {
           <CardHeader>
             <CardTitle>Criar Horário Fixo de Clubinho</CardTitle>
             <CardDescription>
-              Selecione um dia e horário para bloquear semanalmente na agenda.
+              Selecione um dia, horário e pet para bloquear semanalmente na agenda.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleBlockRecurringTime)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
                       name="dayOfWeek"
@@ -336,6 +338,19 @@ export default function AdminPage() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                        control={form.control}
+                        name="petName"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Nome do Pet</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Nome do pet do clubinho" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
                 <Button type="submit" disabled={isBlocking}>
                   <Repeat className='mr-2' />
@@ -365,6 +380,7 @@ export default function AdminPage() {
                   <TableRow>
                     <TableHead>Dia da Semana</TableHead>
                     <TableHead>Horário</TableHead>
+                    <TableHead>Pet</TableHead>
                     <TableHead>Rótulo</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -379,6 +395,9 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell>
                           {block.time}
+                        </TableCell>
+                        <TableCell>
+                          {block.petName}
                         </TableCell>
                          <TableCell>
                           <Badge variant="secondary">{block.label}</Badge>
@@ -395,7 +414,7 @@ export default function AdminPage() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Esta ação removerá o bloqueio semanal do clubinho. Novos agendamentos poderão ser feitos neste horário.
+                                  Esta ação removerá o bloqueio semanal do clubinho para {block.petName}. Novos agendamentos poderão ser feitos neste horário.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>

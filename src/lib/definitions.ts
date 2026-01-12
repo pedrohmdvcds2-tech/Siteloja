@@ -42,6 +42,7 @@ export const formSchema = z.object({
 export const recurringBlockSchema = z.object({
   dayOfWeek: z.string().min(1, "Por favor, selecione um dia da semana."),
   time: z.string().min(1, "Por favor, selecione um horário."),
+  petName: z.string().min(2, "O nome do pet deve ter pelo menos 2 caracteres."),
   label: z.string().default('Clubinho')
 });
 
