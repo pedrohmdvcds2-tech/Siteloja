@@ -13,7 +13,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Users } from 'lucide-react';
+
+interface UnifiedAppointment {
+    id: string;
+    startTime: string;
+    type: 'client' | 'recurring';
+    clientName?: string;
+    petNames: string[];
+    service?: string;
+    label?: string;
+}
 
 export default function AgendaPage() {
   const { user, isUserLoading } = useUser();
@@ -26,11 +36,26 @@ export default function AgendaPage() {
   const ADMIN_EMAILS = ['admin@princesaspetshop.com'];
 
   const appointmentsQuery = useMemoFirebase(() => {
-    if (!firestore || !isAdmin) return null;
-    return query(collection(firestore, 'appointments'));
+    if (!firestore || !isAdmin || !selectedDate) return null;
+    const startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(selectedDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return query(
+        collection(firestore, 'appointments'),
+        where('startTime', '>=', startOfDay.toISOString()),
+        where('startTime', '<=', endOfDay.toISOString())
+    );
+  }, [firestore, isAdmin, selectedDate]);
+
+  const recurringBlocksQuery = useMemoFirebase(() => {
+      if (!firestore || !isAdmin) return null;
+      return collection(firestore, 'recurringBlocks');
   }, [firestore, isAdmin]);
 
-  const { data: allAppointments, isLoading: isLoadingAppointments, error } = useCollection(appointmentsQuery);
+  const { data: dayAppointments, isLoading: isLoadingAppointments, error } = useCollection(appointmentsQuery);
+  const { data: recurringBlocks, isLoading: isLoadingRecurring } = useCollection(recurringBlocksQuery);
 
   useEffect(() => {
     if (!isUserLoading) {
@@ -42,29 +67,80 @@ export default function AgendaPage() {
       }
     }
   }, [user, isUserLoading, router]);
-
+  
   const appointmentsByDay = useMemo(() => {
-    if (!allAppointments) return {};
-    return allAppointments.reduce((acc, apt) => {
-      const date = format(new Date(apt.startTime), 'yyyy-MM-dd');
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(apt);
-      return acc;
-    }, {} as Record<string, typeof allAppointments>);
-  }, [allAppointments]);
+    if (!recurringBlocks) return {};
+    const blocksByDay: Record<string, any[]> = {};
+    recurringBlocks.forEach(block => {
+        const day = block.dayOfWeek;
+        if (!blocksByDay[day]) {
+            blocksByDay[day] = [];
+        }
+        blocksByDay[day].push(block);
+    });
+    return blocksByDay;
+  }, [recurringBlocks]);
 
   const highlightedDays = useMemo(() => {
-    return Object.keys(appointmentsByDay).map(dateStr => new Date(dateStr + 'T00:00:00'));
-  }, [appointmentsByDay]);
+    // This part can be improved to show all future dates with recurring blocks
+    return []; // For now, we rely on existing appointments for highlights
+  }, []);
 
-  const selectedDayAppointments = useMemo(() => {
-    if (!selectedDate || !allAppointments) return [];
-    return allAppointments
-      .filter(apt => isSameDay(new Date(apt.startTime), selectedDate))
-      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-  }, [selectedDate, allAppointments]);
+  const selectedDaySchedule = useMemo(() => {
+    if (!selectedDate) return [];
+
+    const schedule: UnifiedAppointment[] = [];
+
+    // 1. Adicionar agendamentos de clientes
+    if (dayAppointments) {
+      dayAppointments.forEach(apt => {
+        if(apt.blocked) {
+            // Ignorar bloqueios manuais antigos se existirem
+            return;
+        }
+        schedule.push({
+          id: apt.id,
+          startTime: apt.startTime,
+          type: 'client',
+          clientName: apt.clientName,
+          petNames: [apt.petName],
+          service: apt.bathType,
+        });
+      });
+    }
+
+    // 2. Adicionar bloqueios recorrentes (clubinho)
+    if (recurringBlocks) {
+        const dayOfWeek = selectedDate.getDay().toString(); // Domingo = 0, ...
+        const dayRecurringBlocks = recurringBlocks.filter(b => b.dayOfWeek === dayOfWeek);
+
+        const recurringGroupedByTime: Record<string, any[]> = {};
+        dayRecurringBlocks.forEach(block => {
+            if(!recurringGroupedByTime[block.time]) {
+                recurringGroupedByTime[block.time] = [];
+            }
+            recurringGroupedByTime[block.time].push(block);
+        });
+        
+        Object.entries(recurringGroupedByTime).forEach(([time, blocks]) => {
+            const [hours, minutes] = time.split(':').map(Number);
+            const startTime = new Date(selectedDate);
+            startTime.setHours(hours, minutes, 0, 0);
+
+            schedule.push({
+                id: `recurring-${time}`,
+                startTime: startTime.toISOString(),
+                type: 'recurring',
+                petNames: blocks.map(b => b.petName),
+                label: blocks[0].label, // Assume all have same label
+            });
+        });
+    }
+
+    // 3. Ordenar o cronograma final
+    return schedule.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  }, [selectedDate, dayAppointments, recurringBlocks]);
+
 
   if (isUserLoading || isCheckingAdmin) {
     return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
@@ -87,6 +163,8 @@ export default function AgendaPage() {
       </div>
     );
   }
+  
+  const isLoading = isLoadingAppointments || isLoadingRecurring;
 
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-8">
@@ -123,46 +201,59 @@ export default function AgendaPage() {
           <Card>
             <CardHeader>
               <CardTitle>
-                Agendamentos para {selectedDate ? format(selectedDate, 'PPP', { locale: ptBR }) : '...'}
+                Agenda para {selectedDate ? format(selectedDate, 'PPP', { locale: ptBR }) : '...'}
               </CardTitle>
               <CardDescription>
-                Lista de todos os agendamentos e bloqueios para o dia selecionado.
+                Lista de todos os agendamentos e horários de clubinho para o dia selecionado.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoadingAppointments && <p>Carregando agendamentos...</p>}
+              {isLoading && <p>Carregando agendamentos...</p>}
               {error && <p className="text-red-500">{error.message}</p>}
-              {!isLoadingAppointments && selectedDayAppointments.length === 0 && (
+              {!isLoading && selectedDaySchedule.length === 0 && (
                 <div className="text-center text-muted-foreground py-8">
                   <p>Nenhum agendamento para este dia.</p>
                 </div>
               )}
-              {selectedDayAppointments.length > 0 && (
+              {selectedDaySchedule.length > 0 && (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Horário</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Detalhes</TableHead>
-                      <TableHead>Serviço</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedDayAppointments.map(apt => (
-                      <TableRow key={apt.id}>
-                        <TableCell className="font-medium">{format(new Date(apt.startTime), 'HH:mm')}</TableCell>
+                    {selectedDaySchedule.map(item => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{format(new Date(item.startTime), 'HH:mm')}</TableCell>
                         <TableCell>
-                          {apt.blocked ? (
-                            <Badge variant="destructive">Bloqueado</Badge>
+                          {item.type === 'recurring' ? (
+                            <Badge variant="destructive">{item.label || 'Clubinho'}</Badge>
                           ) : (
                             <Badge variant="secondary">Cliente</Badge>
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className='font-medium'>{apt.clientName}</div>
-                          <div className='text-sm text-muted-foreground'>{apt.petName}</div>
+                          {item.type === 'client' ? (
+                            <>
+                                <div className='font-medium'>{item.clientName}</div>
+                                <div className='text-sm text-muted-foreground'>{item.petNames[0]}</div>
+                                <div className='text-xs text-muted-foreground mt-1'>{item.service}</div>
+                            </>
+                          ) : (
+                            <div className="flex flex-col gap-1">
+                               <div className='font-medium flex items-center gap-2'>
+                                  <Users className="h-4 w-4 text-primary" /> 
+                                  <span>{item.petNames.length} pets no clubinho</span>
+                               </div>
+                               <div className='text-sm text-muted-foreground'>
+                                {item.petNames.join(', ')}
+                               </div>
+                            </div>
+                          )}
                         </TableCell>
-                        <TableCell>{apt.bathType}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -175,5 +266,3 @@ export default function AgendaPage() {
     </div>
   );
 }
-
-    
