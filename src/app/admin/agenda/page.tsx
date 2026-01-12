@@ -93,8 +93,7 @@ export default function AgendaPage() {
 
     // 2. Adicionar bloqueios recorrentes (clubinho)
     const selectedDayOfWeek = selectedDate.getDay();
-    const selectedWeekOfYear = getWeek(selectedDate, { weekStartsOn: 1 });
-
+    
     const dayRecurringBlocks = recurringBlocks.filter(block => {
         const blockDayOfWeek = parseInt(block.dayOfWeek, 10);
         if (blockDayOfWeek !== selectedDayOfWeek) return false;
@@ -102,6 +101,7 @@ export default function AgendaPage() {
         if (block.frequency === 'weekly') return true;
 
         if (block.frequency === 'bi-weekly') {
+            const selectedWeekOfYear = getWeek(selectedDate, { weekStartsOn: 1 });
             const startWeekParity = block.startWeekParity ?? (block.cycleStartDate ? getWeek(new Date(block.cycleStartDate.seconds * 1000), { weekStartsOn: 1 }) % 2 : 0);
             return selectedWeekOfYear % 2 === startWeekParity;
         }
@@ -110,17 +110,17 @@ export default function AgendaPage() {
     });
 
     dayRecurringBlocks.forEach(block => {
-        const cycleStartDate = block.cycleStartDate ? new Date(block.cycleStartDate.seconds * 1000) : null;
+        const cycleStartDate = block.cycleStartDate ? new Date(block.cycleStartDate.seconds * 1000) : startOfMonth(selectedDate);
         const startBathNumber = block.startBathNumber || 1;
-        const firstDayOfMonth = startOfMonth(selectedDate);
+        
         let occurrencesInMonth = 0;
         
         // Contar ocorrências desde o início do mês ou da data do ciclo, o que for posterior.
         for (let d = 1; d <= selectedDate.getDate(); d++) {
-            const currentDay = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth(), d);
+            const currentDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), d);
             
-            // Pular dias antes do início do ciclo, se houver
-            if (cycleStartDate && currentDay < cycleStartDate) {
+            // Pular dias antes do início do ciclo
+            if (currentDay < startOfMonth(cycleStartDate)) {
                 continue;
             }
             
