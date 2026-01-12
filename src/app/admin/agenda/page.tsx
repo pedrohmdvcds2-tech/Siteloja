@@ -70,93 +70,91 @@ export default function AgendaPage() {
   }, [user, isUserLoading, router]);
   
   const selectedDaySchedule = useMemo(() => {
-    if (!selectedDate) return [];
+    if (!selectedDate || !recurringBlocks) return [];
 
     const schedule: UnifiedAppointment[] = [];
 
     // 1. Adicionar agendamentos de clientes
     if (dayAppointments) {
-      dayAppointments.forEach(apt => {
-        if(apt.blocked) {
-            // Ignorar bloqueios manuais antigos se existirem
-            return;
-        }
-        schedule.push({
-          id: apt.id,
-          startTime: apt.startTime,
-          type: 'client',
-          clientName: apt.clientName,
-          petName: apt.petName,
-          service: apt.bathType,
-        });
-      });
-    }
-
-    // 2. Adicionar bloqueios recorrentes (clubinho)
-    if (recurringBlocks) {
-        const selectedDayOfWeek = selectedDate.getDay();
-        const weekOfYear = getWeek(selectedDate, { weekStartsOn: 1 });
-
-        const dayRecurringBlocks = recurringBlocks.filter(block => {
-            if (parseInt(block.dayOfWeek, 10) !== selectedDayOfWeek) {
-                return false;
+        dayAppointments.forEach(apt => {
+            if(apt.blocked) {
+                return;
             }
-
-            if (block.frequency === 'weekly') {
-                return true;
-            }
-
-            if (block.frequency === 'bi-weekly') {
-                return weekOfYear % 2 === 0;
-            }
-
-            return false;
-        });
-        
-        dayRecurringBlocks.forEach(block => {
-            // Calcula o número do banho no mês
-            const firstDayOfMonth = startOfMonth(selectedDate);
-            let bathCount = 0;
-            for (let i = 0; i < selectedDate.getDate(); i++) {
-                const currentDay = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth(), i + 1);
-                
-                if (parseInt(block.dayOfWeek, 10) !== currentDay.getDay()) {
-                    continue;
-                }
-
-                let isValidOccurrence = false;
-                if (block.frequency === 'weekly') {
-                    isValidOccurrence = true;
-                } else if (block.frequency === 'bi-weekly') {
-                    const currentWeekOfYear = getWeek(currentDay, { weekStartsOn: 1 });
-                    if (currentWeekOfYear % 2 === 0) {
-                        isValidOccurrence = true;
-                    }
-                }
-                
-                if(isValidOccurrence) {
-                    bathCount++;
-                }
-            }
-            
-            const [hours, minutes] = block.time.split(':').map(Number);
-            const startTime = new Date(selectedDate);
-            startTime.setHours(hours, minutes, 0, 0);
-
             schedule.push({
-                id: `${block.id}-${selectedDate.toISOString()}`, // ID único para a ocorrência
-                startTime: startTime.toISOString(),
-                type: 'recurring',
-                petName: block.petName,
-                label: block.label,
-                bathCount: bathCount > 0 ? bathCount : undefined
+                id: apt.id,
+                startTime: apt.startTime,
+                type: 'client',
+                clientName: apt.clientName,
+                petName: apt.petName,
+                service: apt.bathType,
             });
         });
     }
 
+    // 2. Adicionar bloqueios recorrentes (clubinho)
+    const selectedDayOfWeek = selectedDate.getDay();
+    const weekOfYear = getWeek(selectedDate, { weekStartsOn: 1 });
+
+    const dayRecurringBlocks = recurringBlocks.filter(block => {
+        if (parseInt(block.dayOfWeek, 10) !== selectedDayOfWeek) {
+            return false;
+        }
+
+        if (block.frequency === 'weekly') {
+            return true;
+        }
+
+        if (block.frequency === 'bi-weekly') {
+            return weekOfYear % 2 === 0;
+        }
+
+        return false;
+    });
+
+    dayRecurringBlocks.forEach(block => {
+        // Calcula o número do banho no mês
+        const firstDayOfMonth = startOfMonth(selectedDate);
+        let bathCount = 0;
+        // Loop até o dia selecionado (inclusive)
+        for (let i = 1; i <= selectedDate.getDate(); i++) {
+            const currentDay = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth(), i);
+            
+            if (parseInt(block.dayOfWeek, 10) !== currentDay.getDay()) {
+                continue;
+            }
+
+            let isValidOccurrence = false;
+            if (block.frequency === 'weekly') {
+                isValidOccurrence = true;
+            } else if (block.frequency === 'bi-weekly') {
+                const currentWeekOfYear = getWeek(currentDay, { weekStartsOn: 1 });
+                if (currentWeekOfYear % 2 === 0) {
+                    isValidOccurrence = true;
+                }
+            }
+            
+            if(isValidOccurrence) {
+                bathCount++;
+            }
+        }
+        
+        const [hours, minutes] = block.time.split(':').map(Number);
+        const startTime = new Date(selectedDate);
+        startTime.setHours(hours, minutes, 0, 0);
+
+        schedule.push({
+            id: `${block.id}-${block.petName}-${selectedDate.toISOString()}`, // ID único para a ocorrência
+            startTime: startTime.toISOString(),
+            type: 'recurring',
+            petName: block.petName,
+            label: block.label,
+            bathCount: bathCount > 0 ? bathCount : undefined
+        });
+    });
+
     // 3. Ordenar o cronograma final
     return schedule.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-  }, [selectedDate, dayAppointments, recurringBlocks]);
+}, [selectedDate, dayAppointments, recurringBlocks]);
 
 
   if (isUserLoading || isCheckingAdmin) {
