@@ -3,8 +3,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query } from 'firebase/firestore';
-import { format, isSameDay } from 'date-fns';
+import { collection, query, where } from 'firebase/firestore';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
@@ -68,24 +68,6 @@ export default function AgendaPage() {
     }
   }, [user, isUserLoading, router]);
   
-  const appointmentsByDay = useMemo(() => {
-    if (!recurringBlocks) return {};
-    const blocksByDay: Record<string, any[]> = {};
-    recurringBlocks.forEach(block => {
-        const day = block.dayOfWeek;
-        if (!blocksByDay[day]) {
-            blocksByDay[day] = [];
-        }
-        blocksByDay[day].push(block);
-    });
-    return blocksByDay;
-  }, [recurringBlocks]);
-
-  const highlightedDays = useMemo(() => {
-    // This part can be improved to show all future dates with recurring blocks
-    return []; // For now, we rely on existing appointments for highlights
-  }, []);
-
   const selectedDaySchedule = useMemo(() => {
     if (!selectedDate) return [];
 
@@ -189,10 +171,6 @@ export default function AgendaPage() {
                         onSelect={setSelectedDate}
                         className="w-full"
                         locale={ptBR}
-                        modifiers={{ highlighted: highlightedDays }}
-                        modifiersClassNames={{
-                            highlighted: 'bg-primary/20 text-primary-foreground rounded-full',
-                        }}
                     />
                 </CardContent>
             </Card>
