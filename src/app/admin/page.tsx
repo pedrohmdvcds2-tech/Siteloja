@@ -136,23 +136,6 @@ export default function AdminPage() {
     setIsBlocking(true);
 
     try {
-      // Check if this block already exists
-      const q = query(
-        collection(firestore, "recurringBlocks"),
-        where("dayOfWeek", "==", data.dayOfWeek),
-        where("time", "==", data.time)
-      );
-      const existing = await getDocs(q);
-      if (!existing.empty) {
-        toast({
-          variant: "destructive",
-          title: "Horário Duplicado",
-          description: "Este horário recorrente já está bloqueado.",
-        });
-        setIsBlocking(false);
-        return;
-      }
-
       await addDoc(collection(firestore, 'recurringBlocks'), data);
 
       toast({
