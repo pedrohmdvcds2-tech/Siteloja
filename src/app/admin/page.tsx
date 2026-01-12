@@ -83,7 +83,6 @@ export default function AdminPage() {
       petName: '',
       label: 'Clubinho',
       frequency: 'weekly',
-      startDate: new Date(),
     },
   });
 
@@ -137,11 +136,7 @@ export default function AdminPage() {
     setIsBlocking(true);
 
     try {
-       const newBlock = {
-        ...data,
-        startDate: data.startDate.toISOString(), // Convert Date to ISO string
-      };
-      await addDoc(collection(firestore, 'recurringBlocks'), newBlock);
+      await addDoc(collection(firestore, 'recurringBlocks'), data);
 
       toast({
         title: 'Sucesso!',
@@ -275,13 +270,13 @@ export default function AdminPage() {
           <CardHeader>
             <CardTitle>Criar Horário Fixo de Clubinho</CardTitle>
             <CardDescription>
-              Selecione dia, horário, pet, frequência e data de início para bloquear na agenda.
+              Selecione dia, horário, pet e frequência para bloquear na agenda.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleBlockRecurringTime)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <FormField
                       control={form.control}
                       name="dayOfWeek"
@@ -368,46 +363,6 @@ export default function AdminPage() {
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="startDate"
-                      render={({ field }) => (
-                        <FormItem className='flex flex-col pt-2'>
-                          <FormLabel>Data de Início</FormLabel>
-                           <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP", { locale: ptBR })
-                                  ) : (
-                                    <span>Escolha uma data</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                locale={ptBR}
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                 </div>
                 <Button type="submit" disabled={isBlocking}>
                   <Repeat className='mr-2' />
@@ -444,7 +399,6 @@ export default function AdminPage() {
                     <TableHead>Horário</TableHead>
                     <TableHead>Pet</TableHead>
                     <TableHead>Frequência</TableHead>
-                    <TableHead>Início</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -466,9 +420,6 @@ export default function AdminPage() {
                           <Badge variant={block.frequency === 'weekly' ? 'secondary' : 'outline'}>
                             {block.frequency === 'weekly' ? 'Semanal' : 'Quinzenal'}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {block.startDate ? format(toDate(block.startDate), 'dd/MM/yyyy') : 'N/A'}
                         </TableCell>
                         <TableCell className="text-right">
                           <AlertDialog>
@@ -562,7 +513,7 @@ export default function AdminPage() {
                                   <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Esta ação não pode ser desfeita. Isso irá cancelar permanentemente o agendamento de {apt.clientName} para o pet {apt.petName}.
-                                  </Ã›Â›Ã›Â›lertDialogDescription>
+                                  </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Voltar</AlertDialogCancel>

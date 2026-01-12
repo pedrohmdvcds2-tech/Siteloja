@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState, useEffect, useMemo } from "react";
-import { format, differenceInCalendarDays, toDate } from "date-fns";
+import { format, getWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   User,
@@ -147,6 +147,7 @@ export function SchedulingForm() {
     // Adiciona bloqueios recorrentes (clubinho)
     if (recurringBlocks) {
       const selectedDayOfWeek = selectedDate.getDay();
+      const weekOfYear = getWeek(selectedDate, { weekStartsOn: 1 });
       
       recurringBlocks.forEach((block) => {
         // Checagem primária: o dia da semana bate?
@@ -154,21 +155,13 @@ export function SchedulingForm() {
           return;
         }
 
-        const blockStartDate = toDate(block.startDate);
-        const dayDifference = differenceInCalendarDays(selectedDate, blockStartDate);
-
-        // Se for antes da data de início, ignora
-        if (dayDifference < 0) {
-          return;
-        }
-
         // Se for semanal, adiciona
         if (block.frequency === 'weekly') {
           bookedOrBlockedTimes.add(block.time);
         } 
-        // Se for quinzenal, checa se a diferença de dias é múltiplo de 14
+        // Se for quinzenal, checa se a semana é par
         else if (block.frequency === 'bi-weekly') {
-          if (dayDifference % 14 === 0) {
+          if (weekOfYear % 2 === 0) {
             bookedOrBlockedTimes.add(block.time);
           }
         }

@@ -4,7 +4,7 @@ import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where } from 'firebase/firestore';
-import { format, differenceInCalendarDays, toDate, getDaysInMonth, startOfMonth } from 'date-fns';
+import { format, startOfMonth, getWeek, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
@@ -95,15 +95,10 @@ export default function AgendaPage() {
     // 2. Adicionar bloqueios recorrentes (clubinho)
     if (recurringBlocks) {
         const selectedDayOfWeek = selectedDate.getDay();
+        const weekOfYear = getWeek(selectedDate, { weekStartsOn: 1 });
+
         const dayRecurringBlocks = recurringBlocks.filter(block => {
             if (parseInt(block.dayOfWeek, 10) !== selectedDayOfWeek) {
-                return false;
-            }
-
-            const blockStartDate = toDate(block.startDate);
-            const dayDifference = differenceInCalendarDays(selectedDate, blockStartDate);
-
-            if (dayDifference < 0) {
                 return false;
             }
 
@@ -112,9 +107,7 @@ export default function AgendaPage() {
             }
 
             if (block.frequency === 'bi-weekly') {
-                // Checa se a diferença de dias desde o início é múltiplo de 14
-                const weekDifference = Math.floor(dayDifference / 7);
-                return weekDifference % 2 === 0;
+                return weekOfYear % 2 === 0;
             }
 
             return false;
@@ -132,19 +125,12 @@ export default function AgendaPage() {
                     continue;
                 }
 
-                const blockStartDate = toDate(block.startDate);
-                const dayDifference = differenceInCalendarDays(currentDay, blockStartDate);
-
-                if (dayDifference < 0) {
-                    continue;
-                }
-
                 let isValidOccurrence = false;
                 if (block.frequency === 'weekly') {
                     isValidOccurrence = true;
                 } else if (block.frequency === 'bi-weekly') {
-                    const weekDifference = Math.floor(dayDifference / 7);
-                    if (weekDifference % 2 === 0) {
+                    const currentWeekOfYear = getWeek(currentDay, { weekStartsOn: 1 });
+                    if (currentWeekOfYear % 2 === 0) {
                         isValidOccurrence = true;
                     }
                 }

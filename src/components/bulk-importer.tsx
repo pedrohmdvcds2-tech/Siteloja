@@ -65,7 +65,7 @@ export function BulkImporter({ collectionPath, onImportSuccess }: BulkImporterPr
 
         try {
           const batch = writeBatch(firestore);
-          const requiredHeaders = ['dayOfWeek', 'time', 'petName', 'frequency', 'startDate'];
+          const requiredHeaders = ['dayOfWeek', 'time', 'petName', 'frequency'];
           const fileHeaders = results.meta.fields || [];
           
           const hasAllHeaders = requiredHeaders.every(h => fileHeaders.includes(h));
@@ -79,7 +79,6 @@ export function BulkImporter({ collectionPath, onImportSuccess }: BulkImporterPr
             const dayOfWeekRaw = (row.dayOfWeek || '').toLowerCase().trim();
             const frequencyRaw = (row.frequency || '').toLowerCase().trim();
             const timeRaw = (row.time || '').trim();
-            const startDateRaw = (row.startDate || '').trim();
             
             const dayOfWeek = dayOfWeekMap[dayOfWeekRaw];
             const frequency = frequencyMap[frequencyRaw];
@@ -93,25 +92,11 @@ export function BulkImporter({ collectionPath, onImportSuccess }: BulkImporterPr
                 continue;
             }
 
-            // Tenta parsear a data, aceitando formatos dd/MM/yyyy ou yyyy-MM-dd
-            let startDate: Date;
-            if (startDateRaw.includes('/')) {
-                startDate = parse(startDateRaw, 'dd/MM/yyyy', new Date());
-            } else {
-                startDate = parse(startDateRaw, 'yyyy-MM-dd', new Date());
-            }
-
-            if (isNaN(startDate.getTime())) {
-                 console.warn(`Data de início inválida na linha: ${JSON.stringify(row)}`);
-                 continue; // Pula a linha se a data for inválida
-            }
-
             const dataToValidate = {
               dayOfWeek,
               time: timeRaw,
               petName: row.petName,
               frequency,
-              startDate,
               label: 'Clubinho' // Valor padrão
             };
             
@@ -119,10 +104,7 @@ export function BulkImporter({ collectionPath, onImportSuccess }: BulkImporterPr
 
             if (validation.success) {
               const docRef = collection(firestore, collectionPath).doc();
-              batch.set(docRef, {
-                ...validation.data,
-                startDate: validation.data.startDate.toISOString() // Converte para string ISO no Firestore
-              });
+              batch.set(docRef, validation.data);
             } else {
               console.warn("Linha inválida, pulando:", validation.error.flatten().fieldErrors);
             }
@@ -191,13 +173,12 @@ export function BulkImporter({ collectionPath, onImportSuccess }: BulkImporterPr
             <FileText className="h-4 w-4" />
             <AlertTitle>Instruções para o Arquivo CSV</AlertTitle>
             <AlertDescription>
-                <p className='mb-2'>O arquivo deve ter as colunas: <strong>dayOfWeek, time, petName, frequency, startDate</strong>.</p>
+                <p className='mb-2'>O arquivo deve ter as colunas: <strong>dayOfWeek, time, petName, frequency</strong>.</p>
                 <ul className="list-disc list-inside text-xs space-y-1">
                     <li><strong>dayOfWeek:</strong> Use 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'.</li>
                     <li><strong>time:</strong> Use o formato HH:mm (ex: 14:00).</li>
                     <li><strong>petName:</strong> O nome do pet.</li>
                     <li><strong>frequency:</strong> Use 'semanal' ou 'quinzenal'.</li>
-                    <li><strong>startDate:</strong> Use o formato dd/MM/yyyy (ex: 29/07/2024).</li>
                 </ul>
             </AlertDescription>
         </Alert>

@@ -157,11 +157,6 @@
           "type": "string",
           "enum": ["weekly", "bi-weekly"],
           "description": "The frequency of the recurrence."
-        },
-        "startDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The start date for the recurring block."
         }
       },
       "required": [
@@ -170,8 +165,7 @@
         "time",
         "petName",
         "label",
-        "frequency",
-        "startDate"
+        "frequency"
       ]
     }
   },
@@ -236,3 +230,5 @@
     ]
   }
 }
+
+    
