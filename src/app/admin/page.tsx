@@ -13,6 +13,9 @@ import {
   getDocs,
   writeBatch,
 } from 'firebase/firestore';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -33,14 +36,8 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LogOut, Calendar as CalendarIcon, Trash2, Unlock, CalendarPlus, CalendarClock } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon, Trash2, Unlock, CalendarPlus, CalendarClock, Repeat } from 'lucide-react';
 import { signOut } from 'firebase/auth';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -48,7 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn, generateTimeSlots } from '@/lib/utils';
+import { cn, generateTimeSlots, getDayOfWeekName } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import {
@@ -62,12 +59,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { recurringBlockSchema, type RecurringBlockValues } from '@/lib/definitions';
 
 
 export default function AdminPage() {
@@ -77,13 +70,18 @@ export default function AdminPage() {
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
-
-  // State for the new blocking form
-  const [blockDate, setBlockDate] = useState<Date | undefined>();
-  const [timeSlotsToBlock, setTimeSlotsToBlock] = useState<string[]>([]);
   const [isBlocking, setIsBlocking] = useState(false);
 
   const ADMIN_EMAILS = ['admin@princesaspetshop.com'];
+
+  const form = useForm<RecurringBlockValues>({
+    resolver: zodResolver(recurringBlockSchema),
+    defaultValues: {
+      dayOfWeek: '',
+      time: '',
+      label: 'Clubinho'
+    },
+  });
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
@@ -93,27 +91,24 @@ export default function AdminPage() {
     );
   }, [firestore, isAdmin]);
 
-  const blockedAppointmentsQuery = useMemoFirebase(() => {
+  const recurringBlocksQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
-    return query(
-      collection(firestore, 'appointments'),
-      where('blocked', '==', true)
-    );
+    return collection(firestore, 'recurringBlocks');
   }, [firestore, isAdmin]);
 
   const {
     data: appointments,
     isLoading: isLoadingAppointments,
     error,
-    refetch,
   } = useCollection(appointmentsQuery);
 
   const {
-    data: blockedAppointments,
-    isLoading: isLoadingBlocked,
-    error: blockedError,
-    refetch: refetchBlocked,
-  } = useCollection(blockedAppointmentsQuery);
+    data: recurringBlocks,
+    isLoading: isLoadingRecurring,
+    error: recurringError,
+    refetch: refetchRecurring,
+  } = useCollection(recurringBlocksQuery);
+
 
   useEffect(() => {
     if (!isUserLoading) {
@@ -126,62 +121,56 @@ export default function AdminPage() {
     }
   }, [user, isUserLoading, router]);
 
-  const handleBlockTimes = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!firestore || !user || !blockDate || timeSlotsToBlock.length === 0) {
+
+  const handleBlockRecurringTime = async (data: RecurringBlockValues) => {
+    if (!firestore || !user ) {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Por favor, selecione uma data e pelo menos um horário.',
+        description: 'Usuário não autenticado.',
       });
       return;
     }
     setIsBlocking(true);
 
     try {
-      const batch = writeBatch(firestore);
-
-      for (const timeSlot of timeSlotsToBlock) {
-        const [hours, minutes] = timeSlot.split(':').map(Number);
-        const startTime = new Date(blockDate);
-        startTime.setHours(hours, minutes, 0, 0);
-
-        const newBlockedAppointment = {
-          userId: user.uid,
-          clientName: 'Horário Bloqueado',
-          petName: 'Admin',
-          startTime: startTime.toISOString(),
-          endTime: new Date(startTime.getTime() + 30 * 60000).toISOString(),
-          bathType: 'N/A',
-          totalPrice: 0,
-          blocked: true,
-          vaccinationCardUrl: '',
-        };
-        
-        const docRef = doc(collection(firestore, 'appointments'));
-        batch.set(docRef, newBlockedAppointment);
+      // Check if this block already exists
+      const q = query(
+        collection(firestore, "recurringBlocks"),
+        where("dayOfWeek", "==", data.dayOfWeek),
+        where("time", "==", data.time)
+      );
+      const existing = await getDocs(q);
+      if (!existing.empty) {
+        toast({
+          variant: "destructive",
+          title: "Horário Duplicado",
+          description: "Este horário recorrente já está bloqueado.",
+        });
+        setIsBlocking(false);
+        return;
       }
 
-      await batch.commit();
+      await addDoc(collection(firestore, 'recurringBlocks'), data);
 
       toast({
         title: 'Sucesso!',
-        description: 'Os horários foram bloqueados.',
+        description: 'O horário do clubinho foi salvo e será bloqueado toda semana.',
       });
-      setBlockDate(undefined);
-      setTimeSlotsToBlock([]);
-      refetchBlocked(); 
+      form.reset();
+      refetchRecurring(); 
     } catch (e) {
-      console.error('Error blocking time slots: ', e);
+      console.error('Error creating recurring block: ', e);
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Não foi possível bloquear os horários.',
+        description: 'Não foi possível salvar o bloqueio recorrente.',
       });
     } finally {
       setIsBlocking(false);
     }
   };
+
 
   const handleCancelAppointment = async (appointmentId: string) => {
     if (!firestore) return;
@@ -191,7 +180,6 @@ export default function AdminPage() {
         title: 'Sucesso!',
         description: 'O agendamento foi cancelado.',
       });
-      // refetch() is handled by useCollection's real-time listener
     } catch (e: any) {
       console.error('Error canceling appointment: ', e);
       toast({
@@ -202,21 +190,21 @@ export default function AdminPage() {
     }
   };
   
-  const handleUnblockAppointment = async (appointmentId: string) => {
+  const handleRemoveRecurringBlock = async (blockId: string) => {
     if (!firestore) return;
     try {
-      await deleteDoc(doc(firestore, 'appointments', appointmentId));
+      await deleteDoc(doc(firestore, 'recurringBlocks', blockId));
       toast({
         title: 'Sucesso!',
-        description: 'O horário foi desbloqueado.',
+        description: 'O bloqueio recorrente foi removido.',
       });
-      refetchBlocked();
+      refetchRecurring();
     } catch (e) {
-      console.error('Error unblocking appointment: ', e);
+      console.error('Error removing recurring block: ', e);
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Não foi possível desbloquear o horário.',
+        description: 'Não foi possível remover o bloqueio.',
       });
     }
   };
@@ -261,7 +249,6 @@ export default function AdminPage() {
   }
 
   return (
-    <TooltipProvider>
       <div className="container mx-auto p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -288,166 +275,133 @@ export default function AdminPage() {
       
         <Card>
           <CardHeader>
-            <CardTitle>Bloquear Horários</CardTitle>
+            <CardTitle>Criar Horário Fixo de Clubinho</CardTitle>
+            <CardDescription>
+              Selecione um dia e horário para bloquear semanalmente na agenda.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleBlockTimes} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label>Data</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={'outline'}
-                        className={cn(
-                          'pl-3 text-left font-normal',
-                          !blockDate && 'text-muted-foreground'
-                        )}
-                      >
-                        {blockDate ? (
-                          format(blockDate, 'PPP', { locale: ptBR })
-                        ) : (
-                          <span>Escolha uma data</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        locale={ptBR}
-                        mode="single"
-                        selected={blockDate}
-                        onSelect={setBlockDate}
-                        disabled={(date) =>
-                          date < new Date(new Date().setHours(0, 0, 0, 0)) ||
-                          date.getDay() === 0
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleBlockRecurringTime)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="dayOfWeek"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dia da Semana</FormLabel>
+                           <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione um dia" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="1">Segunda-feira</SelectItem>
+                              <SelectItem value="2">Terça-feira</SelectItem>
+                              <SelectItem value="3">Quarta-feira</SelectItem>
+                              <SelectItem value="4">Quinta-feira</SelectItem>
+                              <SelectItem value="5">Sexta-feira</SelectItem>
+                              <SelectItem value="6">Sábado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="time"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Horário</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione um horário" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {generateTimeSlots().map((time) => (
+                                <SelectItem
+                                  key={time}
+                                  value={time}
+                                >
+                                  {time}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Label>Horários para bloquear</Label>
-                  <Select
-                    value={undefined} // Not a controlled component for selection
-                    onValueChange={(value) => {
-                      if (value && !timeSlotsToBlock.includes(value)) {
-                        setTimeSlotsToBlock((prev) => [...prev, value].sort());
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Adicionar um horário para bloquear" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {generateTimeSlots().map((time) => (
-                        <SelectItem
-                          key={time}
-                          value={time}
-                          disabled={timeSlotsToBlock.includes(time)}
-                        >
-                          {time}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              {timeSlotsToBlock.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Horários selecionados:</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {timeSlotsToBlock.map((time) => (
-                      <Badge
-                        key={time}
-                        variant="secondary"
-                        className="flex items-center gap-2"
-                      >
-                        {time}
-                        <button
-                          type="button"
-                          className="rounded-full hover:bg-muted"
-                          onClick={() =>
-                            setTimeSlotsToBlock(
-                              timeSlotsToBlock.filter((t) => t !== time)
-                            )
-                          }
-                        >
-                          &#x2715;
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <Button type="submit" disabled={isBlocking}>
-                {isBlocking ? 'Bloqueando...' : 'Bloquear Horários Selecionados'}
-              </Button>
-            </form>
+                <Button type="submit" disabled={isBlocking}>
+                  <Repeat className='mr-2' />
+                  {isBlocking ? 'Salvando...' : 'Salvar Bloqueio Semanal'}
+                </Button>
+              </form>
+            </Form>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Horários Bloqueados</CardTitle>
+            <CardTitle>Horários Fixos (Clubinho)</CardTitle>
             <CardDescription>
-              Horários que você bloqueou manually. Clique para desbloquear.
+              Horários bloqueados toda semana.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoadingBlocked && <p>Carregando horários bloqueados...</p>}
-            {blockedError && <p className="text-red-500">{blockedError.message}</p>}
-            {!isLoadingBlocked && !blockedAppointments?.length && (
-              <p>Nenhum horário bloqueado encontrado.</p>
+            {isLoadingRecurring && <p>Carregando horários fixos...</p>}
+            {recurringError && <p className="text-red-500">{recurringError.message}</p>}
+            {!isLoadingRecurring && !recurringBlocks?.length && (
+              <p>Nenhum horário fixo de clubinho encontrado.</p>
             )}
-            {blockedAppointments && blockedAppointments.length > 0 && (
+            {recurringBlocks && recurringBlocks.length > 0 && (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Data</TableHead>
+                    <TableHead>Dia da Semana</TableHead>
                     <TableHead>Horário</TableHead>
+                    <TableHead>Rótulo</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {blockedAppointments
-                    .sort(
-                      (a, b) =>
-                        new Date(a.startTime).getTime() -
-                        new Date(b.startTime).getTime()
-                    )
-                    .map((apt) => (
-                      <TableRow key={apt.id}>
-                        <TableCell>
-                          {format(new Date(apt.startTime), 'dd/MM/yyyy', {
-                            locale: ptBR,
-                          })}
+                  {recurringBlocks
+                    .sort((a, b) => parseInt(a.dayOfWeek) - parseInt(b.dayOfWeek) || a.time.localeCompare(b.time))
+                    .map((block) => (
+                      <TableRow key={block.id}>
+                        <TableCell className='font-medium'>
+                          {getDayOfWeekName(parseInt(block.dayOfWeek, 10))}
                         </TableCell>
                         <TableCell>
-                          {format(new Date(apt.startTime), 'HH:mm', {
-                            locale: ptBR,
-                          })}
+                          {block.time}
+                        </TableCell>
+                         <TableCell>
+                          <Badge variant="secondary">{block.label}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <Unlock className="mr-2 h-4 w-4" />
-                                Desbloquear
+                              <Button variant="ghost" size="sm" className='text-destructive hover:text-destructive'>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Remover
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Esta ação liberará este horário na agenda para novos agendamentos.
+                                  Esta ação removerá o bloqueio semanal do clubinho. Novos agendamentos poderão ser feitos neste horário.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Voltar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleUnblockAppointment(apt.id)}>
-                                  Sim, desbloquear
+                                <AlertDialogAction onClick={() => handleRemoveRecurringBlock(block.id)}>
+                                  Sim, remover
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -539,8 +493,5 @@ export default function AdminPage() {
           </CardContent>
         </Card>
       </div>
-    </TooltipProvider>
   );
 }
-
-    

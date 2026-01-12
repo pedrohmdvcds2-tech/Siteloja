@@ -39,5 +39,13 @@ export const formSchema = z.object({
   path: ["vaccinationStatus"], 
 });
 
+export const recurringBlockSchema = z.object({
+  dayOfWeek: z.string().min(1, "Por favor, selecione um dia da semana."),
+  time: z.string().min(1, "Por favor, selecione um horário."),
+  label: z.string().default('Clubinho')
+});
+
+export type RecurringBlockValues = z.infer<typeof recurringBlockSchema>;
+
 
 export type SchedulingFormValues = z.infer<typeof formSchema>;

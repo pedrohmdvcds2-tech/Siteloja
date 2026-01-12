@@ -122,21 +122,43 @@ export function SchedulingForm() {
       where("startTime", "<=", endOfDay.toISOString())
     );
   }, [firestore, selectedDate]);
+  
+  const recurringBlocksQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, "recurringBlocks");
+  }, [firestore]);
 
-  const { data: todaysAppointments, isLoading: isLoadingAppointments } =
-    useCollection(appointmentsQuery);
+  const { data: todaysAppointments, isLoading: isLoadingAppointments } = useCollection(appointmentsQuery);
+  const { data: recurringBlocks, isLoading: isLoadingRecurringBlocks } = useCollection(recurringBlocksQuery);
+
 
   const availableTimeSlots = useMemo(() => {
-    if (!todaysAppointments) {
-      return allTimeSlots;
+    if (!selectedDate) return allTimeSlots;
+
+    const bookedOrBlockedTimes = new Set<string>();
+
+    // Adiciona agendamentos do dia
+    if (todaysAppointments) {
+      todaysAppointments.forEach((apt) => {
+        bookedOrBlockedTimes.add(format(new Date(apt.startTime), "HH:mm"));
+      });
     }
-    const bookedOrBlockedTimes = todaysAppointments.map((apt) =>
-      format(new Date(apt.startTime), "HH:mm")
-    );
+
+    // Adiciona bloqueios recorrentes (clubinho)
+    if (recurringBlocks) {
+      const dayOfWeek = selectedDate.getDay(); // Domingo = 0, Segunda = 1, etc.
+      recurringBlocks.forEach((block) => {
+        if (parseInt(block.dayOfWeek, 10) === dayOfWeek) {
+          bookedOrBlockedTimes.add(block.time);
+        }
+      });
+    }
+    
     return allTimeSlots.filter(
-      (slot) => !bookedOrBlockedTimes.includes(slot)
+      (slot) => !bookedOrBlockedTimes.has(slot)
     );
-  }, [todaysAppointments]);
+  }, [todaysAppointments, recurringBlocks, selectedDate]);
+
 
   const form = useForm<SchedulingFormValues>({
     resolver: zodResolver(formSchema),
@@ -245,7 +267,7 @@ export function SchedulingForm() {
         description: "Agora abra o WhatsApp para confirmar o envio da sua mensagem.",
       });
   
-      const phoneNumber = "5521992056443";
+      const phoneNumber = "5521993413747";
       const formattedDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
       
       const message = `🐕 *NOVO AGENDAMENTO - Princesas Pet Shop*
@@ -299,6 +321,7 @@ Agendamento realizado através do site.`;
   }
 
   const isVaccinationOk = watchedValues.vaccinationStatus === 'Em dia';
+  const isLoading = isUserLoading || isLoadingAppointments || isLoadingRecurringBlocks;
 
   return (
     <Card className="w-full shadow-xl">
@@ -699,7 +722,7 @@ Agendamento realizado através do site.`;
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {isLoadingAppointments ? (
+                          {isLoading ? (
                             <SelectItem value="loading" disabled>
                               Carregando...
                             </SelectItem>
@@ -740,7 +763,7 @@ Agendamento realizado através do site.`;
               type="submit"
               size="lg"
               className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
-              disabled={isUserLoading || isLoadingAppointments || isSubmitting || watchedValues.vaccinationStatus === 'Não está em dia'}
+              disabled={isLoading || isSubmitting || watchedValues.vaccinationStatus === 'Não está em dia'}
             >
               {isSubmitting ? 'Enviando...' : <><MessageCircle /> Agendar via WhatsApp</>}
             </Button>

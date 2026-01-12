@@ -126,6 +126,36 @@
         "totalPrice",
         "blocked"
       ]
+    },
+     "RecurringBlock": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Recurring Block",
+      "type": "object",
+      "description": "Represents a recurring weekly blocked time slot.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the recurring block."
+        },
+        "dayOfWeek": {
+          "type": "string",
+          "description": "The day of the week for the block (e.g., '1' for Monday)."
+        },
+        "time": {
+          "type": "string",
+          "description": "The time of the block (e.g., '14:30')."
+        },
+        "label": {
+          "type": "string",
+          "description": "A label for the block, e.g., 'Clubinho'."
+        }
+      },
+      "required": [
+        "id",
+        "dayOfWeek",
+        "time",
+        "label"
+      ]
     }
   },
   "auth": {
@@ -166,6 +196,22 @@
             {
               "name": "appointmentId",
               "description": "The ID of the appointment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/recurringBlocks/{blockId}",
+        "definition": {
+          "entityName": "RecurringBlock",
+          "schema": {
+            "$ref": "#/backend/entities/RecurringBlock"
+          },
+          "description": "Stores recurring weekly time blocks for events like 'Clubinho'. Read by all, writable only by admin.",
+          "params": [
+            {
+              "name": "blockId",
+              "description": "The ID of the recurring block."
             }
           ]
         }
