@@ -4,7 +4,7 @@ import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where } from 'firebase/firestore';
-import { format, startOfMonth, getWeek, getDay } from 'date-fns';
+import { format, startOfMonth, getWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
@@ -94,6 +94,7 @@ export default function AgendaPage() {
     // 2. Adicionar bloqueios recorrentes (clubinho)
     const selectedDayOfWeek = selectedDate.getDay();
     const weekOfYear = getWeek(selectedDate, { weekStartsOn: 1 });
+    const selectedWeekParity = weekOfYear % 2; // 0 for even, 1 for odd
 
     const dayRecurringBlocks = recurringBlocks.filter(block => {
         if (parseInt(block.dayOfWeek, 10) !== selectedDayOfWeek) {
@@ -105,19 +106,32 @@ export default function AgendaPage() {
         }
 
         if (block.frequency === 'bi-weekly') {
-            return weekOfYear % 2 === 0;
+            const startWeekParity = block.startWeekParity ?? 0;
+            return selectedWeekParity === startWeekParity;
         }
 
         return false;
     });
 
     dayRecurringBlocks.forEach(block => {
-        // Calcula o número do banho no mês
         const firstDayOfMonth = startOfMonth(selectedDate);
-        let bathCount = 0;
-        // Loop até o dia selecionado (inclusive)
+        let bathCount = block.startBathNumber || 0;
+        let startCounting = false;
+        
+        if (block.cycleStartDate && new Date(block.cycleStartDate) > firstDayOfMonth) {
+             startCounting = true;
+        } else {
+            bathCount = 0;
+        }
+        
         for (let i = 1; i <= selectedDate.getDate(); i++) {
             const currentDay = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth(), i);
+             
+            if (block.cycleStartDate && currentDay < new Date(block.cycleStartDate) && !startCounting) {
+                continue;
+            }
+
+            if(startCounting) startCounting = false;
             
             if (parseInt(block.dayOfWeek, 10) !== currentDay.getDay()) {
                 continue;
@@ -128,7 +142,8 @@ export default function AgendaPage() {
                 isValidOccurrence = true;
             } else if (block.frequency === 'bi-weekly') {
                 const currentWeekOfYear = getWeek(currentDay, { weekStartsOn: 1 });
-                if (currentWeekOfYear % 2 === 0) {
+                const startWeekParity = block.startWeekParity ?? 0;
+                if (currentWeekOfYear % 2 === startWeekParity) {
                     isValidOccurrence = true;
                 }
             }
@@ -143,7 +158,7 @@ export default function AgendaPage() {
         startTime.setHours(hours, minutes, 0, 0);
 
         schedule.push({
-            id: `${block.id}-${block.petName}-${selectedDate.toISOString()}`, // ID único para a ocorrência
+            id: `${block.id}-${block.petName}-${selectedDate.toISOString()}`,
             startTime: startTime.toISOString(),
             type: 'recurring',
             petName: block.petName,
