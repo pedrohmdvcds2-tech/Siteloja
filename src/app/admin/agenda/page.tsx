@@ -4,7 +4,7 @@ import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where } from 'firebase/firestore';
-import { format, differenceInCalendarDays, toDate } from 'date-fns';
+import { format, differenceInCalendarDays, toDate, getDaysInMonth, startOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ interface UnifiedAppointment {
     petNames: string[];
     service?: string;
     label?: string;
+    bathCount?: number;
 }
 
 export default function AgendaPage() {
@@ -111,7 +112,9 @@ export default function AgendaPage() {
             }
 
             if (block.frequency === 'bi-weekly') {
-                return dayDifference % 14 === 0;
+                // Checa se a diferença de dias desde o início é múltiplo de 14
+                const weekDifference = Math.floor(dayDifference / 7);
+                return weekDifference % 2 === 0;
             }
 
             return false;
@@ -119,10 +122,44 @@ export default function AgendaPage() {
 
         const recurringGroupedByTime: Record<string, any[]> = {};
         dayRecurringBlocks.forEach(block => {
+            // Calcula o número do banho no mês
+            const firstDayOfMonth = startOfMonth(selectedDate);
+            let bathCount = 0;
+            for (let i = 0; i < selectedDate.getDate(); i++) {
+                const currentDay = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth(), i + 1);
+                
+                if (parseInt(block.dayOfWeek, 10) !== currentDay.getDay()) {
+                    continue;
+                }
+
+                const blockStartDate = toDate(block.startDate);
+                const dayDifference = differenceInCalendarDays(currentDay, blockStartDate);
+
+                if (dayDifference < 0) {
+                    continue;
+                }
+
+                let isValidOccurrence = false;
+                if (block.frequency === 'weekly') {
+                    isValidOccurrence = true;
+                } else if (block.frequency === 'bi-weekly') {
+                    const weekDifference = Math.floor(dayDifference / 7);
+                    if (weekDifference % 2 === 0) {
+                        isValidOccurrence = true;
+                    }
+                }
+                
+                if(isValidOccurrence) {
+                    bathCount++;
+                }
+            }
+            
+            const blockWithCount = {...block, bathCount};
+
             if(!recurringGroupedByTime[block.time]) {
                 recurringGroupedByTime[block.time] = [];
             }
-            recurringGroupedByTime[block.time].push(block);
+            recurringGroupedByTime[block.time].push(blockWithCount);
         });
         
         Object.entries(recurringGroupedByTime).forEach(([time, blocks]) => {
@@ -136,6 +173,7 @@ export default function AgendaPage() {
                 type: 'recurring',
                 petNames: blocks.map(b => b.petName),
                 label: blocks[0].label, // Assume all have same label
+                bathCount: blocks[0].bathCount // Assumindo que o primeiro é representativo
             });
         });
     }
@@ -245,7 +283,12 @@ export default function AgendaPage() {
                             <div className="flex flex-col gap-1">
                                <div className='font-medium flex items-center gap-2'>
                                   <Users className="h-4 w-4 text-primary" /> 
-                                  <span>{item.petNames.length} pets no clubinho</span>
+                                   <div className='flex items-center gap-2'>
+                                      <span>{item.petNames.length} {item.petNames.length > 1 ? 'pets' : 'pet'} no clubinho</span>
+                                      {item.bathCount && item.bathCount > 0 && (
+                                        <Badge variant="outline">{item.bathCount}º Banho</Badge>
+                                      )}
+                                   </div>
                                </div>
                                <div className='text-sm text-muted-foreground'>
                                 {item.petNames.join(', ')}
