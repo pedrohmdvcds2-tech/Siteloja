@@ -152,6 +152,16 @@
         "label": {
           "type": "string",
           "description": "A label for the block, e.g., 'Clubinho'."
+        },
+        "frequency": {
+          "type": "string",
+          "enum": ["weekly", "bi-weekly"],
+          "description": "The frequency of the recurrence."
+        },
+        "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The start date for the recurring block."
         }
       },
       "required": [
@@ -159,7 +169,9 @@
         "dayOfWeek",
         "time",
         "petName",
-        "label"
+        "label",
+        "frequency",
+        "startDate"
       ]
     }
   },

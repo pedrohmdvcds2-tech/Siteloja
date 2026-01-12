@@ -4,7 +4,7 @@ import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where } from 'firebase/firestore';
-import { format } from 'date-fns';
+import { format, differenceInCalendarDays, toDate } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
@@ -93,8 +93,29 @@ export default function AgendaPage() {
 
     // 2. Adicionar bloqueios recorrentes (clubinho)
     if (recurringBlocks) {
-        const dayOfWeek = selectedDate.getDay().toString(); // Domingo = 0, ...
-        const dayRecurringBlocks = recurringBlocks.filter(b => b.dayOfWeek === dayOfWeek);
+        const selectedDayOfWeek = selectedDate.getDay();
+        const dayRecurringBlocks = recurringBlocks.filter(block => {
+            if (parseInt(block.dayOfWeek, 10) !== selectedDayOfWeek) {
+                return false;
+            }
+
+            const blockStartDate = toDate(block.startDate);
+            const dayDifference = differenceInCalendarDays(selectedDate, blockStartDate);
+
+            if (dayDifference < 0) {
+                return false;
+            }
+
+            if (block.frequency === 'weekly') {
+                return true;
+            }
+
+            if (block.frequency === 'bi-weekly') {
+                return dayDifference % 14 === 0;
+            }
+
+            return false;
+        });
 
         const recurringGroupedByTime: Record<string, any[]> = {};
         dayRecurringBlocks.forEach(block => {

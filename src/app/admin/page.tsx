@@ -15,6 +15,8 @@ import {
 } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { format, toDate } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -33,8 +35,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LogOut, Calendar as CalendarIcon, Trash2, Unlock, CalendarPlus, CalendarClock, Repeat, Dog } from 'lucide-react';
 import { signOut } from 'firebase/auth';
@@ -62,6 +62,8 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { recurringBlockSchema, type RecurringBlockValues } from '@/lib/definitions';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 
 export default function AdminPage() {
@@ -81,7 +83,9 @@ export default function AdminPage() {
       dayOfWeek: '',
       time: '',
       petName: '',
-      label: 'Clubinho'
+      label: 'Clubinho',
+      frequency: 'weekly',
+      startDate: new Date(),
     },
   });
 
@@ -136,11 +140,15 @@ export default function AdminPage() {
     setIsBlocking(true);
 
     try {
-      await addDoc(collection(firestore, 'recurringBlocks'), data);
+       const newBlock = {
+        ...data,
+        startDate: data.startDate.toISOString(), // Convert Date to ISO string
+      };
+      await addDoc(collection(firestore, 'recurringBlocks'), newBlock);
 
       toast({
         title: 'Sucesso!',
-        description: 'O horário do clubinho foi salvo e será bloqueado toda semana.',
+        description: `O horário do clubinho foi salvo e será bloqueado com frequência ${data.frequency === 'weekly' ? 'semanal' : 'quinzenal'}.`,
       });
       form.reset();
       refetchRecurring(); 
@@ -262,13 +270,13 @@ export default function AdminPage() {
           <CardHeader>
             <CardTitle>Criar Horário Fixo de Clubinho</CardTitle>
             <CardDescription>
-              Selecione um dia, horário e pet para bloquear semanalmente na agenda.
+              Selecione dia, horário, pet, frequência e data de início para bloquear na agenda.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleBlockRecurringTime)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <FormField
                       control={form.control}
                       name="dayOfWeek"
@@ -321,23 +329,84 @@ export default function AdminPage() {
                         </FormItem>
                       )}
                     />
-                    <FormField
+                     <FormField
                         control={form.control}
                         name="petName"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Nome do Pet</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="Nome do pet do clubinho" {...field} />
+                                    <Input placeholder="Nome do pet" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="frequency"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Frequência</FormLabel>
+                           <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione a frequência" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="weekly">Semanal</SelectItem>
+                              <SelectItem value="bi-weekly">Quinzenal</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="startDate"
+                      render={({ field }) => (
+                        <FormItem className='flex flex-col pt-2'>
+                          <FormLabel>Data de Início</FormLabel>
+                           <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP", { locale: ptBR })
+                                  ) : (
+                                    <span>Escolha uma data</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                locale={ptBR}
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                 </div>
                 <Button type="submit" disabled={isBlocking}>
                   <Repeat className='mr-2' />
-                  {isBlocking ? 'Salvando...' : 'Salvar Bloqueio Semanal'}
+                  {isBlocking ? 'Salvando...' : 'Salvar Bloqueio Recorrente'}
                 </Button>
               </form>
             </Form>
@@ -348,7 +417,7 @@ export default function AdminPage() {
           <CardHeader>
             <CardTitle>Horários Fixos (Clubinho)</CardTitle>
             <CardDescription>
-              Horários bloqueados toda semana.
+              Horários bloqueados recorrentemente na agenda.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -364,7 +433,8 @@ export default function AdminPage() {
                     <TableHead>Dia da Semana</TableHead>
                     <TableHead>Horário</TableHead>
                     <TableHead>Pet</TableHead>
-                    <TableHead>Rótulo</TableHead>
+                    <TableHead>Frequência</TableHead>
+                    <TableHead>Início</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -383,7 +453,12 @@ export default function AdminPage() {
                           {block.petName}
                         </TableCell>
                          <TableCell>
-                          <Badge variant="secondary">{block.label}</Badge>
+                          <Badge variant={block.frequency === 'weekly' ? 'secondary' : 'outline'}>
+                            {block.frequency === 'weekly' ? 'Semanal' : 'Quinzenal'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {format(toDate(block.startDate), 'dd/MM/yyyy')}
                         </TableCell>
                         <TableCell className="text-right">
                           <AlertDialog>
@@ -397,7 +472,7 @@ export default function AdminPage() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Esta ação removerá o bloqueio semanal do clubinho para {block.petName}. Novos agendamentos poderão ser feitos neste horário.
+                                  Esta ação removerá o bloqueio recorrente do clubinho para {block.petName}.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
