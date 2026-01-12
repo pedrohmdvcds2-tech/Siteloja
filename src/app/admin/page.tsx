@@ -194,6 +194,40 @@ export default function AdminPage() {
     }
   };
 
+  const handleRemoveAllRecurringBlocks = async () => {
+    if (!firestore || !recurringBlocks || recurringBlocks.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Nenhum item para remover',
+        description: 'Não há horários de clubinho para serem removidos.',
+      });
+      return;
+    }
+
+    const batch = writeBatch(firestore);
+    recurringBlocks.forEach(block => {
+      const docRef = doc(firestore, 'recurringBlocks', block.id);
+      batch.delete(docRef);
+    });
+
+    try {
+      await batch.commit();
+      toast({
+        title: 'Sucesso!',
+        description: 'Todos os horários do clubinho foram removidos.',
+      });
+      refetchRecurring();
+    } catch (e) {
+      console.error('Error removing all recurring blocks: ', e);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível remover todos os horários do clubinho.',
+      });
+    }
+  };
+
+
   const handleLogout = async () => {
     if (!auth) return;
     try {
@@ -380,10 +414,37 @@ export default function AdminPage() {
         
         <Card>
           <CardHeader>
-            <CardTitle>Horários Fixos (Clubinho)</CardTitle>
-            <CardDescription>
-              Horários bloqueados recorrentemente na agenda.
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Horários Fixos (Clubinho)</CardTitle>
+                <CardDescription>
+                  Horários bloqueados recorrentemente na agenda.
+                </CardDescription>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={!recurringBlocks || recurringBlocks.length === 0}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Remover Todos
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação não pode ser desfeita. Isso removerá permanentemente
+                      todos os horários fixos do clubinho.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleRemoveAllRecurringBlocks}>
+                      Sim, remover tudo
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoadingRecurring && <p>Carregando horários fixos...</p>}
@@ -534,3 +595,5 @@ export default function AdminPage() {
       </div>
   );
 }
+
+    
