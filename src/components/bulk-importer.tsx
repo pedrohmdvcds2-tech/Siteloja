@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Papa from 'papaparse';
 import { useFirebase } from '@/firebase';
-import { collection, writeBatch } from 'firebase/firestore';
+import { collection, writeBatch, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -103,7 +103,7 @@ export function BulkImporter({ collectionPath, onImportSuccess }: BulkImporterPr
             const validation = recurringBlockSchema.safeParse(dataToValidate);
 
             if (validation.success) {
-              const docRef = collection(firestore, collectionPath).doc();
+              const docRef = doc(collection(firestore, collectionPath));
               batch.set(docRef, validation.data);
             } else {
               console.warn("Linha inválida, pulando:", validation.error.flatten().fieldErrors);
