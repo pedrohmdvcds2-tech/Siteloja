@@ -43,6 +43,10 @@ Agora, você precisa conectar o ambiente de desenvolvimento atual ao repositóri
     > Muitos terminais baseados na web não permitem colar com `Ctrl+V`. Se você não conseguir colar um comando, tente uma destas opções:
     > - **Clique com o botão direito** do mouse dentro do terminal e selecione a opção **"Colar"**.
     > - Use o atalho **`Ctrl+Shift+V`** (em Windows/Linux) ou **`Cmd+Shift+V`** (em Mac).
+    >
+    > **⚠️ Erro de Permissão da Área de Transferência?**
+    > Se você vir uma mensagem como *"Unable to read from the browser's clipboard..."*, isso é uma proteção de segurança do seu navegador.
+    > **Solução:** Ao tentar colar, procure por um pequeno ícone (geralmente um ícone de prancheta) que aparece na **barra de endereço** do seu navegador. Clique nele e selecione **"Permitir"** ou **"Allow"** para que o site possa acessar sua área de transferência.
 
 2.  **Execute os Comandos Git:** Digite os seguintes comandos, um de cada vez, pressionando Enter após cada um. Substitua `[URL_DO_SEU_REPO_NO_GITHUB]` pela URL que o GitHub forneceu (algo como `https://github.com/seu-usuario/meu-petshop.git`).
 
