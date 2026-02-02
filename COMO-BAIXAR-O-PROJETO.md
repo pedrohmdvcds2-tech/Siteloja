@@ -32,9 +32,9 @@ Este método é um pouco mais envolvido, mas é o padrão para desenvolvimento d
 1.  Vá para [GitHub.com](https://github.com/) e crie uma conta se ainda não tiver uma.
 2.  Crie um novo repositório clicando em "New". Dê um nome a ele (ex: `meu-petshop`) e mantenha-o público ou privado, como preferir. **Não** inicialize com um `README` ou `.gitignore`.
 
-### Passo 2: Conectar Seu Projeto ao GitHub no Firebase Studio
+### Passo 2: Conectar Seu Projeto ao GitHub (Primeira Vez)
 
-Agora, você precisa conectar o ambiente de desenvolvimento atual ao repositório que acabou de criar.
+Na primeira vez que você for conectar o projeto, precisará executar uma série de comandos no terminal para "batizar" o projeto e conectá-lo ao seu repositório no GitHub.
 
 1.  **Abra o Terminal:** Procure por uma aba ou janela de "Terminal" ou "Console" no Firebase Studio.
 
@@ -48,35 +48,52 @@ Agora, você precisa conectar o ambiente de desenvolvimento atual ao repositóri
     > Se você vir uma mensagem como *"Unable to read from the browser's clipboard..."*, isso é uma proteção de segurança do seu navegador.
     > **Solução:** Ao tentar colar, procure por um pequeno ícone (geralmente um ícone de prancheta) que aparece na **barra de endereço** do seu navegador. Clique nele e selecione **"Permitir"** ou **"Allow"** para que o site possa acessar sua área de transferência.
 
-2.  **Execute os Comandos Git:** Digite os seguintes comandos, um de cada vez, pressionando Enter após cada um. Substitua `[URL_DO_SEU_REPO_NO_GITHUB]` pela URL que o GitHub forneceu (algo como `https://github.com/seu-usuario/meu-petshop.git`).
+2.  **Execute os Comandos de Inicialização:** Digite os seguintes comandos, um de cada vez. Substitua `[URL_DO_SEU_REPO_NO_GITHUB]` pela URL que o GitHub forneceu (algo como `https://github.com/seu-usuario/meu-petshop.git`).
 
     ```bash
-    # Inicializa o Git no projeto e cria a branch 'main' (se ainda não foi feito)
+    # Inicializa o Git no projeto (se ainda não foi feito)
     git init -b main
 
-    # Adiciona todos os arquivos para o Git "observar"
+    # Adiciona todos os arquivos atuais para o Git "observar"
     git add .
 
-    # Cria um "snapshot" inicial das suas alterações
+    # Cria a primeira "versão" (commit) da história do seu projeto
     git commit -m "Primeiro commit do projeto PetShop"
 
-    # Conecta seu projeto local ao repositório do GitHub
+    # Conecta seu projeto local ao repositório remoto do GitHub
     git remote add origin [URL_DO_SEU_REPO_NO_GITHUB]
     ```
+    **E se aparecer `error: remote origin already exists.`?** Não se preocupe! Isso significa que a conexão com o GitHub já está feita. Você pode pular para o próximo passo.
 
-    **E se aparecer `error: remote origin already exists.`?**
-    Não se preocupe! Isso significa que você já executou este comando antes e a conexão com o GitHub já está feita. Apenas pule para o próximo passo.
+### Passo 3: Como Salvar Novas Versões (Ex: "Versão 2.0")
 
+Depois que o projeto já está conectado, seu fluxo de trabalho para salvar novas alterações é muito mais simples. Cada "salvamento" é um **commit**.
+
+Siga estes passos sempre que quiser salvar uma nova versão do seu trabalho:
+
+1.  **Prepare todos os arquivos modificados:**
     ```bash
-    # Envia os arquivos para o GitHub
-    git push -u origin main
+    git add .
     ```
 
-    *Pode ser que ele peça seu nome de usuário e senha (ou um token) do GitHub para autorizar o envio.*
+2.  **Crie a nova versão (commit) com uma mensagem descritiva:**
+    A mensagem entre aspas é o nome da sua versão. Use algo que descreva o que você fez.
+    ```bash
+    # Exemplo com a sua solicitação:
+    git commit -m "Versão 2.0"
+    
+    # Outro exemplo:
+    # git commit -m "Adiciona formulário de contato"
+    ```
 
-    **Se encontrar um erro aqui:** O erro `fatal: 'main' does not appear to be a git repository` geralmente significa que o `git init` não foi executado ou não funcionou como esperado. Tente rodar os comandos na sequência exata. Se o erro `Could not read from remote repository` aparecer, verifique se a URL do GitHub que você colou está correta.
+3.  **Envie a nova versão para o GitHub:**
+    Este comando atualiza seu repositório online com todos os commits que você fez localmente.
+    ```bash
+    git push origin main
+    ```
+    *Da primeira vez que você fizer o push, o Git pode sugerir um comando um pouco mais longo, como `git push -u origin main`. Pode usá-lo sem problemas.*
 
-### Passo 3: Baixar (Clonar) o Projeto para o Seu Computador
+### Passo 4: Baixar (Clonar) o Projeto para o Seu Computador
 
 Com o projeto no GitHub, agora você pode baixá-lo em qualquer máquina.
 
