@@ -1,9 +1,10 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState, useEffect, useMemo } from "react";
-import { format, getWeek } from "date-fns";
+import { format, getWeek, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   User,
@@ -28,7 +29,7 @@ import {
 
 
 import { formSchema, type SchedulingFormValues } from "@/lib/definitions";
-import { cn, generateTimeSlots } from "@/lib/utils";
+import { cn, getClientTimeSlots } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -93,7 +94,6 @@ const PRICES = {
 };
 
 const bathTypes = ["Banho Simples", "Banho Terapêutico", "Banho e Tosa"];
-const allTimeSlots = generateTimeSlots();
 
 export function SchedulingForm() {
   const [totalPrice, setTotalPrice] = useState(0);
@@ -133,9 +133,11 @@ export function SchedulingForm() {
 
 
   const availableTimeSlots = useMemo(() => {
-    if (!selectedDate) return allTimeSlots;
+    if (!selectedDate) return [];
 
+    const slotsForDay = getClientTimeSlots(selectedDate);
     const bookedOrBlockedTimes = new Set<string>();
+    const startOfSelectedDate = startOfDay(selectedDate);
 
     // Adiciona agendamentos do dia
     if (todaysAppointments) {
@@ -147,28 +149,33 @@ export function SchedulingForm() {
     // Adiciona bloqueios recorrentes (clubinho)
     if (recurringBlocks) {
       const selectedDayOfWeek = selectedDate.getDay();
-      const weekOfYear = getWeek(selectedDate, { weekStartsOn: 1 });
       
       recurringBlocks.forEach((block) => {
-        // Checagem primária: o dia da semana bate?
-        if (parseInt(block.dayOfWeek, 10) !== selectedDayOfWeek) {
+        const blockDayOfWeek = parseInt(block.dayOfWeek, 10);
+        if (blockDayOfWeek !== selectedDayOfWeek) {
           return;
         }
 
-        // Se for semanal, adiciona
+        const cycleStartDate = block.cycleStartDate ? startOfDay(new Date(block.cycleStartDate.seconds * 1000)) : startOfDay(new Date());
+        
+        if (isBefore(startOfSelectedDate, cycleStartDate)) {
+            return;
+        }
+        
+        const startWeekParity = getWeek(cycleStartDate, { weekStartsOn: 1 }) % 2;
+
         if (block.frequency === 'weekly') {
           bookedOrBlockedTimes.add(block.time);
-        } 
-        // Se for quinzenal, checa se a semana é par
-        else if (block.frequency === 'bi-weekly') {
-          if (weekOfYear % 2 === 0) {
-            bookedOrBlockedTimes.add(block.time);
+        } else if (block.frequency === 'bi-weekly') {
+          const selectedWeekParity = getWeek(selectedDate, { weekStartsOn: 1 }) % 2;
+          if (selectedWeekParity === startWeekParity) {
+             bookedOrBlockedTimes.add(block.time);
           }
         }
       });
     }
     
-    return allTimeSlots.filter(
+    return slotsForDay.filter(
       (slot) => !bookedOrBlockedTimes.has(slot)
     );
   }, [todaysAppointments, recurringBlocks, selectedDate]);
@@ -787,3 +794,5 @@ Agendamento realizado através do site.`;
     </Card>
   );
 }
+
+    
