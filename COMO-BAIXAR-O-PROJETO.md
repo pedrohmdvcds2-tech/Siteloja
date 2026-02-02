@@ -92,6 +92,12 @@ Siga estes passos sempre que quiser salvar uma nova versão do seu trabalho:
     git push origin main
     ```
     *Da primeira vez que você fizer o push, o Git pode sugerir um comando um pouco mais longo, como `git push -u origin main`. Pode usá-lo sem problemas.*
+    
+    > #### **Entendendo as Mensagens do Terminal**
+    > Depois de rodar `git commit`, você pode ver mensagens como:
+    > * **`[main 1a2b3c4] Versão 2.0`**: Sucesso! Isso mostra que seu commit foi criado.
+    > * **`Your branch is ahead of 'origin/main' by 1 commit.`**: Perfeito! Isso significa que você tem uma nova versão localmente que ainda não foi enviada para o GitHub. O próximo passo é o `git push`.
+    > * **`nothing to commit, working tree clean`**: Isso geralmente acontece se você rodar `git commit` *depois* que suas alterações já foram salvas em um commit anterior. Significa que o Git não encontrou nenhuma alteração nova para adicionar. Se você já fez o commit, apenas ignore esta mensagem e siga para o `git push`.
 
 ### Passo 4: Baixar (Clonar) o Projeto para o Seu Computador
 
