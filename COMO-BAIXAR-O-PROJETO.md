@@ -37,6 +37,13 @@ Este método é um pouco mais envolvido, mas é o padrão para desenvolvimento d
 Agora, você precisa conectar o ambiente de desenvolvimento atual ao repositório que acabou de criar.
 
 1.  **Abra o Terminal:** Procure por uma aba ou janela de "Terminal" ou "Console" no Firebase Studio.
+
+    > **Dica Rápida: Como Colar no Terminal**
+    >
+    > Muitos terminais baseados na web não permitem colar com `Ctrl+V`. Se você não conseguir colar um comando, tente uma destas opções:
+    > - **Clique com o botão direito** do mouse dentro do terminal e selecione a opção **"Colar"**.
+    > - Use o atalho **`Ctrl+Shift+V`** (em Windows/Linux) ou **`Cmd+Shift+V`** (em Mac).
+
 2.  **Execute os Comandos Git:** Digite os seguintes comandos, um de cada vez, pressionando Enter após cada um. Substitua `[URL_DO_SEU_REPO_NO_GITHUB]` pela URL que o GitHub forneceu (algo como `https://github.com/seu-usuario/meu-petshop.git`).
 
     ```bash
