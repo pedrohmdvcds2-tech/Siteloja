@@ -73,7 +73,7 @@ export default function AdminPage() {
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [isBlocking, setIsBlocking] = useState(false);
 
-  const ADMIN_EMAILS = ['admin@princesaspetshop.com'];
+  const ADMIN_EMAILS = ['admin@princesaspetshop.com.br'];
 
   const form = useForm<RecurringBlockValues>({
     resolver: zodResolver(recurringBlockSchema),

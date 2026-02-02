@@ -34,7 +34,7 @@ export default function AgendaPage() {
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  const ADMIN_EMAILS = ['admin@princesaspetshop.com'];
+  const ADMIN_EMAILS = ['admin@princesaspetshop.com.br'];
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin || !selectedDate) return null;
