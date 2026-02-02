@@ -28,27 +28,15 @@ export function getDayOfWeekName(dayIndex: number): string {
 
 export function getClientTimeSlots(date: Date): string[] {
   if (!date) return [];
+  
   const dayOfWeek = date.getDay();
-
-  // 0: Dom, 1: Seg, 2: Ter, 3: Qua, 4: Qui, 5: Sex, 6: Sáb
-  switch (dayOfWeek) {
-    // Quarta e Quinta: 1 de manhã, 1 de tarde
-    case 3: // Quarta-feira
-    case 4: // Quinta-feira
-      return ['10:00', '14:30'];
-
-    // Segunda, Terça, Sexta, Sábado: 2 de tarde
-    case 1: // Segunda-feira
-    case 2: // Terça-feira
-    case 5: // Sexta-feira
-    case 6: // Sábado
-      return ['14:00', '15:30'];
-
-    // Domingo e outros casos
-    case 0: // Domingo
-    default:
+  // Domingo (dayOfWeek === 0) não tem agendamentos.
+  if (dayOfWeek === 0) {
       return [];
   }
+  
+  // Para todos os outros dias (Segunda a Sábado), retorna a lista completa de horários.
+  return generateTimeSlots();
 }
 
     
