@@ -6,11 +6,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function generateTimeSlots() {
+export function generateTimeSlots(
+    startHour: number = 8, 
+    startMinute: number = 0, 
+    endHour: number = 16, 
+    endMinute: number = 0, 
+    interval: number = 30
+) {
   const slots = [];
-  const startTime = 8 * 60; // 8:00 in minutes
-  const endTime = 17 * 60; // 17:00 in minutes
-  const interval = 30; // 30 minutes
+  const startTime = startHour * 60 + startMinute;
+  const endTime = endHour * 60 + endMinute;
 
   for (let time = startTime; time <= endTime; time += interval) {
     const hours = Math.floor(time / 60).toString().padStart(2, '0');
@@ -29,14 +34,22 @@ export function getDayOfWeekName(dayIndex: number): string {
 export function getClientTimeSlots(date: Date): string[] {
   if (!date) return [];
   
-  const dayOfWeek = date.getDay();
-  // Domingo (dayOfWeek === 0) não tem agendamentos.
+  const dayOfWeek = date.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+  
+  // Domingo (Sunday)
   if (dayOfWeek === 0) {
       return [];
   }
   
-  // Para todos os outros dias (Segunda a Sábado), retorna a lista completa de horários.
-  return generateTimeSlots();
+  // Quarta (Wednesday = 3) e Quinta (Thursday = 4)
+  if (dayOfWeek === 3 || dayOfWeek === 4) {
+    // 08:00 to 16:00
+    return generateTimeSlots(8, 0, 16, 0); 
+  }
+
+  // Outros dias (Segunda, Terça, Sexta, Sábado)
+  // 12:30 to 16:00
+  return generateTimeSlots(12, 30, 16, 0);
 }
 
     
