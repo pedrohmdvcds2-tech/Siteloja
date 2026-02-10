@@ -1,7 +1,7 @@
 'use client';
 
-import Image from "next/image";
-import { Instagram, Facebook, MessageSquare } from "lucide-react";
+import Image from 'next/image';
+import { Instagram, Facebook, MessageSquare } from 'lucide-react';
 
 export function PageHeader() {
   return (
@@ -18,7 +18,11 @@ export function PageHeader() {
           />
           <div className="flex flex-col text-center md:text-left">
             <h1 className="text-4xl lg:text-5xl font-bold font-headline">
-              <span className="md:hidden">Princesas<br />Pet Shop</span>
+              <span className="md:hidden">
+                Princesas
+                <br />
+                Pet Shop
+              </span>
               <span className="hidden md:inline">Princesas Pet Shop</span>
             </h1>
             <p className="text-lg lg:text-2xl">
@@ -27,11 +31,10 @@ export function PageHeader() {
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 mt-4 md:mt-0">
           <a
             href="https://www.instagram.com/princesaspetshop/"
             target="_blank"
-            rel="noopener noreferrer"
             aria-label="Siga-nos no Instagram"
             className="h-10 w-10 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors"
           >
