@@ -151,7 +151,7 @@ const AnswerBubble: React.FC<AnswerBubbleProps> = ({ answer }) => {
     return (
         <div className="flex items-start gap-3">
             <Avatar className="h-8 w-8 border-2 border-primary/50 shadow-sm">
-              <AvatarImage src="https://i.imgur.com/A12jV3e.jpeg" alt="Princesa, a assistente virtual" />
+              <AvatarImage src="https://i.imgur.com/XzksruZ.png" alt="Princesa, a assistente virtual" />
               <AvatarFallback>P</AvatarFallback>
             </Avatar>
             <div className="flex-1">
