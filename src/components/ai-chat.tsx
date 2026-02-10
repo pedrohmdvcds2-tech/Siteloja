@@ -7,7 +7,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { HelpCircle } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 const faqData = [
   {
@@ -53,7 +53,7 @@ const faqData = [
           <li>
             <strong>Instagram:</strong>{' '}
             <a
-              href="https://www.instagram.com/princesaspetshop"
+              href="https://www.instagram.com/princesaspetshop/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
@@ -83,20 +83,24 @@ export function Faq() {
     <Card className="w-full shadow-xl mt-8">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-2xl font-bold">
-          <HelpCircle className="text-primary" />
-          Perguntas Frequentes
+          <Sparkles className="text-primary" />
+          Assistente Virtual
         </CardTitle>
         <CardDescription>
-          Tire suas dúvidas sobre nossos serviços clicando nas perguntas abaixo.
+          Tenho respostas para algumas dúvidas comuns. Clique em uma pergunta para começar.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible className="w-full">
           {faqData.map((item) => (
             <AccordionItem value={item.id} key={item.id}>
-              <AccordionTrigger>{item.question}</AccordionTrigger>
+              <AccordionTrigger className="text-left hover:no-underline">
+                {item.question}
+              </AccordionTrigger>
               <AccordionContent>
-                <div className="text-muted-foreground">{item.answer}</div>
+                <div className="text-muted-foreground p-4 bg-secondary/50 rounded-lg">
+                  {item.answer}
+                </div>
               </AccordionContent>
             </AccordionItem>
           ))}
