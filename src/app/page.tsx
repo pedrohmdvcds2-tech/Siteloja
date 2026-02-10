@@ -13,7 +13,7 @@ export default function Home() {
       <header className="w-full bg-gradient-to-r from-pink-500 via-orange-400 to-yellow-400 py-4 text-white shadow-md">
         <div className="container mx-auto flex flex-col items-center justify-center gap-1 text-center">
           <Image
-            src="https://i.imgur.com/agbon6P.png"
+            src="https://i.imgur.com/SLxSDoD.png"
             alt="Princesas Pet Shop Logo"
             width={60}
             height={60}
