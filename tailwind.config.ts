@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['"Baloo 2"', 'sans-serif'],
-        headline: ['"Baloo 2"', 'sans-serif'],
+        body: ['var(--font-baloo)', 'sans-serif'],
+        headline: ['var(--font-baloo)', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
