@@ -9,23 +9,19 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-background text-foreground font-body">
-      <header className="w-full p-6 bg-gradient-to-r from-[#c724b1] via-[#e05d5d] to-[#f7b733] text-white">
-        <div className="container mx-auto flex items-center justify-center gap-4">
-           <div className="relative h-16 w-16">
+      <header className="w-full p-4 bg-gradient-to-r from-[#c724b1] via-[#e05d5d] to-[#f7b733] text-white">
+        <div className="container mx-auto flex flex-col items-center justify-center gap-2">
+          <div className="relative h-24 w-full max-w-md">
             <Image
-              src="https://i.imgur.com/SLxSDoD.png"
+              src="https://i.imgur.com/agbon6P.png"
               alt="Princesas Pet Shop Logo"
               fill
-              sizes="64px"
+              sizes="448px"
               className="object-contain"
+              priority
             />
           </div>
-          <div className="text-center">
-            <h1 className="text-4xl font-bold font-headline">
-              Princesas Pet Shop
-            </h1>
-            <p className="text-lg">Cuidado Real para Seu Amiguinho</p>
-          </div>
+          <p className="text-lg -mt-2">Cuidado Real para Seu Amiguinho</p>
         </div>
       </header>
 
