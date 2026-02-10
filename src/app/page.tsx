@@ -11,13 +11,14 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background font-body text-foreground">
       {/* Header from the screenshot */}
-      <header className="w-full bg-gradient-to-r from-pink-500 via-orange-400 to-yellow-400 py-4 text-white shadow-md">
+      <header className="w-full bg-primary py-4 text-primary-foreground shadow-md">
         <div className="container mx-auto flex flex-col items-center justify-center gap-1 text-center">
           <Image
             src="https://i.imgur.com/SLxSDoD.png"
             alt="Princesas Pet Shop Logo"
             width={60}
             height={60}
+            className="opacity-100"
           />
           <h1 className="text-2xl font-bold font-headline">
             Princesas Pet Shop
