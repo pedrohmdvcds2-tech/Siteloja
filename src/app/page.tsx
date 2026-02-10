@@ -12,18 +12,18 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background font-body text-foreground">
       {/* Header from the screenshot */}
       <header className="w-full bg-primary py-4 text-primary-foreground shadow-md">
-        <div className="container mx-auto flex flex-col items-center justify-center gap-1 text-center">
+        <div className="container mx-auto flex flex-col items-center justify-center gap-2 text-center">
           <Image
             src="https://i.imgur.com/SLxSDoD.png"
             alt="Princesas Pet Shop Logo"
-            width={60}
-            height={60}
-            className="opacity-100"
+            width={80}
+            height={80}
+            className=""
           />
-          <h1 className="text-2xl font-bold font-headline">
+          <h1 className="text-3xl font-bold font-headline">
             Princesas Pet Shop
           </h1>
-          <p className="text-md">
+          <p className="text-lg">
             Cuidado Real para Seu Amiguinho
           </p>
         </div>
