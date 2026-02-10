@@ -6,7 +6,7 @@ import { Instagram, Facebook, MessageSquare } from 'lucide-react';
 export function PageHeader() {
   return (
     <header className="w-full bg-primary py-4 text-primary-foreground shadow-md">
-      <div className="container mx-auto flex flex-wrap flex-col md:flex-row items-center justify-center md:justify-between gap-4">
+      <div className="container mx-auto flex flex-wrap flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
         <div className="flex flex-row items-center justify-center gap-4">
           <Image
             src="https://i.imgur.com/SLxSDoD.png"
@@ -16,7 +16,7 @@ export function PageHeader() {
             className="shrink-0"
             priority
           />
-          <div className="flex flex-col text-center md:text-left">
+          <div className="flex flex-col text-center">
             <h1 className="text-4xl lg:text-5xl font-bold font-headline">
               <span className="md:hidden">
                 Princesas
@@ -33,7 +33,7 @@ export function PageHeader() {
 
         <div className="flex items-center justify-center gap-2 mt-4 md:mt-0">
           <a
-            href="https://www.instagram.com/princesaspetshop/"
+            href="https://instagram.com/princesaspetshop/"
             target="_blank"
             aria-label="Siga-nos no Instagram"
             className="h-10 w-10 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors"
