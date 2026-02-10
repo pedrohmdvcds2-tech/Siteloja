@@ -16,7 +16,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, MessageSquare } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
@@ -100,6 +100,27 @@ const faqData = [
       </div>
     ),
   },
+  {
+    id: 'faq-4',
+    question: 'Minha dúvida não está aqui, e agora?',
+    answer: (
+      <div className="space-y-2">
+        <p>
+          Sem problemas! Nossa equipe está pronta para te ajudar diretamente
+          pelo WhatsApp.
+        </p>
+        <Button asChild className="w-full mt-2">
+          <a
+            href="https://wa.me/552136538610"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <MessageSquare className="mr-2 h-4 w-4" /> Chamar no WhatsApp
+          </a>
+        </Button>
+      </div>
+    ),
+  },
 ];
 
 
@@ -147,12 +168,17 @@ const AnswerBubble: React.FC<AnswerBubbleProps> = ({ answer }) => {
 export function Faq() {
   return (
     <Sheet>
-      <SheetTrigger asChild>
-        <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-xl z-50 shimmer transition-transform duration-200 hover:scale-110">
-          <Sparkles className="h-8 w-8" />
-          <span className="sr-only">Abrir assistente virtual</span>
-        </Button>
-      </SheetTrigger>
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-2">
+          <div className="bg-background/90 backdrop-blur-sm text-foreground text-xs font-medium py-1 px-3 rounded-full shadow-lg border">
+              <p>Tem alguma dúvida?</p>
+          </div>
+          <SheetTrigger asChild>
+              <Button className="h-16 w-16 rounded-full shadow-xl shimmer transition-transform duration-200 hover:scale-110">
+                  <Sparkles className="h-8 w-8" />
+                  <span className="sr-only">Abrir assistente virtual</span>
+              </Button>
+          </SheetTrigger>
+      </div>
       <SheetContent className="flex flex-col">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2 text-2xl font-bold">
