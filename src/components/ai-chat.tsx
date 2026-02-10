@@ -35,7 +35,46 @@ const faqData = [
   {
     id: 'faq-3',
     question: 'Quais são os meios de comunicação?',
-    answer: 'Nosso principal canal de comunicação para dúvidas, agendamentos e confirmação da área de cobertura do Taxi Dog é o WhatsApp.',
+    answer: (
+      <div className="space-y-2">
+        <p>Você pode entrar em contato conosco através dos nossos canais oficiais. Nosso principal canal para dúvidas e agendamentos é o WhatsApp.</p>
+        <ul className="list-disc list-inside pl-4 space-y-1 text-sm">
+          <li>
+            <strong>WhatsApp:</strong>{' '}
+            <a
+              href="https://wa.me/552136538610"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              (21) 3653-8610
+            </a>
+          </li>
+          <li>
+            <strong>Instagram:</strong>{' '}
+            <a
+              href="https://www.instagram.com/princesaspetshop"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              @princesaspetshop
+            </a>
+          </li>
+          <li>
+            <strong>Facebook:</strong>{' '}
+            <a
+              href="https://www.facebook.com/princesaspetshop"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              /princesaspetshop
+            </a>
+          </li>
+        </ul>
+      </div>
+    ),
   },
 ];
 
