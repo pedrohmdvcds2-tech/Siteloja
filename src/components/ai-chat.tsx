@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Accordion,
   AccordionContent,
@@ -16,6 +17,8 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 const faqData = [
   {
@@ -99,6 +102,48 @@ const faqData = [
   },
 ];
 
+
+const TypingIndicator = () => (
+    <div className="flex items-center space-x-1.5 p-2">
+        <div className="w-2 h-2 rounded-full bg-primary/50 animate-pulse [animation-delay:-0.3s]"></div>
+        <div className="w-2 h-2 rounded-full bg-primary/50 animate-pulse [animation-delay:-0.15s]"></div>
+        <div className="w-2 h-2 rounded-full bg-primary/50 animate-pulse"></div>
+    </div>
+);
+
+interface AnswerBubbleProps {
+    answer: React.ReactNode;
+}
+
+const AnswerBubble: React.FC<AnswerBubbleProps> = ({ answer }) => {
+    const [isTyping, setIsTyping] = useState(true);
+
+    useEffect(() => {
+        setIsTyping(true); 
+        const timer = setTimeout(() => {
+            setIsTyping(false);
+        }, 1200 + Math.random() * 500); 
+
+        return () => clearTimeout(timer);
+    }, [answer]);
+
+    return (
+        <div className="flex items-start gap-3">
+            <Avatar className="h-8 w-8 border-2 border-primary/50 shadow-sm">
+              <AvatarImage src="https://i.imgur.com/SLxSDoD.png" alt="Princesa, a assistente virtual" />
+              <AvatarFallback>P</AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+                <p className="font-bold text-primary mb-1">Princesa</p>
+                <div className="text-muted-foreground p-4 bg-secondary/50 rounded-lg rounded-tl-none min-h-[48px] flex items-center">
+                    {isTyping ? <TypingIndicator /> : answer}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 export function Faq() {
   return (
     <Sheet>
@@ -115,21 +160,18 @@ export function Faq() {
             Assistente Virtual
           </SheetTitle>
           <SheetDescription>
-            Tenho respostas para algumas dúvidas comuns. Clique em uma pergunta
-            para começar.
+            Eu me chamo Princesa! Clique em uma pergunta para eu poder te ajudar.
           </SheetDescription>
         </SheetHeader>
         <div className="flex-grow overflow-y-auto py-4 -mx-6 px-6">
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible className="w-full space-y-2">
             {faqData.map((item) => (
-              <AccordionItem value={item.id} key={item.id}>
-                <AccordionTrigger className="text-left hover:no-underline">
+              <AccordionItem value={item.id} key={item.id} className="border-b-0">
+                <AccordionTrigger className="text-left hover:no-underline border rounded-lg px-4 data-[state=open]:border-primary data-[state=open]:bg-accent/50 transition-all">
                   {item.question}
                 </AccordionTrigger>
-                <AccordionContent>
-                  <div className="text-muted-foreground p-4 bg-secondary/50 rounded-lg">
-                    {item.answer}
-                  </div>
+                <AccordionContent className="pt-4 px-1">
+                  <AnswerBubble key={item.id} answer={item.answer} />
                 </AccordionContent>
               </AccordionItem>
             ))}
