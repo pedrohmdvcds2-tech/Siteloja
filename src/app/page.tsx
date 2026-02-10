@@ -64,9 +64,9 @@ export default function Home() {
 
           <div className="flex items-center justify-center gap-2">
             <a
-              href="https://www.instagram.com/princesaspetshop/"
+              href="https://instagram.com/princesaspetshop/"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener"
               aria-label="Siga-nos no Instagram"
               className="h-10 w-10 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors"
             >
