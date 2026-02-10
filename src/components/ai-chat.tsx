@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Accordion,
   AccordionContent,
@@ -173,8 +174,13 @@ export function Faq() {
               <p>Tem alguma dúvida?</p>
           </div>
           <SheetTrigger asChild>
-              <Button className="h-16 w-16 rounded-full shadow-xl shimmer transition-transform duration-200 hover:scale-110">
-                  <Sparkles className="h-8 w-8" />
+              <Button className="relative h-16 w-16 rounded-full shadow-xl shimmer transition-transform duration-200 hover:scale-110 p-0 overflow-hidden">
+                  <Image
+                      src="https://i.imgur.com/XzksruZ.png"
+                      alt="Abrir assistente virtual"
+                      fill
+                      className="object-cover"
+                  />
                   <span className="sr-only">Abrir assistente virtual</span>
               </Button>
           </SheetTrigger>
