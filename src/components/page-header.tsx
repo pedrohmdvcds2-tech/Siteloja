@@ -1,14 +1,9 @@
-
 'use client';
 
 import Image from "next/image";
 import { Instagram, Facebook, MessageSquare } from "lucide-react";
 
 export function PageHeader() {
-  const handleInstagramClick = () => {
-    window.open('https://instagram.com/princesaspetshop/', '_blank', 'noopener,noreferrer');
-  };
-
   return (
     <header className="w-full bg-primary py-4 text-primary-foreground shadow-md">
       <div className="container mx-auto flex flex-wrap flex-col md:flex-row items-center justify-center md:justify-between gap-4">
@@ -33,16 +28,15 @@ export function PageHeader() {
         </div>
 
         <div className="flex items-center justify-center gap-2">
-          <div
-            onClick={handleInstagramClick}
-            role="link"
+          <a
+            href="https://www.instagram.com/princesaspetshop/"
+            target="_blank"
+            rel="noopener noreferrer"
             aria-label="Siga-nos no Instagram"
-            className="h-10 w-10 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors cursor-pointer"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleInstagramClick(); }}
+            className="h-10 w-10 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors"
           >
             <Instagram className="h-6 w-6" />
-          </div>
+          </a>
           <a
             href="https://wa.me/552136538610"
             target="_blank"
