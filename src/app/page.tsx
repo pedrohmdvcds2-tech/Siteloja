@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import Link from "next/link";
 import { SchedulingForm } from "@/components/scheduling-form";
@@ -17,7 +18,6 @@ export default function Home() {
             alt="Princesas Pet Shop Logo"
             width={60}
             height={60}
-            className="invert-[.90] sepia-[.1] saturate-[5] hue-rotate(300deg) brightness-[1.2] contrast-100"
           />
           <h1 className="text-2xl font-bold font-headline">
             Princesas Pet Shop

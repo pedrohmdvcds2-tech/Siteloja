@@ -1,3 +1,4 @@
+
 import { ImageResponse } from 'next/og'
  
 // Image metadata
@@ -24,7 +25,7 @@ export default function Icon() {
           color: 'white',
         }}
       >
-        <img src="https://i.imgur.com/agbon6P.png" alt="Logo" style={{ width: '100%', height: '100%' }} />
+        <img src="https://i.imgur.com/SLxSDoD.png" alt="Logo" style={{ width: '100%', height: '100%' }} />
       </div>
     ),
     // ImageResponse options
