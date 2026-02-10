@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SchedulingForm } from "@/components/scheduling-form";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { AiChat } from "@/components/ai-chat";
+import { Faq } from "@/components/ai-chat";
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find((p) => p.id === "petspa-hero");
@@ -52,7 +52,7 @@ export default function Home() {
             </div>
           </div>
         <SchedulingForm />
-        <AiChat />
+        <Faq />
       </main>
 
       <footer className="w-full text-center p-6 text-sm text-muted-foreground border-t">
