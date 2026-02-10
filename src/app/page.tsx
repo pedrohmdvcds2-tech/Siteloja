@@ -5,6 +5,35 @@ import { Instagram, Facebook, MessageSquare } from "lucide-react";
 import { SchedulingForm } from "@/components/scheduling-form";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Faq } from "@/components/ai-chat";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Princesas Pet Shop",
+  description: "Agende o melhor cuidado para o seu melhor amigo.",
+  openGraph: {
+    title: "Princesas Pet Shop",
+    description: "Cuidado Real para Seu Amiguinho. Agende online!",
+    siteName: "Princesas Pet Shop",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1604508558528-04bfc0d52379?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxoYXBweSUyMGRvZyUyMGdyb29taW5nfGVufDB8fHx8MTc2NzU0OTEwN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+        width: 1080,
+        height: 720,
+      },
+    ],
+    locale: "pt_BR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Princesas Pet Shop",
+    description: "Cuidado Real para Seu Amiguinho. Agende online!",
+    images: [
+      "https://images.unsplash.com/photo-1604508558528-04bfc0d52379?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxoYXBweSUyMGRvZyUyMGdyb29taW5nfGVufDB8fHx8MTc2NzU0OTEwN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+    ],
+  },
+};
+
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find((p) => p.id === "petspa-hero");
@@ -35,7 +64,8 @@ export default function Home() {
 
           <div className="flex items-center justify-center gap-2">
             <a
-              href="https://www.instagram.com/princesaspetshop"
+              href="https://www.instagram.com/princesaspetshop/"
+              target="_blank"
               rel="noopener noreferrer"
               aria-label="Siga-nos no Instagram"
               className="h-10 w-10 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors"
