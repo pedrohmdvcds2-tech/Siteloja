@@ -9,21 +9,33 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-background text-foreground font-body">
-      <header className="w-full bg-primary text-primary-foreground py-6 shadow-md">
-        <div className="container mx-auto flex flex-col items-center justify-center text-center gap-3">
+      <header className="relative w-full h-64 md:h-80 flex items-center justify-center text-center shadow-lg">
+        {heroImage && (
+          <Image
+            src={heroImage.imageUrl}
+            alt={heroImage.description}
+            fill
+            priority
+            className="object-cover"
+            sizes="100vw"
+            data-ai-hint={heroImage.imageHint}
+          />
+        )}
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative z-10 flex flex-col items-center gap-4 text-white">
           <Image
             src="https://i.imgur.com/agbon6P.png"
             alt="Princesas Pet Shop Logo"
-            width={72}
-            height={72}
-            className="rounded-full border-2 border-white/80 shadow-lg"
+            width={80}
+            height={80}
+            className="rounded-full border-4 border-white/80 shadow-lg"
             priority
           />
           <div>
-            <h1 className="text-4xl font-bold font-headline tracking-tight">
+            <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight">
               Princesas Pet Shop
             </h1>
-            <p className="text-xl text-primary-foreground/90 mt-1">
+            <p className="text-xl md:text-2xl text-white/90 mt-2">
               Cuidado Real para Seu Amiguinho
             </p>
           </div>
@@ -31,27 +43,6 @@ export default function Home() {
       </header>
 
       <main className="flex-grow w-full max-w-5xl mx-auto p-4 md:p-8">
-         <div className="relative w-full h-56 md:h-64 rounded-xl overflow-hidden mb-8 shadow-lg">
-            {heroImage && (
-              <Image
-                src={heroImage.imageUrl}
-                alt={heroImage.description}
-                fill
-                priority
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                data-ai-hint={heroImage.imageHint}
-              />
-            )}
-            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-4">
-              <h2 className="text-3xl md:text-4xl font-bold text-white font-headline">
-                O melhor cuidado para o seu melhor amigo
-              </h2>
-              <p className="text-lg text-white/90 mt-2 max-w-2xl">
-                Agende online de forma rápida e fácil o banho e outros serviços para o seu pet.
-              </p>
-            </div>
-          </div>
         <SchedulingForm />
         <Faq />
       </main>
