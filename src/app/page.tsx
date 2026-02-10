@@ -12,7 +12,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background font-body text-foreground">
       <header className="w-full bg-primary py-4 text-primary-foreground shadow-md">
         <div className="container mx-auto flex flex-wrap flex-col md:flex-row items-center justify-center md:justify-between gap-4">
-          <div className="flex flex-row items-center justify-center gap-4 order-2 md:order-1">
+          <div className="flex flex-row items-center justify-center gap-4">
             <Image
               src="https://i.imgur.com/SLxSDoD.png"
               alt="Princesas Pet Shop Logo"
@@ -23,7 +23,8 @@ export default function Home() {
             />
             <div className="flex flex-col text-center md:text-left">
               <h1 className="text-4xl lg:text-5xl font-bold font-headline">
-                Princesas Pet Shop
+                <span className="md:hidden">Princesas<br />Pet Shop</span>
+                <span className="hidden md:inline">Princesas Pet Shop</span>
               </h1>
               <p className="text-lg lg:text-2xl">
                 Cuidado Real para Seu Amiguinho
@@ -31,7 +32,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-2 order-1 md:order-2">
+          <div className="flex items-center justify-center gap-2">
             <a
               href="https://www.instagram.com/princesaspetshop"
               target="_blank"
