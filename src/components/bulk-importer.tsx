@@ -44,7 +44,6 @@ const frequencyMap: { [key: string]: string } = {
     'semanal': 'weekly',
     'quinzenal': 'bi-weekly',
     'mensal': 'monthly',
-    'semestral': 'semestral'
 };
 
 const parseDateString = (dateStr: string): Date | undefined => {
@@ -254,7 +253,7 @@ export function BulkImporter({ collectionPath, onImportSuccess, onClearSuccess, 
                     <li><strong>dayOfWeek:</strong> 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'.</li>
                     <li><strong>time:</strong> Formato HH:mm (ex: 14:00).</li>
                     <li><strong>petName:</strong> O nome do pet.</li>
-                    <li><strong>frequency:</strong> 'semanal', 'quinzenal', 'mensal', ou 'semestral'.</li>
+                    <li><strong>frequency:</strong> 'semanal', 'quinzenal', ou 'mensal'.</li>
                     <li><strong>cycleStartDate (opcional):</strong> Data de início do ciclo no formato dd/MM/yyyy.</li>
                     <li><strong>startBathNumber (opcional):</strong> Número do banho inicial (ex: 1, 2, 3, 4).</li>
                 </ul>

@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState, useEffect, useMemo } from "react";
-import { format, getWeek, isBefore, startOfDay } from "date-fns";
+import { format, getWeek, isBefore, startOfDay, isEqual, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   User,
@@ -164,7 +164,7 @@ export function SchedulingForm() {
         
         const startWeekParity = getWeek(cycleStartDate, { weekStartsOn: 1 }) % 2;
 
-        if (block.frequency === 'weekly') {
+        if (block.frequency === 'weekly' || block.frequency === 'monthly') {
           bookedOrBlockedTimes.add(block.time);
         } else if (block.frequency === 'bi-weekly') {
           const selectedWeekParity = getWeek(selectedDate, { weekStartsOn: 1 }) % 2;

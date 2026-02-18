@@ -44,7 +44,7 @@ export const recurringBlockSchema = z.object({
   time: z.string().min(1, "Por favor, selecione um horário."),
   petName: z.string().min(2, "O nome do pet deve ter pelo menos 2 caracteres."),
   label: z.string().default('Clubinho'),
-  frequency: z.enum(['weekly', 'bi-weekly', 'monthly', 'semestral'], {
+  frequency: z.enum(['weekly', 'bi-weekly', 'monthly'], {
     required_error: 'Selecione a frequência.'
   }),
   startBathNumber: z.number().optional(),
