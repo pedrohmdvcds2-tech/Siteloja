@@ -12,7 +12,7 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return request.auth.token.email == 'admin@princesaspetshop.com';
+      return request.auth.token.email == 'admin@princesaspetshop.com.br';
     }
 
     match /users/{userId} {
