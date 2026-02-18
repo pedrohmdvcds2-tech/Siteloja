@@ -107,7 +107,7 @@ export default function AgendaPage() {
 
         const startWeekParity = getWeek(cycleStartDate, { weekStartsOn: 1 }) % 2;
 
-        if (block.frequency === 'weekly') {
+        if (block.frequency === 'weekly' || block.frequency === 'monthly') {
             // Always valid if after start date
         } else if (block.frequency === 'bi-weekly') {
             const selectedWeekParity = getWeek(selectedDate, { weekStartsOn: 1 }) % 2;
@@ -124,7 +124,7 @@ export default function AgendaPage() {
 
         while (isBefore(currentDate, startOfSelectedDate) || isEqual(currentDate, startOfSelectedDate)) {
              if (currentDate.getDay() === blockDayOfWeek) {
-                if (block.frequency === 'weekly') {
+                if (block.frequency === 'weekly' || block.frequency === 'monthly') {
                     totalOccurrences++;
                 } else if (block.frequency === 'bi-weekly') {
                     const currentWeekParity = getWeek(currentDate, { weekStartsOn: 1 }) % 2;

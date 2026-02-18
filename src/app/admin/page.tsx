@@ -413,6 +413,8 @@ export default function AdminPage() {
                             <SelectContent>
                               <SelectItem value="weekly">Semanal</SelectItem>
                               <SelectItem value="bi-weekly">Quinzenal</SelectItem>
+                              <SelectItem value="monthly">Mensal</SelectItem>
+                              <SelectItem value="semestral">Semestral</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -556,8 +558,8 @@ export default function AdminPage() {
                           {block.petName}
                         </TableCell>
                          <TableCell>
-                          <Badge variant={block.frequency === 'weekly' ? 'secondary' : 'outline'}>
-                            {block.frequency === 'weekly' ? 'Semanal' : 'Quinzenal'}
+                          <Badge variant={block.frequency === 'weekly' || block.frequency === 'monthly' ? 'secondary' : 'outline'}>
+                            {block.frequency === 'weekly' ? 'Semanal' : block.frequency === 'bi-weekly' ? 'Quinzenal' : block.frequency === 'monthly' ? 'Mensal' : block.frequency === 'semestral' ? 'Semestral' : ''}
                           </Badge>
                         </TableCell>
                         <TableCell>
