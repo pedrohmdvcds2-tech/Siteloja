@@ -105,42 +105,50 @@ export default function AgendaPage() {
             return;
         }
 
-        const startWeekParity = getWeek(cycleStartDate, { weekStartsOn: 1 }) % 2;
+        // Calculate week difference from cycle start date.
+        // getTime() is in ms. Divide to get days, then weeks.
+        const diffInMs = startOfSelectedDate.getTime() - cycleStartDate.getTime();
+        const diffInWeeks = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 7));
 
-        if (block.frequency === 'weekly' || block.frequency === 'monthly') {
-            // Always valid if after start date
-        } else if (block.frequency === 'bi-weekly') {
-            const selectedWeekParity = getWeek(selectedDate, { weekStartsOn: 1 }) % 2;
-            if (selectedWeekParity !== startWeekParity) {
-                return; // Skip if week parity doesn't match
+        let isValidForFrequency = false;
+        if (block.frequency === 'weekly') {
+            isValidForFrequency = true;
+        } else if (block.frequency === 'bi-weekly') { // Quinzenal
+            // Occurs every 2 weeks from start date
+            if (diffInWeeks % 2 === 0) {
+                isValidForFrequency = true;
             }
-        } else {
-            return; // Skip if no valid frequency
+        } else if (block.frequency === 'monthly') { // Mensal
+            // Occurs every 4 weeks from start date
+            if (diffInWeeks % 4 === 0) {
+                isValidForFrequency = true;
+            }
+        }
+        
+        if (!isValidForFrequency) {
+            return; // Not a valid week for this frequency
         }
 
-        // Calculate occurrences since cycle start date
+        // Calculate total occurrences to determine bath number
         let totalOccurrences = 0;
-        let currentDate = cycleStartDate;
-
-        while (isBefore(currentDate, startOfSelectedDate) || isEqual(currentDate, startOfSelectedDate)) {
-             if (currentDate.getDay() === blockDayOfWeek) {
-                if (block.frequency === 'weekly' || block.frequency === 'monthly') {
-                    totalOccurrences++;
-                } else if (block.frequency === 'bi-weekly') {
-                    const currentWeekParity = getWeek(currentDate, { weekStartsOn: 1 }) % 2;
-                    if (currentWeekParity === startWeekParity) {
-                        totalOccurrences++;
-                    }
-                }
+        // This can be calculated mathematically, avoiding a slow loop.
+        if (diffInWeeks >= 0) {
+             if (block.frequency === 'weekly') {
+                // If weekly, every week is an occurrence.
+                totalOccurrences = diffInWeeks + 1;
+            } else if (block.frequency === 'bi-weekly') {
+                // If bi-weekly, every 2nd week is an occurrence.
+                totalOccurrences = Math.floor(diffInWeeks / 2) + 1;
+            } else if (block.frequency === 'monthly') {
+                // If monthly (every 4 weeks), every 4th week is an occurrence.
+                totalOccurrences = Math.floor(diffInWeeks / 4) + 1;
             }
-            currentDate = addDays(currentDate, 1);
         }
 
-        if (totalOccurrences === 0) return; // Should not happen if logic is correct but as a safeguard
+        if (totalOccurrences <= 0) return;
 
         const startBathNumber = block.startBathNumber || 1;
         const bathCount = (((startBathNumber - 1) + (totalOccurrences - 1)) % 4) + 1;
-
 
         const [hours, minutes] = block.time.split(':').map(Number);
         const startTime = new Date(selectedDate);
