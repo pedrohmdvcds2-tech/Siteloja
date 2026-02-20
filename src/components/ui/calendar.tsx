@@ -54,13 +54,13 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+        IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+        IconRight: () => <ChevronRight className="h-4 w-4" />,
       }}
       formatters={{
         formatWeekdayName: (day, options) => {
-          const weekday = format(day, 'EEEEE', { locale: options?.locale });
-          return weekday.toUpperCase();
+          const weekday = format(day, 'EEE', { locale: options?.locale });
+          return weekday.charAt(0).toUpperCase() + weekday.slice(1);
         }
       }}
       {...props}
