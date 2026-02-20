@@ -122,18 +122,47 @@ export default function AgendaPage() {
         }
 
         let bathCount: number | undefined = undefined;
+        const startBathNumber = block.startBathNumber || 1;
 
-        if (block.frequency === 'weekly' || block.frequency === 'monthly') {
-            let totalOccurrences = 0;
+        if (block.frequency === 'weekly') {
             if (diffInWeeks >= 0) {
-                totalOccurrences = diffInWeeks + 1;
+                const totalOccurrences = diffInWeeks + 1;
+                bathCount = (((startBathNumber - 1) + (totalOccurrences - 1)) % 4) + 1;
             }
-            if (totalOccurrences > 0) {
-                 const startBathNumber = block.startBathNumber || 1;
-                 bathCount = (((startBathNumber - 1) + (totalOccurrences - 1)) % 4) + 1;
+        } else if (block.frequency === 'monthly') {
+            const selectedYear = selectedDate.getFullYear();
+            const selectedMonth = selectedDate.getMonth();
+            const cycleStartYear = cycleStartDate.getFullYear();
+            const cycleStartMonth = cycleStartDate.getMonth();
+
+            if (selectedYear === cycleStartYear && selectedMonth === cycleStartMonth) {
+                // It's the first month of the cycle. Use startBathNumber as the base.
+                const weeksSinceCycleStart = Math.floor(
+                    (startOfSelectedDate.getTime() - cycleStartDate.getTime()) / (1000 * 60 * 60 * 24 * 7)
+                );
+
+                if (weeksSinceCycleStart >= 0) {
+                    bathCount = startBathNumber + weeksSinceCycleStart;
+                }
+            } else {
+                // It's a subsequent month. Start counting from 1.
+                // Find the date of the first occurrence of this weekday in the selected month
+                const dayOfWeek = selectedDayOfWeek;
+                let firstOccurrenceDate = new Date(selectedYear, selectedMonth, 1);
+                while (firstOccurrenceDate.getDay() !== dayOfWeek) {
+                    firstOccurrenceDate.setDate(firstOccurrenceDate.getDate() + 1);
+                }
+                firstOccurrenceDate = startOfDayFns(firstOccurrenceDate);
+                
+                const weeksPassedInMonth = Math.floor(
+                    (startOfSelectedDate.getTime() - firstOccurrenceDate.getTime()) / (1000 * 60 * 60 * 24 * 7)
+                );
+                
+                if (weeksPassedInMonth >= 0) {
+                    bathCount = weeksPassedInMonth + 1;
+                }
             }
         }
-
 
         const [hours, minutes] = block.time.split(':').map(Number);
         const startTime = new Date(selectedDate);
