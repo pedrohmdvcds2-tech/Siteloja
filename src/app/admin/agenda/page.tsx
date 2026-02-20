@@ -24,6 +24,7 @@ interface UnifiedAppointment {
     service?: string;
     label?: string;
     bathCount?: number;
+    frequency?: string;
 }
 
 export default function AgendaPage() {
@@ -171,7 +172,8 @@ export default function AgendaPage() {
             type: 'recurring',
             petName: block.petName,
             label: block.label,
-            bathCount: bathCount
+            bathCount: bathCount,
+            frequency: block.frequency,
         });
     });
 
@@ -216,30 +218,27 @@ export default function AgendaPage() {
           </Button>
       </header>
       
-      <div className="flex flex-col gap-8">
-        {/* Calendar section */}
-        <div className="w-full">
-          <Card>
-            <CardHeader>
-              <CardTitle className='flex items-center justify-center gap-2'>
-                <CalendarIcon className='h-5 w-5' />
-                Selecione uma Data
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex justify-center p-2">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="p-0"
-                locale={ptBR}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Schedule section */}
-        <div className="w-full">
+      <div className="w-full">
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className='flex items-center justify-center gap-2'>
+              <CalendarIcon className='h-5 w-5' />
+              Selecione uma Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center p-2">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              className="p-0"
+              locale={ptBR}
+            />
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="w-full">
           <Card>
             <CardHeader>
               <CardTitle>
@@ -295,6 +294,11 @@ export default function AgendaPage() {
                                     {item.bathCount && item.bathCount > 0 && (
                                         <Badge variant="outline">{item.bathCount}º Banho</Badge>
                                     )}
+                                    {item.frequency && (
+                                      <Badge variant={item.frequency === 'weekly' ? 'default' : item.frequency === 'monthly' ? 'secondary' : 'outline'}>
+                                        {item.frequency === 'weekly' ? 'Semanal' : item.frequency === 'bi-weekly' ? 'Quinzenal' : 'Mensal'}
+                                      </Badge>
+                                    )}
                                 </div>
                                 </div>
                             )}
@@ -308,7 +312,6 @@ export default function AgendaPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
     </div>
   );
 }
