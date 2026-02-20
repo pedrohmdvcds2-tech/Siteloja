@@ -4,7 +4,7 @@ import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where } from 'firebase/firestore';
-import { format, getWeek, startOfDay as startOfDayFns, addDays, isBefore, isEqual, startOfMonth, eachDayOfInterval } from 'date-fns';
+import { format, getWeek, startOfDay as startOfDayFns, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Dog } from 'lucide-react';
+import { ArrowLeft, Dog, Calendar as CalendarIcon } from 'lucide-react';
 
 interface UnifiedAppointment {
     id: string;
@@ -74,7 +74,7 @@ export default function AgendaPage() {
 
     const schedule: UnifiedAppointment[] = [];
 
-    // 1. Adicionar agendamentos de clientes
+    // 1. Add client appointments
     if (dayAppointments) {
         dayAppointments.forEach(apt => {
             if(apt.blocked) {
@@ -91,7 +91,7 @@ export default function AgendaPage() {
         });
     }
 
-    // 2. Adicionar bloqueios recorrentes (clubinho)
+    // 2. Add recurring blocks (clubinho)
     const selectedDayOfWeek = selectedDate.getDay();
     const startOfSelectedDate = startOfDayFns(selectedDate);
 
@@ -112,7 +112,7 @@ export default function AgendaPage() {
         if (block.frequency === 'weekly' || block.frequency === 'monthly') {
             isValidForFrequency = true;
         } else if (block.frequency === 'bi-weekly') {
-            if (diffInWeeks % 2 === 0) {
+             if (diffInWeeks % 2 === 0) {
                 isValidForFrequency = true;
             }
         }
@@ -136,7 +136,6 @@ export default function AgendaPage() {
             const cycleStartMonth = cycleStartDate.getMonth();
 
             if (selectedYear === cycleStartYear && selectedMonth === cycleStartMonth) {
-                // It's the first month of the cycle. Use startBathNumber as the base.
                 const weeksSinceCycleStart = Math.floor(
                     (startOfSelectedDate.getTime() - cycleStartDate.getTime()) / (1000 * 60 * 60 * 24 * 7)
                 );
@@ -145,8 +144,6 @@ export default function AgendaPage() {
                     bathCount = startBathNumber + weeksSinceCycleStart;
                 }
             } else {
-                // It's a subsequent month. Start counting from 1.
-                // Find the date of the first occurrence of this weekday in the selected month
                 const dayOfWeek = selectedDayOfWeek;
                 let firstOccurrenceDate = new Date(selectedYear, selectedMonth, 1);
                 while (firstOccurrenceDate.getDay() !== dayOfWeek) {
@@ -178,7 +175,7 @@ export default function AgendaPage() {
         });
     });
 
-    // 3. Ordenar o cronograma final
+    // 3. Sort the final schedule
     return schedule.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 }, [selectedDate, dayAppointments, recurringBlocks]);
 
@@ -209,7 +206,7 @@ export default function AgendaPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-8">
-      <div className='flex items-center justify-between'>
+      <header className='flex items-center justify-between'>
           <h1 className="text-3xl font-bold">Agenda</h1>
           <Button asChild variant="outline">
               <Link href="/admin">
@@ -217,24 +214,32 @@ export default function AgendaPage() {
                   Voltar ao Painel
               </Link>
           </Button>
-      </div>
+      </header>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-1">
-            <Card>
-                <CardContent className="p-2">
-                    <Calendar
-                        id="admin-agenda-calendar"
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        className="w-full"
-                        locale={ptBR}
-                    />
-                </CardContent>
-            </Card>
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Calendar column */}
+        <div className="lg:w-auto lg:max-w-sm w-full">
+          <Card>
+            <CardHeader>
+              <CardTitle className='flex items-center gap-2'>
+                <CalendarIcon className='h-5 w-5' />
+                Selecione uma Data
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center p-2">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                className="p-0"
+                locale={ptBR}
+              />
+            </CardContent>
+          </Card>
         </div>
-        <div className="md:col-span-2">
+
+        {/* Schedule column */}
+        <div className="flex-1 w-full">
           <Card>
             <CardHeader>
               <CardTitle>
@@ -253,50 +258,52 @@ export default function AgendaPage() {
                 </div>
               )}
               {selectedDaySchedule.length > 0 && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Horário</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Detalhes</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedDaySchedule.map(item => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">{format(new Date(item.startTime), 'HH:mm')}</TableCell>
-                        <TableCell>
-                          {item.type === 'recurring' ? (
-                            <Badge variant="destructive">{item.label || 'Clubinho'}</Badge>
-                          ) : (
-                            <Badge variant="secondary">Cliente</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {item.type === 'client' ? (
-                            <>
-                                <div className='font-medium'>{item.clientName}</div>
-                                <div className='text-sm text-muted-foreground'>{item.petName}</div>
-                                <div className='text-xs text-muted-foreground mt-1'>{item.service}</div>
-                            </>
-                          ) : (
-                            <div className="flex flex-col gap-1">
-                               <div className='font-medium flex items-center gap-2'>
-                                  <Dog className="h-4 w-4 text-primary" /> 
-                                  <span>{item.petName}</span>
-                               </div>
-                               <div className='flex items-center gap-2'>
-                                  {item.bathCount && item.bathCount > 0 && (
-                                    <Badge variant="outline">{item.bathCount}º Banho</Badge>
-                                  )}
-                               </div>
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="overflow-x-auto">
+                    <Table>
+                    <TableHeader>
+                        <TableRow>
+                        <TableHead>Horário</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Detalhes</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {selectedDaySchedule.map(item => (
+                        <TableRow key={item.id}>
+                            <TableCell className="font-medium">{format(new Date(item.startTime), 'HH:mm')}</TableCell>
+                            <TableCell>
+                            {item.type === 'recurring' ? (
+                                <Badge variant="destructive">{item.label || 'Clubinho'}</Badge>
+                            ) : (
+                                <Badge variant="secondary">Cliente</Badge>
+                            )}
+                            </TableCell>
+                            <TableCell>
+                            {item.type === 'client' ? (
+                                <>
+                                    <div className='font-medium'>{item.clientName}</div>
+                                    <div className='text-sm text-muted-foreground'>{item.petName}</div>
+                                    <div className='text-xs text-muted-foreground mt-1'>{item.service}</div>
+                                </>
+                            ) : (
+                                <div className="flex flex-col gap-1">
+                                <div className='font-medium flex items-center gap-2'>
+                                    <Dog className="h-4 w-4 text-primary" /> 
+                                    <span>{item.petName}</span>
+                                </div>
+                                <div className='flex items-center gap-2'>
+                                    {item.bathCount && item.bathCount > 0 && (
+                                        <Badge variant="outline">{item.bathCount}º Banho</Badge>
+                                    )}
+                                </div>
+                                </div>
+                            )}
+                            </TableCell>
+                        </TableRow>
+                        ))}
+                    </TableBody>
+                    </Table>
+                </div>
               )}
             </CardContent>
           </Card>
