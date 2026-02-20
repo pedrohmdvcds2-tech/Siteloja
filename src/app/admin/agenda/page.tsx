@@ -4,7 +4,7 @@ import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where } from 'firebase/firestore';
-import { format, getWeek, startOfDay as startOfDayFns, addDays, isBefore, isEqual } from 'date-fns';
+import { format, getWeek, startOfDay as startOfDayFns, addDays, isBefore, isEqual, startOfMonth, eachDayOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
@@ -109,33 +109,43 @@ export default function AgendaPage() {
         const diffInWeeks = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 7));
 
         let isValidForFrequency = false;
-        // Logic according to user request
         if (block.frequency === 'weekly' || block.frequency === 'monthly') {
             isValidForFrequency = true;
-        } else if (block.frequency === 'bi-weekly') { // Quinzenal
+        } else if (block.frequency === 'bi-weekly') {
             if (diffInWeeks % 2 === 0) {
                 isValidForFrequency = true;
             }
         }
         
         if (!isValidForFrequency) {
-            return; // Not a valid week for this frequency
+            return;
         }
 
         let bathCount: number | undefined = undefined;
 
-        // Calculate bathCount for weekly and monthly frequencies
-        if (block.frequency === 'weekly' || block.frequency === 'monthly') {
+        if (block.frequency === 'weekly') {
             let totalOccurrences = 0;
             if (diffInWeeks >= 0) {
-                // For weekly/monthly, every week is an occurrence from the start date.
                 totalOccurrences = diffInWeeks + 1;
             }
-            
             if (totalOccurrences > 0) {
                  const startBathNumber = block.startBathNumber || 1;
                  bathCount = (((startBathNumber - 1) + (totalOccurrences - 1)) % 4) + 1;
             }
+        } else if (block.frequency === 'monthly') {
+            const monthStart = startOfMonth(selectedDate);
+            const daysInMonthInterval = eachDayOfInterval({
+                start: monthStart,
+                end: selectedDate,
+            });
+            
+            let occurrencesThisMonth = 0;
+            daysInMonthInterval.forEach(day => {
+                if (day.getDay() === blockDayOfWeek) {
+                    occurrencesThisMonth++;
+                }
+            });
+            bathCount = occurrencesThisMonth;
         }
 
 
