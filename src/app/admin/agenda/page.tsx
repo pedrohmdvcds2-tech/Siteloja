@@ -105,22 +105,15 @@ export default function AgendaPage() {
             return;
         }
 
-        // Calculate week difference from cycle start date.
-        // getTime() is in ms. Divide to get days, then weeks.
         const diffInMs = startOfSelectedDate.getTime() - cycleStartDate.getTime();
         const diffInWeeks = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 7));
 
         let isValidForFrequency = false;
-        if (block.frequency === 'weekly') {
+        // Logic according to user request
+        if (block.frequency === 'weekly' || block.frequency === 'monthly') {
             isValidForFrequency = true;
         } else if (block.frequency === 'bi-weekly') { // Quinzenal
-            // Occurs every 2 weeks from start date
             if (diffInWeeks % 2 === 0) {
-                isValidForFrequency = true;
-            }
-        } else if (block.frequency === 'monthly') { // Mensal
-            // Occurs every 4 weeks from start date
-            if (diffInWeeks % 4 === 0) {
                 isValidForFrequency = true;
             }
         }
@@ -129,26 +122,22 @@ export default function AgendaPage() {
             return; // Not a valid week for this frequency
         }
 
-        // Calculate total occurrences to determine bath number
-        let totalOccurrences = 0;
-        // This can be calculated mathematically, avoiding a slow loop.
-        if (diffInWeeks >= 0) {
-             if (block.frequency === 'weekly') {
-                // If weekly, every week is an occurrence.
+        let bathCount: number | undefined = undefined;
+
+        // Calculate bathCount ONLY for weekly frequency
+        if (block.frequency === 'weekly') {
+            let totalOccurrences = 0;
+            if (diffInWeeks >= 0) {
+                // For weekly, every week is an occurrence from the start date.
                 totalOccurrences = diffInWeeks + 1;
-            } else if (block.frequency === 'bi-weekly') {
-                // If bi-weekly, every 2nd week is an occurrence.
-                totalOccurrences = Math.floor(diffInWeeks / 2) + 1;
-            } else if (block.frequency === 'monthly') {
-                // If monthly (every 4 weeks), every 4th week is an occurrence.
-                totalOccurrences = Math.floor(diffInWeeks / 4) + 1;
+            }
+            
+            if (totalOccurrences > 0) {
+                 const startBathNumber = block.startBathNumber || 1;
+                 bathCount = (((startBathNumber - 1) + (totalOccurrences - 1)) % 4) + 1;
             }
         }
 
-        if (totalOccurrences <= 0) return;
-
-        const startBathNumber = block.startBathNumber || 1;
-        const bathCount = (((startBathNumber - 1) + (totalOccurrences - 1)) % 4) + 1;
 
         const [hours, minutes] = block.time.split(':').map(Number);
         const startTime = new Date(selectedDate);
@@ -160,7 +149,7 @@ export default function AgendaPage() {
             type: 'recurring',
             petName: block.petName,
             label: block.label,
-            bathCount: bathCount
+            bathCount: bathCount // Will be undefined for non-weekly
         });
     });
 

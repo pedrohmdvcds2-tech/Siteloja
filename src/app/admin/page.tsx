@@ -87,6 +87,8 @@ export default function AdminPage() {
       startBathNumber: 1,
     },
   });
+  
+  const watchedFrequency = form.watch('frequency');
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
@@ -148,6 +150,10 @@ export default function AdminPage() {
           dataToSave.startBathNumber = Number(data.startBathNumber);
       } else {
           delete dataToSave.startBathNumber;
+      }
+
+      if (data.frequency !== 'weekly') {
+        delete dataToSave.startBathNumber;
       }
 
 
@@ -459,19 +465,21 @@ export default function AdminPage() {
                         </FormItem>
                         )}
                     />
-                    <FormField
-                        control={form.control}
-                        name="startBathNumber"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Nº do Banho Inicial</FormLabel>
-                                <FormControl>
-                                    <Input type="number" placeholder="Ex: 1" {...field} value={field.value || ''} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    {watchedFrequency === 'weekly' && (
+                      <FormField
+                          control={form.control}
+                          name="startBathNumber"
+                          render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>Nº do Banho Inicial</FormLabel>
+                                  <FormControl>
+                                      <Input type="number" placeholder="Ex: 1" {...field} value={field.value || ''} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} />
+                                  </FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                    )}
                 </div>
                 <Button type="submit" disabled={isBlocking}>
                   <Repeat className='mr-2' />
@@ -557,7 +565,7 @@ export default function AdminPage() {
                           {block.petName}
                         </TableCell>
                          <TableCell>
-                          <Badge variant={block.frequency === 'weekly' || block.frequency === 'monthly' ? 'secondary' : 'outline'}>
+                          <Badge variant={block.frequency === 'weekly' ? 'default' : block.frequency === 'monthly' ? 'secondary' : 'outline'}>
                             {block.frequency === 'weekly' ? 'Semanal' : block.frequency === 'bi-weekly' ? 'Quinzenal' : 'Mensal'}
                           </Badge>
                         </TableCell>
@@ -565,7 +573,7 @@ export default function AdminPage() {
                           {block.cycleStartDate ? format(new Date(block.cycleStartDate.seconds * 1000), 'dd/MM/yy') : 'N/A'}
                         </TableCell>
                         <TableCell>
-                          {block.startBathNumber || 'N/A'}
+                          {block.frequency === 'weekly' ? block.startBathNumber || 'N/A' : 'N/A'}
                         </TableCell>
                         <TableCell className="text-right">
                           <AlertDialog>
