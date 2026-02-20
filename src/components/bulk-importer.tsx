@@ -114,7 +114,7 @@ export function BulkImporter({ collectionPath, onImportSuccess, onClearSuccess, 
                 dataToValidate.startWeekParity = getWeek(cycleStartDate, { weekStartsOn: 1 }) % 2;
             }
             
-            if (frequency === 'weekly') {
+            if (frequency === 'weekly' || frequency === 'monthly') {
                 const startBathNumber = startBathNumberRaw ? parseInt(startBathNumberRaw, 10) : undefined;
                 if (startBathNumber && !isNaN(startBathNumber)) {
                     dataToValidate.startBathNumber = startBathNumber;
@@ -257,7 +257,7 @@ export function BulkImporter({ collectionPath, onImportSuccess, onClearSuccess, 
                     <li><strong>petName:</strong> O nome do pet.</li>
                     <li><strong>frequency:</strong> 'semanal', 'quinzenal', ou 'mensal'.</li>
                     <li><strong>cycleStartDate (opcional):</strong> Data de início do ciclo no formato dd/MM/yyyy.</li>
-                    <li><strong>startBathNumber (opcional, para 'semanal'):</strong> Número do banho inicial (ex: 1, 2, 3, 4).</li>
+                    <li><strong>startBathNumber (opcional, para 'semanal' ou 'mensal'):</strong> Número do banho inicial (ex: 1, 2, 3, 4).</li>
                 </ul>
             </AlertDescription>
         </Alert>

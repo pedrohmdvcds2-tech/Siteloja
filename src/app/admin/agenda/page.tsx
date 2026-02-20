@@ -123,7 +123,7 @@ export default function AgendaPage() {
 
         let bathCount: number | undefined = undefined;
 
-        if (block.frequency === 'weekly') {
+        if (block.frequency === 'weekly' || block.frequency === 'monthly') {
             let totalOccurrences = 0;
             if (diffInWeeks >= 0) {
                 totalOccurrences = diffInWeeks + 1;
@@ -132,20 +132,6 @@ export default function AgendaPage() {
                  const startBathNumber = block.startBathNumber || 1;
                  bathCount = (((startBathNumber - 1) + (totalOccurrences - 1)) % 4) + 1;
             }
-        } else if (block.frequency === 'monthly') {
-            const monthStart = startOfMonth(selectedDate);
-            const daysInMonthInterval = eachDayOfInterval({
-                start: monthStart,
-                end: selectedDate,
-            });
-            
-            let occurrencesThisMonth = 0;
-            daysInMonthInterval.forEach(day => {
-                if (day.getDay() === blockDayOfWeek) {
-                    occurrencesThisMonth++;
-                }
-            });
-            bathCount = occurrencesThisMonth;
         }
 
 

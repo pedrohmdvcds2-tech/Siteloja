@@ -152,7 +152,7 @@ export default function AdminPage() {
           delete dataToSave.startBathNumber;
       }
 
-      if (data.frequency !== 'weekly') {
+      if (data.frequency !== 'weekly' && data.frequency !== 'monthly') {
         delete dataToSave.startBathNumber;
       }
 
@@ -465,7 +465,7 @@ export default function AdminPage() {
                         </FormItem>
                         )}
                     />
-                    {watchedFrequency === 'weekly' && (
+                    {(watchedFrequency === 'weekly' || watchedFrequency === 'monthly') && (
                       <FormField
                           control={form.control}
                           name="startBathNumber"
@@ -573,7 +573,7 @@ export default function AdminPage() {
                           {block.cycleStartDate ? format(new Date(block.cycleStartDate.seconds * 1000), 'dd/MM/yy') : 'N/A'}
                         </TableCell>
                         <TableCell>
-                          {block.frequency === 'weekly' ? block.startBathNumber || 'N/A' : 'N/A'}
+                          {(block.frequency === 'weekly' || block.frequency === 'monthly') ? block.startBathNumber || 'N/A' : 'N/A'}
                         </TableCell>
                         <TableCell className="text-right">
                           <AlertDialog>
