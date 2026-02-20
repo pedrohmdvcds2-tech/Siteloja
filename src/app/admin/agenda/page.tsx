@@ -124,11 +124,11 @@ export default function AgendaPage() {
 
         let bathCount: number | undefined = undefined;
 
-        // Calculate bathCount ONLY for weekly frequency
-        if (block.frequency === 'weekly') {
+        // Calculate bathCount for weekly and monthly frequencies
+        if (block.frequency === 'weekly' || block.frequency === 'monthly') {
             let totalOccurrences = 0;
             if (diffInWeeks >= 0) {
-                // For weekly, every week is an occurrence from the start date.
+                // For weekly/monthly, every week is an occurrence from the start date.
                 totalOccurrences = diffInWeeks + 1;
             }
             
@@ -149,7 +149,7 @@ export default function AgendaPage() {
             type: 'recurring',
             petName: block.petName,
             label: block.label,
-            bathCount: bathCount // Will be undefined for non-weekly
+            bathCount: bathCount
         });
     });
 
