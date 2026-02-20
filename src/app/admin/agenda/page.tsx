@@ -216,12 +216,12 @@ export default function AgendaPage() {
           </Button>
       </header>
       
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Calendar column */}
-        <div className="lg:w-auto lg:max-w-sm w-full">
+      <div className="flex flex-col gap-8">
+        {/* Calendar section */}
+        <div className="w-full">
           <Card>
             <CardHeader>
-              <CardTitle className='flex items-center gap-2'>
+              <CardTitle className='flex items-center justify-center gap-2'>
                 <CalendarIcon className='h-5 w-5' />
                 Selecione uma Data
               </CardTitle>
@@ -238,8 +238,8 @@ export default function AgendaPage() {
           </Card>
         </div>
 
-        {/* Schedule column */}
-        <div className="flex-1 w-full">
+        {/* Schedule section */}
+        <div className="w-full">
           <Card>
             <CardHeader>
               <CardTitle>
