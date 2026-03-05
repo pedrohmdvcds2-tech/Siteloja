@@ -77,15 +77,26 @@ import { Switch } from "@/components/ui/switch";
 
 const PRICES = {
   bath: {
-    "Banho Simples": 30,
-    "Banho Terapêutico": 45,
-    "Banho e Tosa": 60,
-    "Banho e Tosa Higienico": 85,
-  },
-  sizeMultiplier: {
-    pequeno: 1,
-    medio: 1.25,
-    grande: 1.5,
+    "Banho Simples": {
+      pequeno: 70,
+      medio: 80,
+      grande: 95,
+    },
+    "Banho Terapêutico": {
+      pequeno: 75,
+      medio: 85,
+      grande: 100,
+    },
+    "Banho e Tosa": {
+      pequeno: 90,
+      medio: 105,
+      grande: 120,
+    },
+    "Banho e Tosa Higienico": {
+      pequeno: 85,
+      medio: 95,
+      grande: 110,
+    },
   },
   extras: {
     hydration: 20,
@@ -213,19 +224,20 @@ export function SchedulingForm() {
         return 0;
       }
 
-      const basePrice = PRICES.bath[bathType as keyof typeof PRICES.bath] || 0;
-      const sizeAdjustedPrice =
-        basePrice *
-        (PRICES.sizeMultiplier[
-          petSize as keyof typeof PRICES.sizeMultiplier
-        ] || 1);
+      const bathPriceConfig = PRICES.bath[bathType as keyof typeof PRICES.bath];
+      if (!bathPriceConfig) {
+        return 0;
+      }
+
+      const basePrice =
+        bathPriceConfig[petSize as keyof typeof bathPriceConfig] || 0;
 
       let extrasPrice = 0;
       if (extras?.hydration) extrasPrice += PRICES.extras.hydration;
       if (extras?.ozoneBath) extrasPrice += PRICES.extras.ozoneBath;
       if (extras?.teethBrushing) extrasPrice += PRICES.extras.teethBrushing;
       
-      return sizeAdjustedPrice + extrasPrice;
+      return basePrice + extrasPrice;
     };
 
     const newPrice = calculatePrice();
