@@ -1,4 +1,4 @@
-# Guia: Como Baixar o Código do Seu Projeto
+init# Guia: Como Baixar o Código do Seu Projeto
 
 Olá! Aqui está um guia passo a passo para ajudá-lo a baixar o código do seu site para o seu computador. Existem dois métodos principais: **Exportar como ZIP** (mais rápido e simples) ou usar o **Git** (melhor para desenvolvimento contínuo).
 
