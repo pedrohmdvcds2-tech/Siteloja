@@ -80,6 +80,7 @@ const PRICES = {
     "Banho Simples": 30,
     "Banho Terapêutico": 45,
     "Banho e Tosa": 60,
+    "Banho e Tosa Higienico": 85,
   },
   sizeMultiplier: {
     pequeno: 1,
@@ -93,7 +94,7 @@ const PRICES = {
   },
 };
 
-const bathTypes = ["Banho Simples", "Banho Terapêutico", "Banho e Tosa"];
+const bathTypes = ["Banho Simples", "Banho Terapêutico", "Banho e Tosa", "Banho e Tosa Higienico"];
 
 export function SchedulingForm() {
   const [totalPrice, setTotalPrice] = useState(0);
@@ -794,5 +795,7 @@ Agendamento realizado através do site.`;
     </Card>
   );
 }
+
+    
 
     
