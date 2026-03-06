@@ -92,6 +92,11 @@ const PRICES = {
       medio: 180,
       grande: 220,
     },
+    "Banho e Tosa Higienico": {
+      pequeno: 85,
+      medio: 190,
+      grande: 230,
+    },
   },
   extras: {
     hydration: 20,
@@ -101,7 +106,7 @@ const PRICES = {
   },
 };
 
-const bathTypes = ["Banho Simples", "Banho Terapêutico", "Banho e Tosa"];
+const bathTypes = ["Banho Simples", "Banho Terapêutico", "Banho e Tosa", "Banho e Tosa Higienico"];
 
 export function SchedulingForm() {
   const [totalPrice, setTotalPrice] = useState(0);
@@ -819,10 +824,14 @@ Agendamento realizado através do site.`;
                 {isSubmitting ? 'Enviando...' : <><MessageCircle /> Agendar via WhatsApp</>}
               </Button>
             </div>
-            <div className="text-center text-xs text-muted-foreground mt-2 space-y-1">
-                <p>O serviço de TaxiDog não está incluso no valor.</p>
-                <p>O cliente terá que levar o animal para o banho.</p>
-            </div>
+            <Alert className="mt-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Observações Importantes</AlertTitle>
+                <AlertDescription>
+                    <p>O serviço de TaxiDog não está incluso no valor.</p>
+                    <p>O cliente deve levar e buscar o animal no local.</p>
+                </AlertDescription>
+            </Alert>
           </CardFooter>
         </form>
       </Form>
