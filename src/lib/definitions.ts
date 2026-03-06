@@ -29,6 +29,7 @@ export const formSchema = z.object({
     hydration: z.boolean().default(false),
     ozoneBath: z.boolean().default(false),
     teethBrushing: z.boolean().default(false),
+    higienicatosa: z.boolean().default(false),
   }),
   observations: z.string().optional(),
 }).refine(data => {

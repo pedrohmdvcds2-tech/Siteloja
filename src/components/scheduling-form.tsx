@@ -78,34 +78,30 @@ import { Switch } from "@/components/ui/switch";
 const PRICES = {
   bath: {
     "Banho Simples": {
-      pequeno: 70,
-      medio: 80,
-      grande: 95,
+      pequeno: 75,
+      medio: 95,
+      grande: 160,
     },
     "Banho Terapêutico": {
       pequeno: 75,
-      medio: 85,
-      grande: 100,
+      medio: 95,
+      grande: 160,
     },
     "Banho e Tosa": {
-      pequeno: 90,
-      medio: 105,
-      grande: 120,
-    },
-    "Banho e Tosa Higienico": {
-      pequeno: 85,
-      medio: 95,
-      grande: 110,
+      pequeno: 75,
+      medio: 180,
+      grande: 220,
     },
   },
   extras: {
     hydration: 20,
-    ozoneBath: 25,
+    ozoneBath: 20,
     teethBrushing: 15,
+    higienicatosa: 30,
   },
 };
 
-const bathTypes = ["Banho Simples", "Banho Terapêutico", "Banho e Tosa", "Banho e Tosa Higienico"];
+const bathTypes = ["Banho Simples", "Banho Terapêutico", "Banho e Tosa"];
 
 export function SchedulingForm() {
   const [totalPrice, setTotalPrice] = useState(0);
@@ -210,6 +206,7 @@ export function SchedulingForm() {
         hydration: false,
         ozoneBath: false,
         teethBrushing: false,
+        higienicatosa: false,
       },
       observations: "",
     },
@@ -220,22 +217,20 @@ export function SchedulingForm() {
   useEffect(() => {
     const calculatePrice = () => {
       const { bathType, petSize, extras } = watchedValues;
-      if (!bathType || !petSize) {
-        return 0;
+      
+      let basePrice = 0;
+      if (bathType && petSize) {
+        const bathPriceConfig = PRICES.bath[bathType as keyof typeof PRICES.bath];
+        if (bathPriceConfig) {
+          basePrice = bathPriceConfig[petSize as keyof typeof bathPriceConfig] || 0;
+        }
       }
-
-      const bathPriceConfig = PRICES.bath[bathType as keyof typeof PRICES.bath];
-      if (!bathPriceConfig) {
-        return 0;
-      }
-
-      const basePrice =
-        bathPriceConfig[petSize as keyof typeof bathPriceConfig] || 0;
 
       let extrasPrice = 0;
       if (extras?.hydration) extrasPrice += PRICES.extras.hydration;
       if (extras?.ozoneBath) extrasPrice += PRICES.extras.ozoneBath;
       if (extras?.teethBrushing) extrasPrice += PRICES.extras.teethBrushing;
+      if (extras?.higienicatosa) extrasPrice += PRICES.extras.higienicatosa;
       
       return basePrice + extrasPrice;
     };
@@ -327,6 +322,7 @@ Tipo: ${data.bathType}
 ${data.extras.hydration ? `Hidratação: Sim (+R$${PRICES.extras.hydration.toFixed(2).replace('.',',')})` : 'Hidratação: Não'}
 ${data.extras.ozoneBath ? `Banho com Ozônio: Sim (+R$${PRICES.extras.ozoneBath.toFixed(2).replace('.',',')})` : 'Banho com Ozônio: Não'}
 ${data.extras.teethBrushing ? `Escovação dental: Sim (+R$${PRICES.extras.teethBrushing.toFixed(2).replace('.',',')})` : 'Escovação dental: Não'}
+${data.extras.higienicatosa ? `Tosa Higiênica: Sim (+R$${PRICES.extras.higienicatosa.toFixed(2).replace('.',',')})` : 'Tosa Higiênica: Não'}
 
 ${data.observations ? `\n💡 *Observações:* ${data.observations}` : ''}
 
@@ -659,6 +655,26 @@ Agendamento realizado através do site.`;
                           <FormLabel className="font-normal">
                             Escovação de Dentes (+R$
                             {PRICES.extras.teethBrushing.toFixed(2).replace(".", ",")}
+                          </FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name="extras.higienicatosa"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                          <FormLabel className="font-normal">
+                            Tosa Higiênica (+R$
+                            {PRICES.extras.higienicatosa.toFixed(2).replace(".", ",")}
                           </FormLabel>
                           </div>
                         </FormItem>
