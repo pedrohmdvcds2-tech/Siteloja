@@ -34,22 +34,13 @@ export function getDayOfWeekName(dayIndex: number): string {
 export function getClientTimeSlots(date: Date): string[] {
   if (!date) return [];
   
-  const dayOfWeek = date.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+  const dayOfWeek = date.getDay(); // Sunday = 0
   
-  // Domingo (Sunday)
+  // Domingo (Sunday) is a day off
   if (dayOfWeek === 0) {
       return [];
   }
   
-  // Quarta (Wednesday = 3) e Quinta (Thursday = 4)
-  if (dayOfWeek === 3 || dayOfWeek === 4) {
-    // 08:00 to 16:00
-    return generateTimeSlots(8, 0, 16, 0); 
-  }
-
-  // Outros dias (Segunda, Terça, Sexta, Sábado)
-  // 12:30 to 16:00
-  return generateTimeSlots(12, 30, 16, 0);
+  // All other days: 09:00 to 16:00, every 1 hour
+  return generateTimeSlots(9, 0, 16, 0, 60);
 }
-
-    

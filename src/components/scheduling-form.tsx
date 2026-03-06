@@ -797,33 +797,35 @@ Agendamento realizado através do site.`;
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col md:flex-row items-center justify-between gap-4 bg-muted/50 p-6 rounded-b-lg">
-            <div className="flex items-center gap-3">
-              <CircleDollarSign className="size-8 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Valor Total Estimado
-                </p>
-                <p className="text-2xl font-bold">
-                  R$${totalPrice.toFixed(2).replace(".", ",")}
-                </p>
+          <CardFooter className="flex flex-col items-stretch gap-4 bg-muted/50 p-6 rounded-b-lg">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <CircleDollarSign className="size-8 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Valor Total Estimado
+                  </p>
+                  <p className="text-2xl font-bold">
+                    R$${totalPrice.toFixed(2).replace(".", ",")}
+                  </p>
+                </div>
               </div>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
+                disabled={isLoading || isSubmitting || watchedValues.vaccinationStatus === 'Não está em dia'}
+              >
+                {isSubmitting ? 'Enviando...' : <><MessageCircle /> Agendar via WhatsApp</>}
+              </Button>
             </div>
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
-              disabled={isLoading || isSubmitting || watchedValues.vaccinationStatus === 'Não está em dia'}
-            >
-              {isSubmitting ? 'Enviando...' : <><MessageCircle /> Agendar via WhatsApp</>}
-            </Button>
+            <div className="text-center text-xs text-muted-foreground mt-2 space-y-1">
+                <p>O serviço de TaxiDog não está incluso no valor.</p>
+                <p>O cliente terá que levar o animal para o banho.</p>
+            </div>
           </CardFooter>
         </form>
       </Form>
     </Card>
   );
 }
-
-    
-
-    
