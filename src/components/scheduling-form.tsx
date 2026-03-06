@@ -96,7 +96,7 @@ const PRICES = {
   extras: {
     hydration: 20,
     ozoneBath: 20,
-    teethBrushing: 15,
+    teethBrushing: 10,
     higienicatosa: 30,
   },
 };
