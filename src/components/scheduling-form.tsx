@@ -91,12 +91,7 @@ const PRICES = {
       pequeno: 75,
       medio: 180,
       grande: 220,
-    },
-    "Banho e Tosa Higienico": {
-      pequeno: 85,
-      medio: 190,
-      grande: 230,
-    },
+    }
   },
   extras: {
     hydration: 20,
@@ -106,7 +101,7 @@ const PRICES = {
   },
 };
 
-const bathTypes = ["Banho Simples", "Banho Terapêutico", "Banho e Tosa", "Banho e Tosa Higienico"];
+const bathTypes = ["Banho Simples", "Banho Terapêutico", "Banho e Tosa" ];
 
 export function SchedulingForm() {
   const [totalPrice, setTotalPrice] = useState(0);
