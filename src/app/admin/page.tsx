@@ -1,7 +1,7 @@
 'use client';
 import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   collection,
@@ -10,10 +10,11 @@ import {
   query,
   addDoc,
   writeBatch,
+  where,
 } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { format, getWeek } from 'date-fns';
+import { format, getWeek, startOfDay, isEqual } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
@@ -34,7 +35,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LogOut, Calendar as CalendarIcon, Trash2, CalendarClock, Repeat, CalendarCheck2, Star } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon, Trash2, CalendarClock, Repeat, CalendarCheck2, Star, Lock } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import {
   Select,
@@ -72,6 +73,8 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [isBlocking, setIsBlocking] = useState(false);
+  const [isBlockingDays, setIsBlockingDays] = useState(false);
+  const [blockedDates, setBlockedDates] = useState<Date[]>([]);
 
   const ADMIN_EMAILS = ['admin@princesaspetshop.com.br'];
 
@@ -94,6 +97,15 @@ export default function AdminPage() {
     if (!firestore || !isAdmin) return null;
     return query(
       collection(firestore, 'appointments'),
+       where('bathType', '!=', 'BLOQUEIO')
+    );
+  }, [firestore, isAdmin]);
+  
+  const blockedDaysQuery = useMemoFirebase(() => {
+    if (!firestore || !isAdmin) return null;
+    return query(
+      collection(firestore, 'appointments'),
+      where('bathType', '==', 'BLOQUEIO')
     );
   }, [firestore, isAdmin]);
 
@@ -107,6 +119,12 @@ export default function AdminPage() {
     isLoading: isLoadingAppointments,
     error,
   } = useCollection(appointmentsQuery);
+
+  const { 
+    data: blockedDayAppointments, 
+    isLoading: isLoadingBlockedDays, 
+    refetch: refetchBlockedDays 
+  } = useCollection(blockedDaysQuery);
 
   const {
     data: recurringBlocks,
@@ -127,6 +145,62 @@ export default function AdminPage() {
     }
   }, [user, isUserLoading, router]);
 
+  useEffect(() => {
+    if (blockedDayAppointments) {
+      const dates = blockedDayAppointments.map(apt => startOfDay(new Date(apt.startTime)));
+      setBlockedDates(dates);
+    }
+  }, [blockedDayAppointments]);
+
+  const handleBlockDays = async (newlySelectedDays: Date[] | undefined) => {
+    if (!firestore || !user) return;
+    setIsBlockingDays(true);
+
+    const currentBlockedDocs = blockedDayAppointments || [];
+    const newDays = newlySelectedDays || [];
+
+    const batch = writeBatch(firestore);
+    
+    // Dates to unblock: find which of the currently blocked docs are NOT in the new selection
+    currentBlockedDocs.forEach(blockedDoc => {
+      const docDate = startOfDay(new Date(blockedDoc.startTime));
+      const isStillSelected = newDays.some(selectedDay => isEqual(docDate, startOfDay(selectedDay)));
+      if (!isStillSelected) {
+        const docRef = doc(firestore, 'appointments', blockedDoc.id);
+        batch.delete(docRef);
+      }
+    });
+
+    // Dates to block: find which of the new selections are NOT in the currently blocked docs
+    newDays.forEach(selectedDay => {
+      const dayAsDate = startOfDay(selectedDay);
+      const isAlreadyBlocked = currentBlockedDocs.some(doc => isEqual(startOfDay(new Date(doc.startTime)), dayAsDate));
+      if (!isAlreadyBlocked) {
+        const newDocRef = doc(collection(firestore, 'appointments'));
+        batch.set(newDocRef, {
+          userId: user.uid,
+          blocked: true,
+          clientName: "DIA BLOQUEADO",
+          petName: "N/A",
+          startTime: dayAsDate.toISOString(),
+          endTime: dayAsDate.toISOString(),
+          bathType: "BLOQUEIO",
+          totalPrice: 0,
+        });
+      }
+    });
+
+    try {
+      await batch.commit();
+      toast({ title: 'Sucesso!', description: 'Os dias bloqueados foram atualizados.' });
+      refetchBlockedDays();
+    } catch (e: any) {
+      console.error("Error blocking/unblocking days: ", e);
+      toast({ variant: 'destructive', title: 'Erro', description: `Não foi possível atualizar os dias bloqueados. Detalhes: ${e.message}` });
+    } finally {
+      setIsBlockingDays(false);
+    }
+};
 
   const handleBlockRecurringTime = async (data: RecurringBlockValues) => {
     if (!firestore || !user ) {
@@ -303,6 +377,8 @@ export default function AdminPage() {
     );
   }
 
+  const isLoading = isLoadingAppointments || isLoadingRecurring || isLoadingBlockedDays;
+
   return (
       <div className="container mx-auto p-4 md:p-8 space-y-8">
         <Card>
@@ -327,7 +403,33 @@ export default function AdminPage() {
             </div>
           </CardHeader>
         </Card>
-      
+        
+        <Card>
+            <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                    <Lock className="h-5 w-5" />
+                    Bloquear Dias na Agenda
+                </CardTitle>
+                <CardDescription>
+                    Selecione as datas no calendário para bloquear ou desbloquear dias inteiros. Dias bloqueados não estarão disponíveis para agendamento.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+                {isLoading ? (
+                    <p>Carregando calendário de bloqueios...</p>
+                ) : (
+                    <Calendar
+                        mode="multiple"
+                        selected={blockedDates}
+                        onSelect={handleBlockDays}
+                        disabled={isBlockingDays}
+                        locale={ptBR}
+                        footer={isBlockingDays ? <p className='text-center text-sm mt-2'>Atualizando...</p> : <p className='text-center text-sm text-muted-foreground mt-2'>Clique em uma data para bloquear/desbloquear.</p>}
+                    />
+                )}
+            </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Criar Horário Fixo de Clubinho</CardTitle>

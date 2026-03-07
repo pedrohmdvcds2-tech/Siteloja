@@ -131,62 +131,46 @@ export function SchedulingForm() {
     );
   }, [firestore, selectedDate]);
   
-  const recurringBlocksQuery = useMemoFirebase(() => {
+  const blockedDaysQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collection(firestore, "recurringBlocks");
+    return query(
+      collection(firestore, "appointments"),
+      where("bathType", "==", "BLOQUEIO")
+    );
   }, [firestore]);
 
   const { data: todaysAppointments, isLoading: isLoadingAppointments } = useCollection(appointmentsQuery);
-  const { data: recurringBlocks, isLoading: isLoadingRecurringBlocks } = useCollection(recurringBlocksQuery);
+  const { data: blockedDayAppointments, isLoading: isLoadingBlockedDays } = useCollection(blockedDaysQuery);
 
+  const disabledDates = useMemo(() => {
+    return blockedDayAppointments?.map(apt => startOfDay(new Date(apt.startTime))) || [];
+  }, [blockedDayAppointments]);
 
   const availableTimeSlots = useMemo(() => {
     if (!selectedDate) return [];
 
-    const slotsForDay = getClientTimeSlots(selectedDate);
-    const bookedOrBlockedTimes = new Set<string>();
-    const startOfSelectedDate = startOfDay(selectedDate);
-
-    // Adiciona agendamentos do dia
-    if (todaysAppointments) {
-      todaysAppointments.forEach((apt) => {
-        bookedOrBlockedTimes.add(format(new Date(apt.startTime), "HH:mm"));
-      });
-    }
-
-    // Adiciona bloqueios recorrentes (clubinho)
-    if (recurringBlocks) {
-      const selectedDayOfWeek = selectedDate.getDay();
-      
-      recurringBlocks.forEach((block) => {
-        const blockDayOfWeek = parseInt(block.dayOfWeek, 10);
-        if (blockDayOfWeek !== selectedDayOfWeek) {
-          return;
-        }
-
-        const cycleStartDate = block.cycleStartDate ? startOfDay(new Date(block.cycleStartDate.seconds * 1000)) : startOfDay(new Date());
-        
-        if (isBefore(startOfSelectedDate, cycleStartDate)) {
-            return;
-        }
-        
-        const startWeekParity = getWeek(cycleStartDate, { weekStartsOn: 1 }) % 2;
-
-        if (block.frequency === 'weekly' || block.frequency === 'monthly') {
-          bookedOrBlockedTimes.add(block.time);
-        } else if (block.frequency === 'bi-weekly') {
-          const selectedWeekParity = getWeek(selectedDate, { weekStartsOn: 1 }) % 2;
-          if (selectedWeekParity === startWeekParity) {
-             bookedOrBlockedTimes.add(block.time);
-          }
-        }
-      });
+    // Se o dia inteiro estiver bloqueado, não retorne nenhum horário
+    if (todaysAppointments?.some(apt => apt.bathType === 'BLOQUEIO')) {
+      return [];
     }
     
+    const slotsForDay = getClientTimeSlots(selectedDate);
+    const bookedOrBlockedTimes = new Set<string>();
+
+    // Adiciona agendamentos do dia (apenas 1 por horário)
+    if (todaysAppointments) {
+      todaysAppointments.forEach((apt) => {
+        // Ignora os documentos de bloqueio de dia inteiro
+        if (apt.bathType !== 'BLOQUEIO') {
+          bookedOrBlockedTimes.add(format(new Date(apt.startTime), "HH:mm"));
+        }
+      });
+    }
+
     return slotsForDay.filter(
       (slot) => !bookedOrBlockedTimes.has(slot)
     );
-  }, [todaysAppointments, recurringBlocks, selectedDate]);
+  }, [todaysAppointments, selectedDate]);
 
 
   const form = useForm<SchedulingFormValues>({
@@ -351,7 +335,7 @@ Agendamento realizado através do site.`;
   }
 
   const isVaccinationOk = watchedValues.vaccinationStatus === 'Em dia';
-  const isLoading = isUserLoading || isLoadingAppointments || isLoadingRecurringBlocks;
+  const isLoading = isUserLoading || isLoadingAppointments || isLoadingBlockedDays;
 
   return (
     <Card className="w-full shadow-xl">
@@ -744,8 +728,9 @@ Agendamento realizado através do site.`;
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) =>
-                              date < new Date(new Date().setHours(0, 0, 0, 0)) ||
-                              date.getDay() === 0
+                              date < startOfDay(new Date()) ||
+                              date.getDay() === 0 ||
+                              disabledDates.some(disabledDate => isEqual(date, disabledDate))
                             }
                             initialFocus
                           />
