@@ -202,6 +202,23 @@ export default function AdminPage() {
     }
 };
 
+ const handleUnblockSingleDay = async (dateToUnblock: Date) => {
+    if (!firestore) return;
+    const docToUnblock = blockedDayAppointments?.find(apt => 
+        isEqual(startOfDay(new Date(apt.startTime)), startOfDay(dateToUnblock))
+    );
+
+    if (docToUnblock) {
+        try {
+            await deleteDoc(doc(firestore, 'appointments', docToUnblock.id));
+            toast({ title: 'Sucesso!', description: 'O dia foi desbloqueado.' });
+        } catch (e: any) {
+            console.error("Error unblocking day: ", e);
+            toast({ variant: 'destructive', title: 'Erro', description: `Não foi possível desbloquear o dia.` });
+        }
+    }
+  };
+
   const handleBlockRecurringTime = async (data: RecurringBlockValues) => {
     if (!firestore || !user ) {
       toast({
@@ -404,31 +421,82 @@ export default function AdminPage() {
           </CardHeader>
         </Card>
         
-        <Card>
-            <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                    <Lock className="h-5 w-5" />
-                    Bloquear Dias na Agenda
-                </CardTitle>
-                <CardDescription>
-                    Selecione as datas no calendário para bloquear ou desbloquear dias inteiros. Dias bloqueados não estarão disponíveis para agendamento.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center">
-                {isLoading ? (
-                    <p>Carregando calendário de bloqueios...</p>
-                ) : (
-                    <Calendar
-                        mode="multiple"
-                        selected={blockedDates}
-                        onSelect={handleBlockDays}
-                        disabled={isBlockingDays}
-                        locale={ptBR}
-                        footer={isBlockingDays ? <p className='text-center text-sm mt-2'>Atualizando...</p> : <p className='text-center text-sm text-muted-foreground mt-2'>Clique em uma data para bloquear/desbloquear.</p>}
-                    />
-                )}
-            </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <Card>
+                <CardHeader>
+                    <CardTitle className='flex items-center gap-2'>
+                        <Lock className="h-5 w-5" />
+                        Bloquear/Desbloquear Dias
+                    </CardTitle>
+                    <CardDescription>
+                        Clique em uma data no calendário para bloquear ou desbloquear o dia inteiro.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center">
+                    {isLoading ? (
+                        <p>Carregando calendário...</p>
+                    ) : (
+                        <Calendar
+                            mode="multiple"
+                            selected={blockedDates}
+                            onSelect={handleBlockDays}
+                            disabled={isBlockingDays}
+                            locale={ptBR}
+                            footer={isBlockingDays ? <p className='text-center text-sm mt-2'>Atualizando...</p> : null}
+                        />
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className='flex items-center gap-2'>
+                        <CalendarCheck2 className="h-5 w-5" />
+                        Dias Atualmente Bloqueados
+                    </CardTitle>
+                    <CardDescription>
+                        Lista de todos os dias bloqueados. Clique no ícone para remover o bloqueio.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 max-h-96 overflow-y-auto">
+                    {isLoading ? (
+                        <p>Carregando dias bloqueados...</p>
+                    ) : blockedDates.length > 0 ? (
+                        blockedDates
+                            .sort((a, b) => a.getTime() - b.getTime())
+                            .map((date) => (
+                                <div key={date.toISOString()} className="flex items-center justify-between rounded-md border p-3">
+                                    <span className="font-medium">{format(date, 'PPP', { locale: ptBR })}</span>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon">
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Esta ação desbloqueará o dia {format(date, 'dd/MM/yyyy')} e ele ficará disponível para novos agendamentos.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Voltar</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleUnblockSingleDay(date)}>
+                                                    Sim, desbloquear
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            ))
+                    ) : (
+                        <p className="text-muted-foreground text-sm">Nenhum dia bloqueado no momento.</p>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+
 
         <Card>
           <CardHeader>
