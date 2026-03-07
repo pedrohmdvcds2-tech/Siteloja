@@ -37,5 +37,11 @@ service cloud.firestore {
       allow get, list: if true;
       allow create, update, delete: if isSignedIn() && isAdmin();
     }
+
+    match /stats/{statId} {
+      allow read: if true;
+      allow write: if request.resource.data.count == 1 || 
+                      (resource != null && request.resource.data.count == resource.data.count + 1);
+    }
   }
 }

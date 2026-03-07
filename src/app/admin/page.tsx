@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LogOut, Calendar as CalendarIcon, Trash2, CalendarClock, Repeat, CalendarCheck2, Star, Lock } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon, Trash2, CalendarClock, Repeat, CalendarCheck2, Star, Lock, Eye } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import {
   Select,
@@ -63,6 +63,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { BulkImporter } from '@/components/bulk-importer';
+import { useDoc } from '@/firebase';
 
 
 export default function AdminPage() {
@@ -114,6 +115,11 @@ export default function AdminPage() {
     return collection(firestore, 'recurringBlocks');
   }, [firestore, isAdmin]);
 
+  const visitsDocQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'stats', 'visits');
+  }, [firestore]);
+
   const {
     data: appointments,
     isLoading: isLoadingAppointments,
@@ -132,6 +138,8 @@ export default function AdminPage() {
     error: recurringError,
     refetch: refetchRecurring,
   } = useCollection(recurringBlocksQuery);
+  
+  const { data: visitsData, isLoading: isLoadingVisits } = useDoc(visitsDocQuery);
 
 
   useEffect(() => {
@@ -394,7 +402,7 @@ export default function AdminPage() {
     );
   }
 
-  const isLoading = isLoadingAppointments || isLoadingRecurring || isLoadingBlockedDays;
+  const isLoading = isLoadingAppointments || isLoadingRecurring || isLoadingBlockedDays || isLoadingVisits;
 
   return (
       <div className="container mx-auto p-4 md:p-8 space-y-8">
@@ -406,17 +414,28 @@ export default function AdminPage() {
                 Gerencie os agendamentos e horários do seu Pet Shop.
               </CardDescription>
             </div>
-            <div className='flex items-center gap-2'>
-              <Button asChild variant="outline">
-                  <Link href="/admin/agenda">
-                    <CalendarClock className="mr-2" />
-                    Ver Agenda
-                  </Link>
-              </Button>
-              <Button onClick={handleLogout} variant="outline" size="sm">
-                <LogOut className="mr-2" />
-                Logout
-              </Button>
+            <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Eye className="h-5 w-5" />
+                    <div>
+                        <p className="text-xs">Visitas no site</p>
+                        <p className="text-lg font-bold text-foreground">
+                            {isLoadingVisits ? '...' : visitsData?.count ?? 0}
+                        </p>
+                    </div>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Button asChild variant="outline">
+                      <Link href="/admin/agenda">
+                        <CalendarClock className="mr-2" />
+                        Ver Agenda
+                      </Link>
+                  </Button>
+                  <Button onClick={handleLogout} variant="outline" size="sm">
+                    <LogOut className="mr-2" />
+                    Logout
+                  </Button>
+                </div>
             </div>
           </CardHeader>
         </Card>

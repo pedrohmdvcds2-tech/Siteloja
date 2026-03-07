@@ -3,6 +3,7 @@ import { Baloo_2 } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 import "./globals.css";
+import { VisitorTracker } from "@/components/visitor-tracker";
 
 const baloo = Baloo_2({
   subsets: ["latin"],
@@ -54,6 +55,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>
+          <VisitorTracker />
           {children}
           <Toaster />
         </FirebaseClientProvider>

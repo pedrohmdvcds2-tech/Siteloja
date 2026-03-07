@@ -783,7 +783,14 @@ Agendamento realizado através do site.`;
           </CardContent>
 
           <CardFooter className="flex flex-col items-stretch gap-4 bg-muted/50 p-6 rounded-b-lg">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+             <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Atenção sobre o Valor</AlertTitle>
+                <AlertDescription>
+                    O valor é uma <strong>estimativa</strong> e pode mudar dependendo do estado do pelo e comportamento do pet.
+                </AlertDescription>
+            </Alert>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4">
               <div className="flex items-center gap-3">
                 <CircleDollarSign className="size-8 text-primary" />
                 <div>
