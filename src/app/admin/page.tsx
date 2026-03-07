@@ -115,10 +115,13 @@ export default function AdminPage() {
     return collection(firestore, 'recurringBlocks');
   }, [firestore, isAdmin]);
 
-  const visitsDocQuery = useMemoFirebase(() => {
+  const today = new Date();
+  const dateString = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+
+  const dailyVisitsDocQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return doc(firestore, 'stats', 'visits');
-  }, [firestore]);
+    return doc(firestore, 'stats', `visits-${dateString}`);
+  }, [firestore, dateString]);
 
   const {
     data: appointments,
@@ -139,7 +142,7 @@ export default function AdminPage() {
     refetch: refetchRecurring,
   } = useCollection(recurringBlocksQuery);
   
-  const { data: visitsData, isLoading: isLoadingVisits } = useDoc(visitsDocQuery);
+  const { data: dailyVisitsData, isLoading: isLoadingDailyVisits } = useDoc(dailyVisitsDocQuery);
 
 
   useEffect(() => {
@@ -402,7 +405,7 @@ export default function AdminPage() {
     );
   }
 
-  const isLoading = isLoadingAppointments || isLoadingRecurring || isLoadingBlockedDays || isLoadingVisits;
+  const isLoading = isLoadingAppointments || isLoadingRecurring || isLoadingBlockedDays || isLoadingDailyVisits;
 
   return (
       <div className="container mx-auto p-4 md:p-8 space-y-8">
@@ -418,9 +421,9 @@ export default function AdminPage() {
                 <div className="flex items-center gap-2 text-muted-foreground">
                     <Eye className="h-5 w-5" />
                     <div>
-                        <p className="text-xs">Visitas no site</p>
+                        <p className="text-xs">Visitas hoje</p>
                         <p className="text-lg font-bold text-foreground">
-                            {isLoadingVisits ? '...' : visitsData?.count ?? 0}
+                            {isLoadingDailyVisits ? '...' : dailyVisitsData?.count ?? 0}
                         </p>
                     </div>
                 </div>
