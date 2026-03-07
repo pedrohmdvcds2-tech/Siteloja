@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 import "./globals.css";
 import { VisitorTracker } from "@/components/visitor-tracker";
+import { GoogleAnalytics } from "@/components/google-analytics";
 
 const baloo = Baloo_2({
   subsets: ["latin"],
@@ -55,6 +56,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>
+          <GoogleAnalytics />
           <VisitorTracker />
           {children}
           <Toaster />
