@@ -6,16 +6,22 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/web
 
 export const formSchema = z.object({
   clientName: z.string().min(2, "Nome deve ter pelo menos 2 caracteres."),
+  contact: z.string().min(10, "Número de contato parece curto demais."),
+  address: z.string().min(10, "Endereço deve ter pelo menos 10 caracteres."),
+
   petName: z.string().min(2, "Nome do pet deve ter pelo menos 2 caracteres."),
   petBreed: z.string().min(2, "Raça deve ter pelo menos 2 caracteres."),
   petSize: z.enum(["pequeno", "medio", "grande"], {
     required_error: "Selecione o porte do pet.",
   }),
-  contact: z.string().min(10, "Número de contato parece curto demais."),
   vaccinationStatus: z.enum(["Em dia", "Não está em dia"],{
     required_error: "Selecione o status da vacinação.",
   }),
+  isAggressive: z.enum(["Sim", "Não"], {
+    required_error: "Informe se o pet é bravo.",
+  }),
   isMatted: z.boolean().default(false),
+
   appointmentDate: z.date({
     required_error: "Selecione uma data para o agendamento.",
   }),

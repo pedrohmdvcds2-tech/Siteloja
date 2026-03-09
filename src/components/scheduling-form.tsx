@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   CalendarIcon,
   Upload,
+  Home,
 } from "lucide-react";
 
 
@@ -101,7 +102,7 @@ const PRICES = {
   },
 };
 
-const bathTypes = ["Banho Simples", "Banho Terapêutico", "Banho e Tosa" ];
+const bathTypes = ["Banho Simples", "Banho Terapêutico" ];
 
 export function SchedulingForm() {
   const [totalPrice, setTotalPrice] = useState(0);
@@ -177,15 +178,17 @@ export function SchedulingForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       clientName: "",
+      contact: "",
+      address: "",
       petName: "",
       petBreed: "",
-      contact: "",
-      vaccinationStatus: undefined,
-      isMatted: false,
-      bathType: undefined,
       petSize: undefined,
+      vaccinationStatus: undefined,
+      isAggressive: undefined,
+      isMatted: false,
       appointmentDate: undefined,
       appointmentTime: undefined,
+      bathType: undefined,
       extras: {
         hydration: false,
         ozoneBath: false,
@@ -288,11 +291,13 @@ export function SchedulingForm() {
 📋 *Dados do Cliente*
 Nome: ${data.clientName}
 Telefone: ${data.contact}
+Endereço: ${data.address}
 
 🐶 *Dados do Cachorro*
 Nome: ${data.petName}
 Raça: ${data.petBreed}
 Porte: ${data.petSize}
+É bravo?: ${data.isAggressive} ${data.isAggressive === 'Sim' ? '⚠️ (Pode haver taxa extra)' : ''}
 Vacinação: ${data.vaccinationStatus}
 ${data.isMatted ? '⚠️ Animal está embolado (requer avaliação presencial)' : ''}
 ${data.vaccinationStatus === 'Em dia' ? '❗️ Carteira de vacinação a ser apresentada no local ou enviada via WhatsApp.' : ''}
@@ -380,6 +385,22 @@ Agendamento realizado através do site.`;
                         <Input
                           type="tel"
                           placeholder="(99) 99999-9999"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="flex items-center gap-2"><Home />Endereço</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Rua, número, complemento e bairro"
                           {...field}
                         />
                       </FormControl>
@@ -493,6 +514,41 @@ Agendamento realizado através do site.`;
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="isAggressive"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel className="flex items-center gap-2">
+                        <AlertTriangle />
+                        O pet é bravo?
+                      </FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex space-x-4"
+                        >
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Sim" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Sim
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Não" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Não</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
                 {watchedValues.vaccinationStatus === 'Não está em dia' && (
                   <Alert variant="destructive" className="mt-2">
@@ -501,6 +557,15 @@ Agendamento realizado através do site.`;
                     <AlertDescription>
                       Para a segurança de todos os pets, a vacinação deve estar em dia para agendar qualquer serviço.
                     </AlertDescription>
+                  </Alert>
+                )}
+                 {watchedValues.isAggressive === 'Sim' && (
+                  <Alert variant="destructive" className="mt-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Atenção ao Comportamento</AlertTitle>
+                      <AlertDescription>
+                          Pets com histórico de agressividade podem necessitar de avaliação e cuidados especiais, o que pode influenciar no valor. A segurança de todos é nossa prioridade.
+                      </AlertDescription>
                   </Alert>
                 )}
                 {isVaccinationOk && (
