@@ -44,6 +44,11 @@ export const formSchema = z.object({
 }, {
   message: "A vacinação do pet precisa estar em dia para realizar o agendamento.",
   path: ["vaccinationStatus"], 
+}).refine(data => {
+  return data.isAggressive !== 'Sim';
+}, {
+  message: "Não agendamos online para pets bravos. Por favor, entre em contato para avaliarmos o caso.",
+  path: ["isAggressive"],
 });
 
 export const recurringBlockSchema = z.object({

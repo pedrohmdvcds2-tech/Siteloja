@@ -88,11 +88,6 @@ const PRICES = {
       medio: 95,
       grande: 160,
     },
-    "Banho e Tosa": {
-      pequeno: 75,
-      medio: 180,
-      grande: 220,
-    }
   },
   extras: {
     hydration: 20,
@@ -562,9 +557,9 @@ Agendamento realizado através do site.`;
                  {watchedValues.isAggressive === 'Sim' && (
                   <Alert variant="destructive" className="mt-2">
                       <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Atenção ao Comportamento</AlertTitle>
+                      <AlertTitle>Agendamento Online Indisponível</AlertTitle>
                       <AlertDescription>
-                          Pets com histórico de agressividade podem necessitar de avaliação e cuidados especiais, o que pode influenciar no valor. A segurança de todos é nossa prioridade.
+                          Para a segurança de nossa equipe e dos outros animais, não é possível agendar online para pets com comportamento agressivo. Por favor, entre em contato diretamente conosco para avaliarmos o caso.
                       </AlertDescription>
                   </Alert>
                 )}
@@ -614,7 +609,7 @@ Agendamento realizado através do site.`;
 
             <Separator />
 
-            <div className="space-y-4">
+            <fieldset className="space-y-4" disabled={watchedValues.isAggressive === 'Sim' || watchedValues.vaccinationStatus === 'Não está em dia'}>
               <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
                 <Scissors /> Escolha dos Serviços
               </h3>
@@ -752,11 +747,11 @@ Agendamento realizado através do site.`;
                   </FormItem>
                 )}
               />
-            </div>
+            </fieldset>
 
             <Separator />
 
-            <div className="space-y-4">
+            <fieldset className="space-y-4" disabled={watchedValues.isAggressive === 'Sim' || watchedValues.vaccinationStatus === 'Não está em dia'}>
               <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
                 <Clock /> Data e Hora
               </h3>
@@ -814,7 +809,7 @@ Agendamento realizado através do site.`;
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
-                        disabled={!watchedValues.appointmentDate || watchedValues.vaccinationStatus === 'Não está em dia'}
+                        disabled={!watchedValues.appointmentDate}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -844,7 +839,7 @@ Agendamento realizado através do site.`;
                   )}
                 />
               </div>
-            </div>
+            </fieldset>
           </CardContent>
 
           <CardFooter className="flex flex-col items-stretch gap-4 bg-muted/50 p-6 rounded-b-lg">
@@ -871,7 +866,7 @@ Agendamento realizado através do site.`;
                 type="submit"
                 size="lg"
                 className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
-                disabled={isLoading || isSubmitting || watchedValues.vaccinationStatus === 'Não está em dia'}
+                disabled={isLoading || isSubmitting || watchedValues.vaccinationStatus === 'Não está em dia' || watchedValues.isAggressive === 'Sim'}
               >
                 {isSubmitting ? 'Enviando...' : <><MessageCircle /> Agendar via WhatsApp</>}
               </Button>
