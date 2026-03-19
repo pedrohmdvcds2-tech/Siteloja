@@ -22,9 +22,7 @@ export const metadata: Metadata = {
     siteName: "Princesas Pet Shop",
     images: [
       {
-        url: "https://images.unsplash.com/photo-1604508558528-04bfc0d52379?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxoYXBweSUyMGRvZyUyMGdyb29taW5nfGVufDB8fHx8MTc2NzU0OTEwN3ww&ixlib=rb-4.1.0&q=80&w=1080",
-        width: 1080,
-        height: 720,
+        url: "https://i.imgur.com/SLxSDoD.png",
       },
     ],
     locale: "pt_BR",
@@ -35,7 +33,7 @@ export const metadata: Metadata = {
     title: "Princesas Pet Shop",
     description: "Cuidado Real para Seu Amiguinho. Agende online!",
     images: [
-      "https://images.unsplash.com/photo-1604508558528-04bfc0d52379?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxoYXBweSUyMGRvZyUyMGdyb29taW5nfGVufDB8fHx8MTc2NzU0OTEwN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "https://i.imgur.com/SLxSDoD.png",
     ],
   },
 };
