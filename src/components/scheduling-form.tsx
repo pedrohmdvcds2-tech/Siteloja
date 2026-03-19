@@ -102,7 +102,7 @@ const PRICES = {
   },
 };
 
-const bathTypes = ["Banho Simples", "Banho Terapêutico"];
+const bathTypes = ["Banho Simples", "Banho Terapêutico", "Banho e Tosa"];
 
 export function SchedulingForm() {
   const [totalPrice, setTotalPrice] = useState(0);
