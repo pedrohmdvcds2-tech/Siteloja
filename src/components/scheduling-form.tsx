@@ -612,9 +612,11 @@ Agendamento realizado através do site.`;
               </div>
             </div>
 
-            <Separator />
+            {watchedValues.vaccinationStatus !== 'Não está em dia' && (
+              <>
+                <Separator />
 
-            <fieldset className="space-y-4" disabled={watchedValues.isAggressive === 'Sim' || watchedValues.vaccinationStatus === 'Não está em dia'}>
+                <fieldset className="space-y-4" disabled={watchedValues.isAggressive === 'Sim'}>
               <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
                 <Scissors /> Escolha dos Serviços
               </h3>
@@ -756,7 +758,7 @@ Agendamento realizado através do site.`;
 
             <Separator />
 
-            <fieldset className="space-y-4" disabled={watchedValues.isAggressive === 'Sim' || watchedValues.vaccinationStatus === 'Não está em dia'}>
+            <fieldset className="space-y-4" disabled={watchedValues.isAggressive === 'Sim'}>
               <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
                 <Clock /> Data e Hora
               </h3>
@@ -845,9 +847,12 @@ Agendamento realizado através do site.`;
                 />
               </div>
             </fieldset>
+              </>
+            )}
           </CardContent>
 
-          <CardFooter className="flex flex-col items-stretch gap-4 bg-muted/50 p-6 rounded-b-lg">
+          {watchedValues.vaccinationStatus !== 'Não está em dia' && (
+            <CardFooter className="flex flex-col items-stretch gap-4 bg-muted/50 p-6 rounded-b-lg">
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Atenção sobre o Valor</AlertTitle>
@@ -871,7 +876,7 @@ Agendamento realizado através do site.`;
                 type="submit"
                 size="lg"
                 className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
-                disabled={isLoading || isSubmitting || watchedValues.vaccinationStatus === 'Não está em dia' || watchedValues.isAggressive === 'Sim'}
+                disabled={isLoading || isSubmitting || watchedValues.isAggressive === 'Sim'}
               >
                 {isSubmitting ? 'Enviando...' : <><MessageCircle /> Agendar via WhatsApp</>}
               </Button>
@@ -884,7 +889,8 @@ Agendamento realizado através do site.`;
                 <p>O cliente deve levar e buscar o animal no local.</p>
               </AlertDescription>
             </Alert>
-          </CardFooter>
+            </CardFooter>
+          )}
         </form>
       </Form>
     </Card>
