@@ -87,11 +87,11 @@ const PRICES = {
       pequeno: 75,
       medio: 95,
       grande: 160,
-      "Banho e Tosa": {
-        pequeno: 140,
-        medio: 180,
-        grande: 220,
-      }
+    },
+    "Banho e Tosa": {
+      pequeno: 140,
+      medio: 180,
+      grande: 220,
     },
   },
   extras: {
@@ -612,283 +612,283 @@ Agendamento realizado através do site.`;
               </div>
             </div>
 
-            {watchedValues.vaccinationStatus !== 'Não está em dia' && (
+            {watchedValues.vaccinationStatus !== 'Não está em dia' && watchedValues.isAggressive !== 'Sim' && (
               <>
                 <Separator />
 
-                <fieldset className="space-y-4" disabled={watchedValues.isAggressive === 'Sim'}>
-              <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
-                <Scissors /> Escolha dos Serviços
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="bathType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Banho</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                <fieldset className="space-y-4">
+                  <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
+                    <Scissors /> Escolha dos Serviços
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="bathType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de Banho</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o banho principal" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {bathTypes.map((type) => (
+                                <SelectItem key={type} value={type}>
+                                  {type}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="space-y-3">
+                      <FormLabel>Serviços Adicionais</FormLabel>
+                      <div className="flex flex-col gap-2">
+                        <FormField
+                          control={form.control}
+                          name="extras.hydration"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-normal">
+                                  Hidratação (+R$
+                                  {PRICES.extras.hydration.toFixed(2).replace(".", ",")}
+                                </FormLabel>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="extras.ozoneBath"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-normal">
+                                  Banho com Ozônio (+R$
+                                  {PRICES.extras.ozoneBath.toFixed(2).replace(".", ",")}
+                                </FormLabel>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="extras.teethBrushing"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-normal">
+                                  Escovação de Dentes (+R$
+                                  {PRICES.extras.teethBrushing.toFixed(2).replace(".", ",")}
+                                </FormLabel>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="extras.higienicatosa"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-normal">
+                                  Tosa Higiênica (+R$
+                                  {PRICES.extras.higienicatosa.toFixed(2).replace(".", ",")}
+                                </FormLabel>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="observations"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <FileText />
+                          Observações
+                        </FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o banho principal" />
-                          </SelectTrigger>
+                          <Textarea
+                            placeholder="Ex: Meu pet tem alergia a algum produto ou precisa de atenção especial?"
+                            className="resize-none"
+                            {...field}
+                          />
                         </FormControl>
-                        <SelectContent>
-                          {bathTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="space-y-3">
-                  <FormLabel>Serviços Adicionais</FormLabel>
-                  <div className="flex flex-col gap-2">
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </fieldset>
+
+                <Separator />
+
+                <fieldset className="space-y-4">
+                  <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
+                    <Clock /> Data e Hora
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="extras.hydration"
+                      name="appointmentDate"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="font-normal">
-                              Hidratação (+R$
-                              {PRICES.extras.hydration.toFixed(2).replace(".", ",")}
-                            </FormLabel>
-                          </div>
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Data do Agendamento</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP", { locale: ptBR })
+                                  ) : (
+                                    <span>Escolha uma data</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                locale={ptBR}
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date < startOfDay(new Date()) ||
+                                  date.getDay() === 0 ||
+                                  disabledDates.some(disabledDate => isEqual(date, disabledDate))
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
                     <FormField
                       control={form.control}
-                      name="extras.ozoneBath"
+                      name="appointmentTime"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="font-normal">
-                              Banho com Ozônio (+R$
-                              {PRICES.extras.ozoneBath.toFixed(2).replace(".", ",")}
-                            </FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="extras.teethBrushing"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="font-normal">
-                              Escovação de Dentes (+R$
-                              {PRICES.extras.teethBrushing.toFixed(2).replace(".", ",")}
-                            </FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="extras.higienicatosa"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="font-normal">
-                              Tosa Higiênica (+R$
-                              {PRICES.extras.higienicatosa.toFixed(2).replace(".", ",")}
-                            </FormLabel>
-                          </div>
+                        <FormItem>
+                          <FormLabel>Horário Disponível</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={!watchedValues.appointmentDate}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione um horário" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {isLoading ? (
+                                <SelectItem value="loading" disabled>
+                                  Carregando...
+                                </SelectItem>
+                              ) : availableTimeSlots.length > 0 ? (
+                                availableTimeSlots.map((time) => (
+                                  <SelectItem key={time} value={time}>
+                                    {time}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="no-slots" disabled>
+                                  Nenhum horário vago
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
-                </div>
-              </div>
-              <FormField
-                control={form.control}
-                name="observations"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <FileText />
-                      Observações
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Ex: Meu pet tem alergia a algum produto ou precisa de atenção especial?"
-                        className="resize-none"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </fieldset>
-
-            <Separator />
-
-            <fieldset className="space-y-4" disabled={watchedValues.isAggressive === 'Sim'}>
-              <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
-                <Clock /> Data e Hora
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="appointmentDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Data do Agendamento</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP", { locale: ptBR })
-                              ) : (
-                                <span>Escolha uma data</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            locale={ptBR}
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < startOfDay(new Date()) ||
-                              date.getDay() === 0 ||
-                              disabledDates.some(disabledDate => isEqual(date, disabledDate))
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="appointmentTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Horário Disponível</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={!watchedValues.appointmentDate}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um horário" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {isLoading ? (
-                            <SelectItem value="loading" disabled>
-                              Carregando...
-                            </SelectItem>
-                          ) : availableTimeSlots.length > 0 ? (
-                            availableTimeSlots.map((time) => (
-                              <SelectItem key={time} value={time}>
-                                {time}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="no-slots" disabled>
-                              Nenhum horário vago
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </fieldset>
+                </fieldset>
               </>
             )}
           </CardContent>
 
-          {watchedValues.vaccinationStatus !== 'Não está em dia' && (
+          {watchedValues.vaccinationStatus !== 'Não está em dia' && watchedValues.isAggressive !== 'Sim' && (
             <CardFooter className="flex flex-col items-stretch gap-4 bg-muted/50 p-6 rounded-b-lg">
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Atenção sobre o Valor</AlertTitle>
-              <AlertDescription>
-                O valor é uma <strong>estimativa</strong> e pode mudar dependendo do estado do pelo e comportamento do pet.
-              </AlertDescription>
-            </Alert>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4">
-              <div className="flex items-center gap-3">
-                <CircleDollarSign className="size-8 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Valor Total Estimado
-                  </p>
-                  <p className="text-2xl font-bold">
-                    R$${totalPrice.toFixed(2).replace(".", ",")}
-                  </p>
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Atenção sobre o Valor</AlertTitle>
+                <AlertDescription>
+                  O valor é uma <strong>estimativa</strong> e pode mudar dependendo do estado do pelo e comportamento do pet.
+                </AlertDescription>
+              </Alert>
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4">
+                <div className="flex items-center gap-3">
+                  <CircleDollarSign className="size-8 text-primary" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Valor Total Estimado
+                    </p>
+                    <p className="text-2xl font-bold">
+                      R$${totalPrice.toFixed(2).replace(".", ",")}
+                    </p>
+                  </div>
                 </div>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
+                  disabled={isLoading || isSubmitting}
+                >
+                  {isSubmitting ? 'Enviando...' : <><MessageCircle /> Agendar via WhatsApp</>}
+                </Button>
               </div>
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
-                disabled={isLoading || isSubmitting || watchedValues.isAggressive === 'Sim'}
-              >
-                {isSubmitting ? 'Enviando...' : <><MessageCircle /> Agendar via WhatsApp</>}
-              </Button>
-            </div>
-            <Alert className="mt-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Observações Importantes</AlertTitle>
-              <AlertDescription>
-                <p>O serviço de TaxiDog não está incluso no valor.</p>
-                <p>O cliente deve levar e buscar o animal no local.</p>
-              </AlertDescription>
-            </Alert>
+              <Alert className="mt-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Observações Importantes</AlertTitle>
+                <AlertDescription>
+                  <p>O serviço de TaxiDog não está incluso no valor.</p>
+                  <p>O cliente deve levar e buscar o animal no local.</p>
+                </AlertDescription>
+              </Alert>
             </CardFooter>
           )}
         </form>
