@@ -87,6 +87,11 @@ const PRICES = {
       pequeno: 75,
       medio: 95,
       grande: 160,
+      "Banho e Tosa": {
+        pequeno: 140,
+        medio: 180,
+        grande: 220,
+      }
     },
   },
   extras: {
@@ -97,7 +102,7 @@ const PRICES = {
   },
 };
 
-const bathTypes = ["Banho Simples", "Banho Terapêutico" ];
+const bathTypes = ["Banho Simples", "Banho Terapêutico"];
 
 export function SchedulingForm() {
   const [totalPrice, setTotalPrice] = useState(0);
@@ -126,7 +131,7 @@ export function SchedulingForm() {
       where("startTime", "<=", endOfDay.toISOString())
     );
   }, [firestore, selectedDate]);
-  
+
   const blockedDaysQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(
@@ -149,7 +154,7 @@ export function SchedulingForm() {
     if (todaysAppointments?.some(apt => apt.bathType === 'BLOQUEIO')) {
       return [];
     }
-    
+
     const slotsForDay = getClientTimeSlots(selectedDate);
     const bookedOrBlockedTimes = new Set<string>();
 
@@ -199,7 +204,7 @@ export function SchedulingForm() {
   useEffect(() => {
     const calculatePrice = () => {
       const { bathType, petSize, extras } = watchedValues;
-      
+
       let basePrice = 0;
       if (bathType && petSize) {
         const bathPriceConfig = PRICES.bath[bathType as keyof typeof PRICES.bath];
@@ -213,7 +218,7 @@ export function SchedulingForm() {
       if (extras?.ozoneBath) extrasPrice += PRICES.extras.ozoneBath;
       if (extras?.teethBrushing) extrasPrice += PRICES.extras.teethBrushing;
       if (extras?.higienicatosa) extrasPrice += PRICES.extras.higienicatosa;
-      
+
       return basePrice + extrasPrice;
     };
 
@@ -242,7 +247,7 @@ export function SchedulingForm() {
       setIsSubmitting(false);
       return;
     }
-    
+
     let fileUrl = "";
 
     try {
@@ -254,8 +259,8 @@ export function SchedulingForm() {
       const [hours, minutes] = appointmentTime.split(':').map(Number);
       const startTime = new Date(appointmentDate);
       startTime.setHours(hours, minutes, 0, 0);
-      const endTime = new Date(startTime.getTime() + 30 * 60000); 
-      
+      const endTime = new Date(startTime.getTime() + 30 * 60000);
+
       const newAppointment = {
         userId: user.uid,
         clientName: data.clientName,
@@ -270,17 +275,17 @@ export function SchedulingForm() {
         blocked: false,
         vaccinationCardUrl: "", // Campo mantido para consistência, mas vazio
       };
-  
+
       await addDoc(collection(firestore, "appointments"), newAppointment);
-      
+
       toast({
         title: "Agendamento Registrado!",
         description: "Agora abra o WhatsApp para confirmar o envio da sua mensagem.",
       });
-  
+
       const phoneNumber = "552136538610";
       const formattedDate = format(data.appointmentDate, "dd/MM/yyyy", { locale: ptBR });
-      
+
       const message = `🐕 *NOVO AGENDAMENTO - Princesas Pet Shop*
 
 📋 *Dados do Cliente*
@@ -303,10 +308,10 @@ Horário: ${data.appointmentTime}
 
 ✨ *Serviço*
 Tipo: ${data.bathType}
-${data.extras.hydration ? `Hidratação: Sim (+R$${PRICES.extras.hydration.toFixed(2).replace('.',',')})` : 'Hidratação: Não'}
-${data.extras.ozoneBath ? `Banho com Ozônio: Sim (+R$${PRICES.extras.ozoneBath.toFixed(2).replace('.',',')})` : 'Banho com Ozônio: Não'}
-${data.extras.teethBrushing ? `Escovação dental: Sim (+R$${PRICES.extras.teethBrushing.toFixed(2).replace('.',',')})` : 'Escovação dental: Não'}
-${data.extras.higienicatosa ? `Tosa Higiênica: Sim (+R$${PRICES.extras.higienicatosa.toFixed(2).replace('.',',')})` : 'Tosa Higiênica: Não'}
+${data.extras.hydration ? `Hidratação: Sim (+R$${PRICES.extras.hydration.toFixed(2).replace('.', ',')})` : 'Hidratação: Não'}
+${data.extras.ozoneBath ? `Banho com Ozônio: Sim (+R$${PRICES.extras.ozoneBath.toFixed(2).replace('.', ',')})` : 'Banho com Ozônio: Não'}
+${data.extras.teethBrushing ? `Escovação dental: Sim (+R$${PRICES.extras.teethBrushing.toFixed(2).replace('.', ',')})` : 'Escovação dental: Não'}
+${data.extras.higienicatosa ? `Tosa Higiênica: Sim (+R$${PRICES.extras.higienicatosa.toFixed(2).replace('.', ',')})` : 'Tosa Higiênica: Não'}
 
 ${data.observations ? `\n💡 *Observações:* ${data.observations}` : ''}
 
@@ -315,13 +320,13 @@ ${data.isMatted ? '💡 Obs: Valor pode variar devido ao embolamento' : ''}
 
 ---
 Agendamento realizado através do site.`;
-  
+
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, "_self");
-  
+
       form.reset();
       setSelectedDate(undefined);
-  
+
     } catch (e: any) {
       console.error("Error during submission: ", e);
       toast({
@@ -387,7 +392,7 @@ Agendamento realizado através do site.`;
                     </FormItem>
                   )}
                 />
-                 <FormField
+                <FormField
                   control={form.control}
                   name="address"
                   render={({ field }) => (
@@ -505,7 +510,7 @@ Agendamento realizado através do site.`;
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
-                       <FormMessage />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -540,40 +545,40 @@ Agendamento realizado através do site.`;
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
-                       <FormMessage />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-                {watchedValues.vaccinationStatus === 'Não está em dia' && (
-                  <Alert variant="destructive" className="mt-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Vacinação Obrigatória</AlertTitle>
-                    <AlertDescription>
-                      Para a segurança de todos os pets, a vacinação deve estar em dia para agendar qualquer serviço.
-                    </AlertDescription>
-                  </Alert>
-                )}
-                 {watchedValues.isAggressive === 'Sim' && (
-                  <Alert variant="destructive" className="mt-2">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Agendamento Online Indisponível</AlertTitle>
-                      <AlertDescription>
-                          Para a segurança de nossa equipe e dos outros animais, não é possível agendar online para pets com comportamento agressivo. Por favor, entre em contato diretamente conosco para avaliarmos o caso.
-                      </AlertDescription>
-                  </Alert>
-                )}
-                {isVaccinationOk && (
-                  <Alert className="mt-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Apresentar Carteirinha</AlertTitle>
-                    <AlertDescription>
-                      Lembre-se de apresentar a carteira de vacinação do seu pet no dia do atendimento ou enviar via whatsapp.
-                    </AlertDescription>
-                  </Alert>
-                )}
+              {watchedValues.vaccinationStatus === 'Não está em dia' && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Vacinação Obrigatória</AlertTitle>
+                  <AlertDescription>
+                    Para a segurança de todos os pets, a vacinação deve estar em dia para agendar qualquer serviço.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {watchedValues.isAggressive === 'Sim' && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Agendamento Online Indisponível</AlertTitle>
+                  <AlertDescription>
+                    Para a segurança de nossa equipe e dos outros animais, não é possível agendar online para pets com comportamento agressivo. Por favor, entre em contato diretamente conosco para avaliarmos o caso.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {isVaccinationOk && (
+                <Alert className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Apresentar Carteirinha</AlertTitle>
+                  <AlertDescription>
+                    Lembre-se de apresentar a carteira de vacinação do seu pet no dia do atendimento ou enviar via whatsapp.
+                  </AlertDescription>
+                </Alert>
+              )}
               <div className="pt-4">
-                 <FormField
+                <FormField
                   control={form.control}
                   name="isMatted"
                   render={({ field }) => (
@@ -664,7 +669,7 @@ Agendamento realizado através do site.`;
                         </FormItem>
                       )}
                     />
-                     <FormField
+                    <FormField
                       control={form.control}
                       name="extras.ozoneBath"
                       render={({ field }) => (
@@ -676,10 +681,10 @@ Agendamento realizado através do site.`;
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                          <FormLabel className="font-normal">
-                            Banho com Ozônio (+R$
-                            {PRICES.extras.ozoneBath.toFixed(2).replace(".", ",")}
-                          </FormLabel>
+                            <FormLabel className="font-normal">
+                              Banho com Ozônio (+R$
+                              {PRICES.extras.ozoneBath.toFixed(2).replace(".", ",")}
+                            </FormLabel>
                           </div>
                         </FormItem>
                       )}
@@ -696,15 +701,15 @@ Agendamento realizado através do site.`;
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                          <FormLabel className="font-normal">
-                            Escovação de Dentes (+R$
-                            {PRICES.extras.teethBrushing.toFixed(2).replace(".", ",")}
-                          </FormLabel>
+                            <FormLabel className="font-normal">
+                              Escovação de Dentes (+R$
+                              {PRICES.extras.teethBrushing.toFixed(2).replace(".", ",")}
+                            </FormLabel>
                           </div>
                         </FormItem>
                       )}
                     />
-                     <FormField
+                    <FormField
                       control={form.control}
                       name="extras.higienicatosa"
                       render={({ field }) => (
@@ -716,10 +721,10 @@ Agendamento realizado através do site.`;
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                          <FormLabel className="font-normal">
-                            Tosa Higiênica (+R$
-                            {PRICES.extras.higienicatosa.toFixed(2).replace(".", ",")}
-                          </FormLabel>
+                            <FormLabel className="font-normal">
+                              Tosa Higiênica (+R$
+                              {PRICES.extras.higienicatosa.toFixed(2).replace(".", ",")}
+                            </FormLabel>
                           </div>
                         </FormItem>
                       )}
@@ -843,12 +848,12 @@ Agendamento realizado através do site.`;
           </CardContent>
 
           <CardFooter className="flex flex-col items-stretch gap-4 bg-muted/50 p-6 rounded-b-lg">
-             <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Atenção sobre o Valor</AlertTitle>
-                <AlertDescription>
-                    O valor é uma <strong>estimativa</strong> e pode mudar dependendo do estado do pelo e comportamento do pet.
-                </AlertDescription>
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Atenção sobre o Valor</AlertTitle>
+              <AlertDescription>
+                O valor é uma <strong>estimativa</strong> e pode mudar dependendo do estado do pelo e comportamento do pet.
+              </AlertDescription>
             </Alert>
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4">
               <div className="flex items-center gap-3">
@@ -872,12 +877,12 @@ Agendamento realizado através do site.`;
               </Button>
             </div>
             <Alert className="mt-4">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Observações Importantes</AlertTitle>
-                <AlertDescription>
-                    <p>O serviço de TaxiDog não está incluso no valor.</p>
-                    <p>O cliente deve levar e buscar o animal no local.</p>
-                </AlertDescription>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Observações Importantes</AlertTitle>
+              <AlertDescription>
+                <p>O serviço de TaxiDog não está incluso no valor.</p>
+                <p>O cliente deve levar e buscar o animal no local.</p>
+              </AlertDescription>
             </Alert>
           </CardFooter>
         </form>
