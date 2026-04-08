@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { Instagram, Facebook, MessageSquare } from 'lucide-react';
 
 export function PageHeader() {
@@ -30,6 +31,15 @@ export function PageHeader() {
             </p>
           </div>
         </div>
+
+        <nav className="flex items-center gap-6 mt-4 md:mt-0 font-headline text-lg md:text-xl font-semibold">
+          <Link href="/" className="hover:text-primary/20 transition-colors underline-offset-4 hover:underline">
+            Início
+          </Link>
+          <Link href="/sobre" className="hover:text-primary/20 transition-colors underline-offset-4 hover:underline">
+            A Loja
+          </Link>
+        </nav>
 
         <div className="flex items-center justify-center gap-2 mt-4 md:mt-0">
           <a
