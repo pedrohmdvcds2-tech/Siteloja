@@ -394,6 +394,22 @@ Agendamento realizado através do site.`;
                 />
                 <FormField
                   control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Endereço Completo</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Rua, número, complemento e bairro"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="petName"
                   render={({ field }) => (
                     <FormItem>
@@ -595,30 +611,6 @@ Agendamento realizado através do site.`;
                 )}
               </div>
             </div>
-
-            <Separator />
-
-            <fieldset className="space-y-4">
-              <h3 className="font-headline font-semibold text-lg flex items-center gap-2 text-primary">
-                <Home /> Endereço do Cliente
-              </h3>
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Endereço Completo</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Rua, número, complemento e bairro"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </fieldset>
 
             {watchedValues.vaccinationStatus !== 'Não está em dia' && watchedValues.isAggressive !== 'Sim' && (
               <>
