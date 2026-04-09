@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { StoreCarousel } from "@/components/store-carousel";
 import { MapPin, ArrowLeft, Clock, History } from "lucide-react";
 import { Metadata } from "next";
 
@@ -21,17 +20,7 @@ export default function SobrePage() {
           </Link>
         </div>
 
-        <section className="space-y-8">
-          <div className="text-center space-y-2">
-            <h2 className="text-3xl md:text-5xl font-extrabold font-headline text-primary tracking-tight">
-              Conheça o Nosso Espaço
-            </h2>
-            <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto">
-              Ambiente preparado com muito carinho e higiene para receber o seu melhor amigo.
-            </p>
-          </div>
-          <StoreCarousel />
-        </section>
+
 
         <section className="relative px-6 py-12 md:p-12 bg-primary/5 rounded-3xl border border-primary/10 overflow-hidden shadow-sm">
           <div className="relative z-10 space-y-6 max-w-4xl mx-auto text-center md:text-left">
