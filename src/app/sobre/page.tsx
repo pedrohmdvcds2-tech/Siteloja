@@ -35,7 +35,9 @@ export default function SobrePage() {
               </p>
               <p>
                 Com profissionais dedicados e apaixonados pelo que fazem, fomos crescendo e nos tornando
-                referência no cuidado animal na nossa região. Acreditamos que cada pet merece um tratamento especial!
+                referência no cuidado animal na nossa região. Acreditamos que cada pet merece um
+                tratamento especial!
+
               </p>
               <p>
                 Aqui, nós não apenas damos banho ou tosamos, nós cuidamos do bem-estar, da saúde e da alegria
