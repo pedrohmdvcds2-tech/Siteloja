@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { StoreCarousel } from "@/components/store-carousel";
