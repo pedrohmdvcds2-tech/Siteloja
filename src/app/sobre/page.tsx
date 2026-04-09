@@ -29,12 +29,11 @@ export default function SobrePage() {
             </h2>
             <div className="space-y-5 text-lg text-foreground/80 leading-relaxed font-medium">
               <p>
-                O <strong>Princesas Pet Shop</strong> nasceu em 07/04/2016 atraves de um sonho, e hoje comemora 10 anos de sucesso.
-                Hoje contamos com uma equipe de profissionais dedicados e apaixonados pelo que fazem, fomos crescendo e nos tornando
+                O <strong>Princesas Pet Shop</strong> nasceu em 07/04/2016 através de um sonho, este ano copletamos 10 anos de sucesso.
 
               </p>
               <p>
-                Com profissionais dedicados e apaixonados pelo que fazem, fomos crescendo e nos tornando
+                Contamos com uma equipe de profissionais dedicados e apaixonados pelo que fazem, fomos crescendo e nos tornando
                 referência no cuidado animal na nossa região. Acreditamos que cada pet merece um
                 tratamento especial!
 
