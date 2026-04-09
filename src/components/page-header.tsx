@@ -37,7 +37,7 @@ export function PageHeader() {
             Início
           </Link>
           <Link href="/sobre" className="hover:text-primary/20 transition-colors underline-offset-4 hover:underline">
-            A Loja
+            Sobre
           </Link>
         </nav>
 
