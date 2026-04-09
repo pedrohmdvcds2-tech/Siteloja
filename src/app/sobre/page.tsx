@@ -6,8 +6,8 @@ import { MapPin, ArrowLeft, Clock, History } from "lucide-react";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "A Loja | Princesas Pet Shop",
-  description: "Conheça a história e o espaço do Princesas Pet Shop.",
+  title: "Sobre | Princesas Pet Shop",
+  description: "Conheça um pouco da Historia dos 10 Anos de loja",
 };
 
 export default function SobrePage() {
@@ -41,13 +41,13 @@ export default function SobrePage() {
             </h2>
             <div className="space-y-5 text-lg text-foreground/80 leading-relaxed font-medium">
               <p>
-                O <strong>Princesas Pet Shop</strong> nasceu do amor incondicional pelos animais. 
-                Nossa missão sempre foi proporcionar um ambiente seguro, acolhedor e cheio de carinho para cada pet.
+                O <strong>Princesas Pet Shop</strong> nasceu em 07/04/2016 atraves de um sonho, e hoje comemora 10 anos de sucesso.
+                Hoje contamos com uma equipe de profissionais dedicados e apaixonados pelo que fazem, fomos crescendo e nos tornando
+
               </p>
               <p>
                 Com profissionais dedicados e apaixonados pelo que fazem, fomos crescendo e nos tornando
-                referência no cuidado animal na nossa região. Acreditamos que cada pet é único e merece um
-                tratamento de realeza!
+                referência no cuidado animal na nossa região. Acreditamos que cada pet merece um tratamento especial!
               </p>
               <p>
                 Aqui, nós não apenas damos banho ou tosamos, nós cuidamos do bem-estar, da saúde e da alegria
@@ -64,12 +64,10 @@ export default function SobrePage() {
             </h2>
             <div className="text-lg text-muted-foreground space-y-2">
               <p className="font-semibold text-foreground text-xl">Princesas Pet Shop</p>
-              <p>Av. Das Princesas, 1000 - Loja A</p>
-              <p>Bairro Imperial, Cidade - Estado</p>
-              <p>CEP: 00000-000</p>
-              <p className="mt-6 text-sm flex items-center gap-2 text-primary/80 bg-primary/10 p-3 rounded-lg">
-                🚗 Temos estacionamento no local para sua conveniência.
-              </p>
+              <p>Estrada do Xerém, 390 - Loja A</p>
+              <p>Bairro: Xerém, Cidade: Duque de Caxias - Estado: RJ</p>
+              <p>CEP: 25241-390</p>
+
             </div>
           </div>
 
@@ -80,10 +78,10 @@ export default function SobrePage() {
             <div className="text-lg text-muted-foreground space-y-4">
               <div className="flex justify-between items-center border-b pb-2">
                 <span className="font-medium">Segunda a Sexta:</span>
-                <span>08:00 às 18:00</span>
+                <span>08:00 às 17:00</span>
               </div>
               <div className="flex justify-between items-center border-b pb-2">
-                <span className="font-medium">Sábado:</span>
+                <span className="font-medium">Segunda e Sábado:</span>
                 <span>08:00 às 14:00</span>
               </div>
               <div className="flex justify-between items-center text-red-500/80 font-medium pb-2">
