@@ -29,7 +29,7 @@ export default function SobrePage() {
             </h2>
             <div className="space-y-5 text-lg text-foreground/80 leading-relaxed font-medium">
               <p>
-                O <strong>Princesas Pet Shop</strong> nasceu em 07/04/2016 através de um sonho, este ano copletamos 10 anos de sucesso.
+                O <strong>Princesas Pet Shop</strong> nasceu em 07/04/2016 através de um sonho, este ano completamos 10 anos de sucesso.
 
               </p>
               <p>

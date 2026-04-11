@@ -11,6 +11,7 @@ export const formSchema = z.object({
 
   petName: z.string().min(2, "Nome do pet deve ter pelo menos 2 caracteres."),
   petBreed: z.string().min(2, "Raça deve ter pelo menos 2 caracteres."),
+  petAge: z.string().min(1, "Informe a idade do pet."),
   petSize: z.enum(["pequeno", "medio", "grande"], {
     required_error: "Selecione o porte do pet.",
   }),
