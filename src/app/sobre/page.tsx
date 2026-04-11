@@ -78,7 +78,7 @@ export default function SobrePage() {
                 <span>Fechado</span>
               </div>
               <p className="mt-4 text-sm bg-muted p-3 rounded-lg text-center">
-                Atendemos por ordem de chegada ou agendamento.
+                Atendemos por ordem de agendamento.
               </p>
             </div>
           </div>
