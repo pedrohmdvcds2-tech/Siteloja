@@ -182,7 +182,7 @@ export function SchedulingForm() {
       address: "",
       petName: "",
       petBreed: "",
-      petAge: "",
+      petBirthDate: "",
       petSize: undefined,
       vaccinationStatus: undefined,
       isAggressive: undefined,
@@ -297,7 +297,7 @@ Endereço: ${data.address}
 🐶 *Dados do Cachorro*
 Nome: ${data.petName}
 Raça: ${data.petBreed}
-Idade: ${data.petAge}
+Data de Nascimento: ${data.petBirthDate}
 Porte: ${data.petSize}
 É bravo?: ${data.isAggressive} ${data.isAggressive === 'Sim' ? '⚠️ (Pode haver taxa extra)' : ''}
 Vacinação: ${data.vaccinationStatus}
@@ -438,12 +438,12 @@ Agendamento realizado através do site.`;
                 />
                 <FormField
                   control={form.control}
-                  name="petAge"
+                  name="petBirthDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Idade do Pet</FormLabel>
+                      <FormLabel>Data de Nascimento</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: 2 anos" {...field} />
+                        <Input placeholder="Ex: 10/05/2018" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
