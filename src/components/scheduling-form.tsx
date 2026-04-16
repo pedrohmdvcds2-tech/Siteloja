@@ -810,7 +810,6 @@ Agendamento realizado através do site.`;
                                 selected={field.value}
                                 onSelect={field.onChange}
                                 disabled={(date) =>
-                                  date < startOfDay(new Date()) ||
                                   date.getDay() === 0 ||
                                   disabledDates.some(disabledDate => isEqual(date, disabledDate))
                                 }
