@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LogOut, Calendar as CalendarIcon, Trash2, CalendarClock, Repeat, CalendarCheck2, Star, Lock, Eye } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon, Trash2, CalendarClock, Repeat, CalendarCheck2, Star, Lock, Eye, Clock } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import {
   Select,
@@ -76,6 +76,9 @@ export default function AdminPage() {
   const [isBlocking, setIsBlocking] = useState(false);
   const [isBlockingDays, setIsBlockingDays] = useState(false);
   const [blockedDates, setBlockedDates] = useState<Date[]>([]);
+  const [selectedSpecificDate, setSelectedSpecificDate] = useState<Date | undefined>(undefined);
+  const [selectedSpecificTime, setSelectedSpecificTime] = useState<string>('');
+  const [isBlockingTime, setIsBlockingTime] = useState(false);
 
   const ADMIN_EMAILS = ['admin@princesaspetshop.com.br'];
 
@@ -110,6 +113,14 @@ export default function AdminPage() {
     );
   }, [firestore, isAdmin]);
 
+  const blockedTimesQuery = useMemoFirebase(() => {
+    if (!firestore || !isAdmin) return null;
+    return query(
+      collection(firestore, 'appointments'),
+      where('bathType', '==', 'BLOQUEIO_HORARIO')
+    );
+  }, [firestore, isAdmin]);
+
   const recurringBlocksQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
     return collection(firestore, 'recurringBlocks');
@@ -134,6 +145,12 @@ export default function AdminPage() {
     isLoading: isLoadingBlockedDays, 
     refetch: refetchBlockedDays 
   } = useCollection(blockedDaysQuery);
+
+  const { 
+    data: blockedTimeAppointments, 
+    isLoading: isLoadingBlockedTimes, 
+    refetch: refetchBlockedTimes 
+  } = useCollection(blockedTimesQuery);
 
   const {
     data: recurringBlocks,
@@ -228,6 +245,51 @@ export default function AdminPage() {
             toast({ variant: 'destructive', title: 'Erro', description: `Não foi possível desbloquear o dia.` });
         }
     }
+  };
+
+  const handleBlockSpecificTime = async () => {
+    if (!selectedSpecificDate || !selectedSpecificTime || !firestore || !user) return;
+    setIsBlockingTime(true);
+
+    try {
+      const [hours, minutes] = selectedSpecificTime.split(':').map(Number);
+      const startDateTime = new Date(selectedSpecificDate);
+      startDateTime.setHours(hours, minutes, 0, 0);
+      const endDateTime = new Date(startDateTime.getTime() + 30 * 60000);
+
+      const newAppointment = {
+        userId: user.uid,
+        clientName: "HORÁRIO BLOQUEADO",
+        petName: "N/A",
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+        bathType: "BLOQUEIO_HORARIO",
+        blocked: true,
+        totalPrice: 0,
+      };
+
+      await addDoc(collection(firestore, 'appointments'), newAppointment);
+
+      toast({ title: 'Sucesso!', description: 'Horário específico bloqueado.' });
+      setSelectedSpecificDate(undefined);
+      setSelectedSpecificTime('');
+    } catch (e: any) {
+      console.error("Error blocking specific time: ", e);
+      toast({ variant: 'destructive', title: 'Erro', description: `Não foi possível bloquear o horário.` });
+    } finally {
+      setIsBlockingTime(false);
+    }
+  };
+
+  const handleUnblockSpecificTime = async (docId: string) => {
+      if (!firestore) return;
+      try {
+          await deleteDoc(doc(firestore, 'appointments', docId));
+          toast({ title: 'Sucesso!', description: 'O horário foi desbloqueado.' });
+      } catch (e: any) {
+          console.error("Error unblocking time: ", e);
+          toast({ variant: 'destructive', title: 'Erro', description: `Não foi possível desbloquear o horário.` });
+      }
   };
 
   const handleBlockRecurringTime = async (data: RecurringBlockValues) => {
@@ -405,7 +467,7 @@ export default function AdminPage() {
     );
   }
 
-  const isLoading = isLoadingAppointments || isLoadingRecurring || isLoadingBlockedDays || isLoadingDailyVisits;
+  const isLoading = isLoadingAppointments || isLoadingRecurring || isLoadingBlockedDays || isLoadingDailyVisits || isLoadingBlockedTimes;
 
   return (
       <div className="container mx-auto p-4 md:p-8 space-y-8">
@@ -514,6 +576,127 @@ export default function AdminPage() {
                             ))
                     ) : (
                         <p className="text-muted-foreground text-sm">Nenhum dia bloqueado no momento.</p>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <Card>
+                <CardHeader>
+                    <CardTitle className='flex items-center gap-2'>
+                        <Clock className="h-5 w-5" />
+                        Bloquear Horário Específico
+                    </CardTitle>
+                    <CardDescription>
+                        Selecione uma data e horário específicos para bloqueá-los de vez na agenda.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium leading-none">Data</label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !selectedSpecificDate && "text-muted-foreground"
+                                    )}
+                                >
+                                    {selectedSpecificDate ? (
+                                        format(selectedSpecificDate, "PPP", { locale: ptBR })
+                                    ) : (
+                                        <span>Escolha uma data</span>
+                                    )}
+                                    <CalendarCheck2 className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    locale={ptBR}
+                                    mode="single"
+                                    selected={selectedSpecificDate}
+                                    onSelect={setSelectedSpecificDate}
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium leading-none">Horário</label>
+                        <Select value={selectedSpecificTime} onValueChange={setSelectedSpecificTime}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione um horário" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {generateTimeSlots().map((time) => (
+                                    <SelectItem key={time} value={time}>
+                                        {time}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <Button 
+                        onClick={handleBlockSpecificTime} 
+                        disabled={!selectedSpecificDate || !selectedSpecificTime || isBlockingTime}
+                        className="w-full"
+                    >
+                        {isBlockingTime ? 'Bloqueando...' : 'Bloquear Horário'}
+                    </Button>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className='flex items-center gap-2'>
+                        <Clock className="h-5 w-5" />
+                        Horários Bloqueados
+                    </CardTitle>
+                    <CardDescription>
+                        Lista de horários específicos bloqueados na agenda. Clique no ícone de lixeira para remover o bloqueio.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 max-h-96 overflow-y-auto">
+                    {isLoadingBlockedTimes ? (
+                        <p>Carregando horários bloqueados...</p>
+                    ) : blockedTimeAppointments && blockedTimeAppointments.length > 0 ? (
+                        blockedTimeAppointments
+                            .slice()
+                            .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                            .map((apt) => (
+                                <div key={apt.id} className="flex items-center justify-between rounded-md border p-3">
+                                    <span className="font-medium">
+                                        {format(new Date(apt.startTime), "PP 'às' HH:mm", { locale: ptBR })}
+                                    </span>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon">
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Esta ação desbloqueará o horário {format(new Date(apt.startTime), "dd/MM/yyyy 'às' HH:mm")}.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Voltar</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleUnblockSpecificTime(apt.id)}>
+                                                    Sim, desbloquear
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            ))
+                    ) : (
+                        <p className="text-muted-foreground text-sm">Nenhum horário específico bloqueado.</p>
                     )}
                 </CardContent>
             </Card>
