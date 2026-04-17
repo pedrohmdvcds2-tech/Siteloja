@@ -35,20 +35,9 @@ function Calendar({
         ),
         month_grid: "w-full border-collapse space-y-1",
         weekdays: "flex w-full justify-around mb-2 relative",
-        weekday:
-          "text-muted-foreground rounded-md w-10 font-bold text-[0.8rem] uppercase text-center",
+        weekday: "text-muted-foreground rounded-md w-10 font-bold text-[0.8rem] uppercase text-center",
         week: "flex w-full justify-around mt-2 relative",
-        day: cn(
-          "p-0 relative text-center text-sm focus-within:relative focus-within:z-20",
-          "[&:has([disabled])]:after:content-['Não_é_possível'] [&:has([disabled])]:after:hidden hover:[&:has([disabled])]:after:block",
-          "[&:has([disabled])]:after:absolute [&:has([disabled])]:after:-top-8 [&:has([disabled])]:after:left-1/2 [&:has([disabled])]:after:-translate-x-1/2",
-          "[&:has([disabled])]:after:bg-black [&:has([disabled])]:after:text-white [&:has([disabled])]:after:text-[10px] [&:has([disabled])]:after:px-2 [&:has([disabled])]:after:py-1",
-          "[&:has([disabled])]:after:rounded-md [&:has([disabled])]:after:z-[100] [&:has([disabled])]:after:whitespace-nowrap",
-          "[&:has([aria-disabled])]:after:content-['Não_é_possível'] [&:has([aria-disabled])]:after:hidden hover:[&:has([aria-disabled])]:after:block",
-          "[&:has([aria-disabled])]:after:absolute [&:has([aria-disabled])]:after:-top-8 [&:has([aria-disabled])]:after:left-1/2 [&:has([aria-disabled])]:after:-translate-x-1/2",
-          "[&:has([aria-disabled])]:after:bg-black [&:has([aria-disabled])]:after:text-white [&:has([aria-disabled])]:after:text-[10px] [&:has([aria-disabled])]:after:px-2 [&:has([aria-disabled])]:after:py-1",
-          "[&:has([aria-disabled])]:after:rounded-md [&:has([aria-disabled])]:after:z-[100] [&:has([aria-disabled])]:after:whitespace-nowrap"
-        ),
+        day: "p-0 relative text-center text-sm focus-within:relative focus-within:z-20",
         day_button: cn(
           buttonVariants({ variant: "ghost" }),
           "h-10 w-10 p-0 font-medium rounded-full transition-all hover:bg-primary/10 hover:text-primary disabled:opacity-30 disabled:hover:bg-transparent"
@@ -58,7 +47,7 @@ function Calendar({
         today: "text-primary bg-primary/5 border border-primary/30 font-bold",
         outside:
           "text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-        disabled: "text-muted-foreground opacity-30 cursor-not-allowed hover:bg-transparent pointer-events-none",
+        disabled: "text-muted-foreground opacity-40 cursor-not-allowed hover:bg-transparent relative after:content-['Indisponível'] after:absolute after:-top-8 after:left-1/2 after:-translate-x-1/2 after:bg-black/90 after:text-white after:text-[11px] after:px-2 after:py-1 after:rounded-md after:z-50 after:whitespace-nowrap after:opacity-0 hover:after:opacity-100 after:transition-opacity after:pointer-events-none",
         range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         hidden: "invisible",
