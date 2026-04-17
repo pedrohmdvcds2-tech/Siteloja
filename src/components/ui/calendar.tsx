@@ -33,7 +33,7 @@ function Calendar({
           buttonVariants({ variant: "outline" }),
           "h-8 w-8 bg-transparent border-primary/20 hover:bg-primary/10 hover:border-primary text-primary/70 hover:text-primary transition-all p-0 shadow-sm rounded-full"
         ),
-        month_grid: "w-full border-collapse space-y-1",
+        month_grid: "w-full border-collapse space-y-1 [&_tr>*:first-child]:hidden",
         weekdays: "flex w-full justify-around mb-2 relative",
         weekday: "text-muted-foreground rounded-md w-10 font-bold text-[0.8rem] uppercase text-center",
         week: "flex w-full justify-around mt-2 relative",
