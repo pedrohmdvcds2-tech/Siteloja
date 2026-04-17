@@ -79,19 +79,19 @@ import { Switch } from "@/components/ui/switch";
 const PRICES = {
   bath: {
     "Banho Simples": {
-      pequeno: 75,
-      medio: 95,
-      grande: 160,
+      pequeno: 85,
+      medio: 115,
+      grande: 170,
     },
     "Banho Terapêutico": {
-      pequeno: 75,
-      medio: 95,
-      grande: 160,
+      pequeno: 85,
+      medio: 115,
+      grande: 170,
     },
     "Banho e Tosa": {
-      pequeno: 140,
-      medio: 180,
-      grande: 220,
+      pequeno: 150,
+      medio: 190,
+      grande: 230,
     },
   },
   extras: {
