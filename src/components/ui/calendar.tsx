@@ -47,7 +47,7 @@ function Calendar({
         today: "text-primary bg-primary/5 border border-primary/30 font-bold",
         outside:
           "text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-        disabled: "text-muted-foreground opacity-60 cursor-not-allowed hover:bg-transparent relative after:content-['Indisponível'] after:absolute after:-top-8 after:left-1/2 after:-translate-x-1/2 after:bg-black/90 after:text-white after:text-[11px] after:px-2 after:py-1 after:rounded-md after:z-50 after:whitespace-nowrap after:opacity-0 hover:after:opacity-100 after:transition-opacity after:pointer-events-none",
+        disabled: "text-black bg-gray-200 opacity-90 font-bold cursor-not-allowed relative after:content-['Indisponível'] after:absolute after:-top-8 after:left-1/2 after:-translate-x-1/2 after:bg-black/90 after:text-white after:text-[11px] after:px-2 after:py-1 after:rounded-md after:z-50 after:whitespace-nowrap after:opacity-0 hover:after:opacity-100 after:transition-opacity",
         range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         hidden: "invisible",
