@@ -80,12 +80,12 @@ const PRICES = {
   bath: {
     "Banho Simples": {
       pequeno: 85,
-      medio: 115,
+      medio: 120,
       grande: 170,
     },
     "Banho Terapêutico": {
       pequeno: 85,
-      medio: 115,
+      medio: 120,
       grande: 170,
     },
     "Banho e Tosa": {
