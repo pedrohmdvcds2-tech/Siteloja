@@ -21,6 +21,9 @@ export const formSchema = z.object({
   isAggressive: z.enum(["Sim", "Não"], {
     required_error: "Informe se o pet é bravo.",
   }),
+  canUsePerfume: z.enum(["Sim", "Não"], {
+    required_error: "Informe se pode usar perfume no pet.",
+  }),
   isMatted: z.boolean().default(false),
 
   appointmentDate: z.date({

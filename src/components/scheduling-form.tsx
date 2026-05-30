@@ -186,6 +186,7 @@ export function SchedulingForm() {
       petSize: undefined,
       vaccinationStatus: undefined,
       isAggressive: undefined,
+      canUsePerfume: undefined,
       isMatted: false,
       appointmentDate: undefined,
       appointmentTime: undefined,
@@ -269,6 +270,7 @@ export function SchedulingForm() {
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
         bathType: data.bathType,
+        canUsePerfume: data.canUsePerfume,
         additionalServices: Object.entries(data.extras)
           .filter(([, value]) => value)
           .map(([key]) => key),
@@ -314,6 +316,7 @@ ${data.extras.hydration ? `Hidratação: Sim (+R$${PRICES.extras.hydration.toFix
 ${data.extras.ozoneBath ? `Banho com Ozônio: Sim (+R$${PRICES.extras.ozoneBath.toFixed(2).replace('.', ',')})` : 'Banho com Ozônio: Não'}
 ${data.extras.teethBrushing ? `Escovação dental: Sim (+R$${PRICES.extras.teethBrushing.toFixed(2).replace('.', ',')})` : 'Escovação dental: Não'}
 ${data.extras.higienicatosa ? `Tosa Higiênica: Sim (+R$${PRICES.extras.higienicatosa.toFixed(2).replace('.', ',')})` : 'Tosa Higiênica: Não'}
+Perfume: ${data.canUsePerfume}
 
 ${data.observations ? `\n💡 *Observações:* ${data.observations}` : ''}
 
@@ -537,6 +540,41 @@ Agendamento realizado através do site.`;
                       <FormLabel className="flex items-center gap-2">
                         <AlertTriangle />
                         O pet é bravo?
+                      </FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex space-x-4"
+                        >
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Sim" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Sim
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Não" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Não</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="canUsePerfume"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel className="flex items-center gap-2">
+                        <Home />
+                        Posso usar perfume?
                       </FormLabel>
                       <FormControl>
                         <RadioGroup
