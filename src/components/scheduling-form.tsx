@@ -21,7 +21,7 @@ import {
   Scale,
   MessageCircle,
   FileText,
-  Wind,
+  BottleWine,
   AlertTriangle,
   CalendarIcon,
   Upload,
@@ -572,7 +572,7 @@ Agendamento realizado através do site.`;
                   render={({ field }) => (
                     <FormItem className="space-y-3">
                       <FormLabel className="flex items-center gap-2">
-                        <Wind />
+                        <BottleWine />
                         Posso usar perfume?
                       </FormLabel>
                       <FormControl>
