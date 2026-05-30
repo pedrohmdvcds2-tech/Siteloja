@@ -25,7 +25,6 @@ import {
   AlertTriangle,
   CalendarIcon,
   Upload,
-  Fragrance,
 } from "lucide-react";
 
 
@@ -573,7 +572,7 @@ Agendamento realizado através do site.`;
                   render={({ field }) => (
                     <FormItem className="space-y-3">
                       <FormLabel className="flex items-center gap-2">
-                        <Fragrance />
+                        <Wind />
                         Posso usar perfume?
                       </FormLabel>
                       <FormControl>
