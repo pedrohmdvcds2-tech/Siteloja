@@ -1,19 +1,21 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useFirebase } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export function RouteTracker() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  // Avoid useSearchParams hook here to prevent CSR bailout on server-rendered pages.
+  // We'll read the search string from window.location in the client effect below.
   const { firestore } = useFirebase();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const query = searchParams ? searchParams.toString() : '';
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    const query = search.startsWith('?') ? search.slice(1) : search;
     const url = pathname + (query ? `?${query}` : '');
 
     // Send SPA page_view to Google Analytics (gtag)
