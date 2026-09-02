@@ -50,7 +50,7 @@ export function RouteTracker() {
         ts: serverTimestamp(),
       }).catch((e) => console.error('Failed to write visit:', e));
     }
-  }, [pathname, searchParams, firestore]);
+  }, [pathname, firestore]);
 
   return null;
 }
