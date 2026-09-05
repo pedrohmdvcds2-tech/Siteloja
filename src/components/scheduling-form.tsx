@@ -167,9 +167,22 @@ export function SchedulingForm() {
       });
     }
 
-    return slotsForDay.filter(
-      (slot) => !bookedOrBlockedTimes.has(slot)
-    );
+    const now = new Date();
+    const isSelectedToday = isEqual(startOfDay(selectedDate), startOfDay(now));
+
+    return slotsForDay.filter((slot) => {
+      if (bookedOrBlockedTimes.has(slot)) return false;
+
+      if (isSelectedToday) {
+        const [hours, minutes] = slot.split(":").map(Number);
+        const slotDate = new Date(selectedDate);
+        slotDate.setHours(hours, minutes, 0, 0);
+        // Não incluir horários que já passaram
+        if (isBefore(slotDate, now)) return false;
+      }
+
+      return true;
+    });
   }, [todaysAppointments, selectedDate]);
 
 
@@ -271,6 +284,17 @@ export function SchedulingForm() {
       const startTime = new Date(appointmentDate);
       startTime.setHours(hours, minutes, 0, 0);
       const endTime = new Date(startTime.getTime() + 30 * 60000);
+
+      // Não permitir agendar no passado
+      if (isBefore(endTime, new Date())) {
+        toast({
+          variant: "destructive",
+          title: "Data/Horário inválido",
+          description: "Não é possível agendar para uma data ou horário que já passou.",
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
       const newAppointment = {
         userId: user.uid,
@@ -864,10 +888,14 @@ Agendamento realizado através do site.`;
                                 mode="single"
                                 selected={field.value}
                                 onSelect={field.onChange}
-                                disabled={(date) =>
-                                  date.getDay() === 0 ||
-                                  disabledDates.some(disabledDate => isEqual(date, disabledDate))
-                                }
+                                disabled={(date) => {
+                                  const todayStart = startOfDay(new Date());
+                                  return (
+                                    date.getDay() === 0 ||
+                                    isBefore(date, todayStart) ||
+                                    disabledDates.some(disabledDate => isEqual(date, disabledDate))
+                                  );
+                                }}
                                 initialFocus
                               />
                             </PopoverContent>
