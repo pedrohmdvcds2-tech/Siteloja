@@ -276,6 +276,10 @@ export function SchedulingForm() {
         totalPrice: totalPrice,
         blocked: false,
         vaccinationCardUrl: "", // Campo mantido para consistência, mas vazio
+        // Marca que o agendamento veio do site e quando deve expirar
+        source: 'site',
+        createdAt: new Date().toISOString(),
+        expireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
       await addDoc(collection(firestore, "appointments"), newAppointment);

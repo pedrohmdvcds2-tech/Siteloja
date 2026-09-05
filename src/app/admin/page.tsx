@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { format, getWeek, startOfDay, isEqual } from 'date-fns';
+import { format, getWeek, startOfDay, isEqual, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
@@ -1004,6 +1004,7 @@ export default function AdminPage() {
                     <TableHead>Serviço</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Horário</TableHead>
+                    <TableHead>Expira</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1029,6 +1030,16 @@ export default function AdminPage() {
                           {format(new Date(apt.startTime), 'HH:mm', {
                             locale: ptBR,
                           })}
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const expireField = apt.expireAt;
+                            if (!expireField) return '-';
+                            const expireDate = expireField?.seconds ? new Date(expireField.seconds * 1000) : new Date(expireField);
+                            const now = new Date();
+                            if (expireDate.getTime() <= now.getTime()) return 'Expirado';
+                            return `em ${formatDistanceToNowStrict(expireDate, { locale: ptBR })}`;
+                          })()}
                         </TableCell>
                         <TableCell className="text-right">
                             <AlertDialog>
