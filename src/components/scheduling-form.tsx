@@ -237,6 +237,16 @@ export function SchedulingForm() {
     }
   }, [watchedValues.appointmentDate, selectedDate, form]);
 
+  // Se o tipo de banho for 'Banho e Tosa', não permitir selecionar a opção de Tosa Higiênica
+  useEffect(() => {
+    if (watchedValues.bathType === 'Banho e Tosa') {
+      const current = form.getValues('extras.higienicatosa');
+      if (current) {
+        form.setValue('extras.higienicatosa', false);
+      }
+    }
+  }, [watchedValues.bathType, form]);
+
   async function onSubmit(data: SchedulingFormValues) {
     setIsSubmitting(true);
     if (!user || !firestore) {
@@ -776,6 +786,7 @@ Agendamento realizado através do site.`;
                                 <Checkbox
                                   checked={field.value}
                                   onCheckedChange={field.onChange}
+                                  disabled={watchedValues.bathType === 'Banho e Tosa'}
                                 />
                               </FormControl>
                               <div className="space-y-1 leading-none">
@@ -783,6 +794,9 @@ Agendamento realizado através do site.`;
                                   Tosa Higiênica (+R$
                                   {PRICES.extras.higienicatosa.toFixed(2).replace(".", ",")}
                                 </FormLabel>
+                                {watchedValues.bathType === 'Banho e Tosa' && (
+                                  <div className="text-sm text-muted-foreground mt-1">Incluído no Banho e Tosa</div>
+                                )}
                               </div>
                             </FormItem>
                           )}
