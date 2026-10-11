@@ -107,6 +107,7 @@ export function SchedulingForm() {
   const [totalPrice, setTotalPrice] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasConfirmedNoPickup, setHasConfirmedNoPickup] = useState(false);
   const { toast } = useToast();
   const { firestore, auth, user, isUserLoading, storage } = useFirebase();
 
@@ -368,6 +369,7 @@ Agendamento realizado através do site.`;
 
       form.reset();
       setSelectedDate(undefined);
+      setHasConfirmedNoPickup(false);
 
     } catch (e: any) {
       console.error("Error during submission: ", e);
@@ -957,6 +959,24 @@ Agendamento realizado através do site.`;
                   O valor é uma <strong>estimativa</strong> e pode mudar dependendo do estado do pelo e comportamento do pet.
                 </AlertDescription>
               </Alert>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-medium text-amber-900">Banhos agendados pelo site</p>
+                    <p className="text-sm text-amber-800">
+                      Não incluem serviço de busca e entrega do pet. O cliente deve levar e buscar o animal no local.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={hasConfirmedNoPickup ? "default" : "outline"}
+                    className={hasConfirmedNoPickup ? "bg-amber-600 hover:bg-amber-700" : "border-amber-300 text-amber-800 hover:bg-amber-100"}
+                    onClick={() => setHasConfirmedNoPickup((prev) => !prev)}
+                  >
+                    {hasConfirmedNoPickup ? "Entendi" : "Estou ciente"}
+                  </Button>
+                </div>
+              </div>
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4">
                 <div className="flex items-center gap-3">
                   <CircleDollarSign className="size-8 text-primary" />
@@ -973,19 +993,11 @@ Agendamento realizado através do site.`;
                   type="submit"
                   size="lg"
                   className="w-full md:w-auto shimmer transition-transform duration-200 hover:scale-105"
-                  disabled={isLoading || isSubmitting}
+                  disabled={isLoading || isSubmitting || !hasConfirmedNoPickup}
                 >
                   {isSubmitting ? 'Enviando...' : <><MessageCircle /> Agendar via WhatsApp</>}
                 </Button>
               </div>
-              <Alert className="mt-4">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Observações Importantes</AlertTitle>
-                <AlertDescription>
-                  <p>O serviço de TaxiDog não está incluso no valor.</p>
-                  <p>O cliente deve levar e buscar o animal no local.</p>
-                </AlertDescription>
-              </Alert>
             </CardFooter>
           )}
         </form>

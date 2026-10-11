@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function SobrePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background font-body text-foreground">
-      <PageHeader />
+      <PageHeader showNav={false} />
 
       <main className="flex-grow w-full max-w-5xl mx-auto p-4 md:p-8 space-y-16 mt-4">
         <div className="flex items-center">
@@ -40,7 +40,7 @@ export default function SobrePage() {
               </p>
               <p>
                 Aqui, nós não apenas damos banho ou tosamos, nós cuidamos do bem-estar, da saúde e da alegria
-                dos nossos clientes de quatro patas. Venha nos fazer uma visita e conhecer a nossa família!
+                dos nossos amiguinhos de quatro patas. Venha nos fazer uma visita e conhecer a nossa família!
               </p>
             </div>
           </div>
@@ -56,7 +56,6 @@ export default function SobrePage() {
               <p>Estrada do Xerém, 390 - Loja A</p>
               <p>Bairro: Xerém, Cidade: Duque de Caxias - Estado: RJ</p>
               <p>CEP: 25241-390</p>
-
             </div>
           </div>
 
@@ -83,6 +82,16 @@ export default function SobrePage() {
             </div>
           </div>
         </section>
+        <div className="flex justify-center pt-4">
+          <a
+            href="https://maps.app.goo.gl/dfvepuriT9Kh5Kow6"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex w-full max-w-md items-center justify-center rounded-xl bg-primary px-6 py-4 text-base font-bold text-primary-foreground shadow-lg transition hover:opacity-90"
+          >
+            Como chegar?
+          </a>
+        </div>
       </main>
 
       <footer className="w-full text-center p-6 text-sm text-muted-foreground mt-8 bg-muted/30">

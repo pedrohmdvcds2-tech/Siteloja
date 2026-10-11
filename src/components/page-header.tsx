@@ -4,7 +4,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Instagram, Facebook, MessageSquare } from 'lucide-react';
 
-export function PageHeader() {
+type PageHeaderProps = {
+  showNav?: boolean;
+};
+
+export function PageHeader({ showNav = true }: PageHeaderProps) {
   return (
     <header className="w-full bg-primary py-4 text-primary-foreground shadow-md">
       <div className="container mx-auto flex flex-wrap flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
@@ -32,14 +36,16 @@ export function PageHeader() {
           </div>
         </div>
 
-        <nav className="flex items-center gap-6 mt-4 md:mt-0 font-headline text-lg md:text-xl font-semibold">
-          <Link href="/" className="hover:text-primary/20 transition-colors underline-offset-4 hover:underline">
-            Início
-          </Link>
-          <Link href="/sobre" className="hover:text-primary/20 transition-colors underline-offset-4 hover:underline">
-            Sobre
-          </Link>
-        </nav>
+        {showNav && (
+          <nav className="flex items-center gap-6 mt-4 md:mt-0 font-headline text-lg md:text-xl font-semibold">
+            <Link href="/" className="hover:text-primary/20 transition-colors underline-offset-4 hover:underline">
+              Início
+            </Link>
+            <Link href="/sobre" className="hover:text-primary/20 transition-colors underline-offset-4 hover:underline">
+              Sobre
+            </Link>
+          </nav>
+        )}
 
         <div className="flex items-center justify-center gap-2 mt-4 md:mt-0">
           <a
