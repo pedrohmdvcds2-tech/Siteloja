@@ -81,6 +81,7 @@ export default function AdminPage() {
   const [isBlockingTime, setIsBlockingTime] = useState(false);
 
   const ADMIN_EMAILS = ['admin@princesaspetshop.com.br'];
+  const RETENTION_DAYS = 45;
 
   const form = useForm<RecurringBlockValues>({
     resolver: zodResolver(recurringBlockSchema),
@@ -179,6 +180,38 @@ export default function AdminPage() {
       setBlockedDates(dates);
     }
   }, [blockedDayAppointments]);
+
+  useEffect(() => {
+    if (!firestore || !isAdmin || !appointments) return;
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - RETENTION_DAYS);
+
+    const expiredAppointments = appointments.filter((apt) => {
+      if (apt.blocked || apt.bathType === 'BLOQUEIO' || apt.bathType === 'BLOQUEIO_HORARIO') {
+        return false;
+      }
+
+      const startTime = new Date(apt.startTime);
+      const expireAtValue = apt.expireAt
+        ? (apt.expireAt.seconds ? new Date(apt.expireAt.seconds * 1000) : new Date(apt.expireAt))
+        : undefined;
+
+      const expirationDate = expireAtValue ?? new Date(startTime.getTime() + RETENTION_DAYS * 24 * 60 * 60 * 1000);
+      return expirationDate <= cutoffDate || startTime < cutoffDate;
+    });
+
+    if (!expiredAppointments.length) return;
+
+    const batch = writeBatch(firestore);
+    expiredAppointments.forEach((apt) => {
+      batch.delete(doc(firestore, 'appointments', apt.id));
+    });
+
+    batch.commit().catch((error) => {
+      console.error('Erro ao remover agendamentos expirados:', error);
+    });
+  }, [firestore, isAdmin, appointments]);
 
   const handleBlockDays = async (newlySelectedDays: Date[] | undefined) => {
     if (!firestore || !user) return;
@@ -1010,7 +1043,17 @@ export default function AdminPage() {
                 </TableHeader>
                 <TableBody>
                   {appointments
-                    .filter(apt => !apt.blocked) // Filtra para não mostrar horários bloqueados
+                    .filter((apt) => {
+                      if (apt.blocked || apt.bathType === 'BLOQUEIO' || apt.bathType === 'BLOQUEIO_HORARIO') {
+                        return false;
+                      }
+
+                      const startTime = new Date(apt.startTime);
+                      const cutoffDate = new Date();
+                      cutoffDate.setDate(cutoffDate.getDate() - RETENTION_DAYS);
+
+                      return startTime >= cutoffDate;
+                    })
                     .sort(
                       (a, b) =>
                         new Date(a.startTime).getTime() -

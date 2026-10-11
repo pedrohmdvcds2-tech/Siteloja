@@ -202,7 +202,7 @@ export function SchedulingForm() {
       canUsePerfume: undefined,
       isMatted: false,
       appointmentDate: undefined,
-      appointmentTime: undefined,
+      appointmentTime: "",
       bathType: undefined,
       extras: {
         hydration: false,
@@ -246,7 +246,7 @@ export function SchedulingForm() {
       const newDate = new Date(watchedValues.appointmentDate);
       if (selectedDate?.getTime() !== newDate.getTime()) {
         setSelectedDate(newDate);
-        form.setValue("appointmentTime", undefined); // Reset time when date changes
+        form.setValue("appointmentTime", ""); // Reset time when date changes
       }
     }
   }, [watchedValues.appointmentDate, selectedDate, form]);
@@ -314,7 +314,7 @@ export function SchedulingForm() {
         // Marca que o agendamento veio do site e quando deve expirar
         source: 'site',
         createdAt: new Date().toISOString(),
-        expireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        expireAt: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
       await addDoc(collection(firestore, "appointments"), newAppointment);
