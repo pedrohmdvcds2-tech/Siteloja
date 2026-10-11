@@ -985,7 +985,7 @@ Agendamento realizado através do site.`;
                       Valor Total Estimado
                     </p>
                     <p className="text-2xl font-bold">
-                      R$${totalPrice.toFixed(2).replace(".", ",")}
+                      R${totalPrice.toFixed(2).replace(".", ",")}
                     </p>
                   </div>
                 </div>
