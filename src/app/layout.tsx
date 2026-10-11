@@ -7,6 +7,7 @@ import { VisitorTracker } from "@/components/visitor-tracker";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import { RouteTracker } from "@/components/route-tracker";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const baloo = Baloo_2({
   subsets: ["latin"],
@@ -62,6 +63,7 @@ export default function RootLayout({
           {children}
           <Toaster />
           <Analytics />
+          <SpeedInsights />
         </FirebaseClientProvider>
       </body>
     </html>
