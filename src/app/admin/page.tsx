@@ -184,21 +184,18 @@ export default function AdminPage() {
   useEffect(() => {
     if (!firestore || !isAdmin || !appointments) return;
 
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - RETENTION_DAYS);
+    const now = new Date();
 
     const expiredAppointments = appointments.filter((apt) => {
       if (apt.blocked || apt.bathType === 'BLOQUEIO' || apt.bathType === 'BLOQUEIO_HORARIO') {
         return false;
       }
 
-      const startTime = new Date(apt.startTime);
       const expireAtValue = apt.expireAt
         ? (apt.expireAt.seconds ? new Date(apt.expireAt.seconds * 1000) : new Date(apt.expireAt))
-        : undefined;
+        : null;
 
-      const expirationDate = expireAtValue ?? new Date(startTime.getTime() + RETENTION_DAYS * 24 * 60 * 60 * 1000);
-      return expirationDate <= cutoffDate || startTime < cutoffDate;
+      return expireAtValue ? expireAtValue <= now : false;
     });
 
     if (!expiredAppointments.length) return;
@@ -1048,11 +1045,11 @@ export default function AdminPage() {
                         return false;
                       }
 
-                      const startTime = new Date(apt.startTime);
-                      const cutoffDate = new Date();
-                      cutoffDate.setDate(cutoffDate.getDate() - RETENTION_DAYS);
+                      const expireAtValue = apt.expireAt
+                        ? (apt.expireAt.seconds ? new Date(apt.expireAt.seconds * 1000) : new Date(apt.expireAt))
+                        : null;
 
-                      return startTime >= cutoffDate;
+                      return !expireAtValue || expireAtValue > new Date();
                     })
                     .sort(
                       (a, b) =>
